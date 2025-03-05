@@ -236,7 +236,7 @@ const summarizeAction = {
                         return `---\nAttachment: ${attachment.id}\n${attachment.description}\n${attachment.text}\n---`;
                     })
                     .join("\n");
-                return `${actorMap.get(memory.userId)?.name ?? "Unknown User"} (${actorMap.get(memory.userId)?.username ?? ""}): ${memory.content.text}\n${attachments}`;
+                return `${actorMap.get(memory.entityId)?.name ?? "Unknown User"} (${actorMap.get(memory.entityId)?.username ?? ""}): ${memory.content.text}\n${attachments}`;
             })
             .join("\n");
 
@@ -320,19 +320,19 @@ ${currentSummary.trim()}
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "```js\nconst x = 10\n```",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "can you give me a detailed report on what we're talking about?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sure, no problem, give me a minute to get that together for you",
                     actions: ["SUMMARIZE"],
@@ -341,13 +341,13 @@ ${currentSummary.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "please summarize the conversation we just had and include this blogpost i'm linking (Attachment: b3e12)",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sure, give me a sec",
                     actions: ["SUMMARIZE"],
@@ -356,13 +356,13 @@ ${currentSummary.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Can you summarize what moon and avf are talking about?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Yeah, just hold on a second while I get that together for you...",
                     actions: ["SUMMARIZE"],
@@ -371,13 +371,13 @@ ${currentSummary.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "i need to write a blog post about farming, can you summarize the discussion from a few hours ago?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "no problem, give me a few minutes to read through everything",
                     actions: ["SUMMARIZE"],

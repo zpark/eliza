@@ -1,5 +1,5 @@
 import { addHeader } from "../prompts";
-import { IAgentRuntime, Memory, Provider } from "../types";
+import type { IAgentRuntime, Memory, Provider } from "../types";
 
 export const knowledgeProvider: Provider = {
   name: "KNOWLEDGE",

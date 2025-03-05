@@ -1,7 +1,7 @@
 import * as crypto from "node:crypto";
 import fs from "node:fs";
 import { getApiKey } from "./credential";
-import { CLOUD_API_URL, CLOUD_URL } from "./constants";
+import { PHALA_CLOUD_API_URL, CLOUD_URL } from "./constants";
 import {
     createCvm,
     getCvmByAppId,

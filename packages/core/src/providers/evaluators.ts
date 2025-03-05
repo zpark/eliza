@@ -1,7 +1,7 @@
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { addHeader } from "../prompts";
 import type { ActionExample } from "../types";
-import { Evaluator, IAgentRuntime, Memory, Provider } from "../types";
+import type { Evaluator, IAgentRuntime, Memory, Provider } from "../types";
 
 /**
  * Formats the names of evaluators into a comma-separated list, each enclosed in single quotes.
@@ -45,7 +45,7 @@ export function formatEvaluatorExamples(evaluators: Evaluator[]) {
 
                   const formattedMessages = example.messages
                       .map((message: ActionExample) => {
-                          let messageString = `${message.user}: ${message.content.text}`;
+                          let messageString = `${message.name}: ${message.content.text}`;
                           exampleNames.forEach((name, index) => {
                               const placeholder = `{{user${index + 1}}}`;
                               messageString = messageString.replaceAll(

@@ -12,7 +12,7 @@ import {
   type State,
   type Setting,
   type WorldSettings,
-  ProviderResult,
+  type ProviderResult,
 } from "../types";
 
 /**
@@ -133,7 +133,7 @@ export const settingsProvider: Provider = {
       const isOnboarding = type === ChannelType.DM;
 
       // Find server for the current user
-      let world = await findWorldForOwner(runtime, message.userId);
+      let world = await findWorldForOwner(runtime, message.entityId);
       let serverId;
 
       if (isOnboarding) {
@@ -149,7 +149,7 @@ export const settingsProvider: Provider = {
       // If still no server found after recovery attempts
       if (!serverId) {
         logger.info(
-          `No server ownership found for user ${message.userId} after recovery attempt`
+          `No server ownership found for user ${message.entityId} after recovery attempt`
         );
         return isOnboarding
           ? {

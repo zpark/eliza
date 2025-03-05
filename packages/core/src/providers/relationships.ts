@@ -67,7 +67,7 @@ const relationshipsProvider: Provider = {
   get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
     // Get all relationships for the current user
     const relationships = await runtime.databaseAdapter.getRelationships({
-      userId: message.userId,
+      entityId: message.entityId,
     });
 
     if (!relationships || relationships.length === 0) {

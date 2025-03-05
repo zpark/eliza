@@ -3,8 +3,8 @@ import type { Sentiment } from "../schemas";
 import type { IToken } from "../types";
 
 const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
-const rolePrompt = "You are a buy signal analyzer.";
-const template = `
+const _rolePrompt = "You are a buy signal analyzer.";
+const _template = `
 
 I want you to give a crypto buy signal based on both the sentiment analysis as well as the trending tokens.
 Only choose a token that occurs in both the Trending Tokens list as well as the Sentiment analysis. This ensures we have the proper token address.

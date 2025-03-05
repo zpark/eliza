@@ -12,7 +12,7 @@ import {
   getWorldSettings,
   logger
 } from "@elizaos/core";
-import { TwitterService } from "@elizaos/plugin-twitter";
+import type { TwitterService } from "@elizaos/plugin-twitter";
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -201,7 +201,7 @@ const twitterPostAction: Action = {
 
       const userRole = await getUserServerRole(
         runtime,
-        message.userId,
+        entityId: message.entityId,
         serverId
       );
       if (userRole !== "OWNER" && userRole !== "ADMIN") {
@@ -284,7 +284,7 @@ const twitterPostAction: Action = {
         ) => {
           const userRole = await getUserServerRole(
             runtime,
-            message.userId,
+            message.entityId,
             serverId
           );
 
@@ -338,13 +338,13 @@ const twitterPostAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "That's such a great point about neural networks! You should tweet that",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I'll tweet this:\n\nDeep learning isn't just about layers - it's about understanding how neural networks actually learn from patterns. The magic isn't in the math, it's in the emergent behaviors we're just beginning to understand.",
           actions: ["TWITTER_POST"],
@@ -353,13 +353,13 @@ const twitterPostAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Can you share this insight on Twitter?",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Tweet posted!\nhttps://twitter.com/username/status/123456789",
           actions: ["TWITTER_POST"],

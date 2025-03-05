@@ -98,7 +98,7 @@ export default {
         'PAY_SOLANA',
     ],
     validate: async (_runtime: IAgentRuntime, message: Memory) => {
-        logger.log('Validating transfer from user:', message.userId);
+        logger.log('Validating transfer from entity:', message.entityId);
         return true;
     },
     description: 'Transfer SOL or SPL tokens to another address on Solana.',
@@ -115,7 +115,7 @@ export default {
         if (!currentState) {
             currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.composeState(message, {}, ["RECENT_MEMORIES"]);
+            state = await runtime.composeState(message, {}, ['RECENT_MEMORIES']);
         }
 
         const transferPrompt = composePrompt({
@@ -259,31 +259,31 @@ export default {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: '{{name1}}',
                 content: {
                     text: 'Send 1.5 SOL to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: "{{user2}}",
+                name: '{{name2}}',
                 content: {
                     text: 'Sending SOL now...',
-                    actions: ["TRANSFER_SOLANA"],
+                    actions: ['TRANSFER_SOLANA'],
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: '{{name1}}',
                 content: {
                     text: 'Send 69 $DEGENAI BieefG47jAHCGZBxi2q87RDuHyGZyYC3vAzxpyu8pump to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: "{{user2}}",
+                name: '{{name2}}',
                 content: {
                     text: 'Sending the tokens now...',
-                    actions: ["TRANSFER_SOLANA"],
+                    actions: ['TRANSFER_SOLANA'],
                 },
             },
         ],

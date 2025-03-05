@@ -121,8 +121,8 @@ export const goalEvaluator: Evaluator = {
     examples: [
         {
             prompt: `Actors in the scene:
-  {{user1}}: An avid reader and member of a book club.
-  {{user2}}: The organizer of the book club.
+  {{name1}}: An avid reader and member of a book club.
+  {{name2}}: The organizer of the book club.
 
   Goals:
   - Name: Finish reading "War and Peace"
@@ -134,19 +134,19 @@ export const goalEvaluator: Evaluator = {
 
             messages: [
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "I've just finished chapter 20 of 'War and Peace'",
                     },
                 },
                 {
-                    user: "{{user2}}",
+                    name: "{{name2}}",
                     content: {
                         text: "Were you able to grasp the complexities of the characters",
                     },
                 },
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "Yep. I've prepared some notes for our discussion",
                     },
@@ -167,8 +167,8 @@ export const goalEvaluator: Evaluator = {
 
         {
             prompt: `Actors in the scene:
-  {{user1}}: A fitness enthusiast working towards a marathon.
-  {{user2}}: A personal trainer.
+  {{name1}}: A fitness enthusiast working towards a marathon.
+  {{name2}}: A personal trainer.
 
   Goals:
   - Name: Complete a marathon
@@ -180,17 +180,17 @@ export const goalEvaluator: Evaluator = {
 
             messages: [
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: { text: "I managed to run 30 miles this week" },
                 },
                 {
-                    user: "{{user2}}",
+                    name: "{{name2}}",
                     content: {
                         text: "Impressive progress! How do you feel about the half-marathon next month?",
                     },
                 },
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "I feel confident. The training is paying off.",
                     },
@@ -210,8 +210,8 @@ export const goalEvaluator: Evaluator = {
 
         {
             prompt: `Actors in the scene:
-  {{user1}}: A student working on a final year project.
-  {{user2}}: The project supervisor.
+  {{name1}}: A student working on a final year project.
+  {{name2}}: The project supervisor.
 
   Goals:
   - Name: Finish the final year project
@@ -223,19 +223,19 @@ export const goalEvaluator: Evaluator = {
 
             messages: [
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "I've submitted the first draft of my thesis.",
                     },
                 },
                 {
-                    user: "{{user2}}",
+                    name: "{{name2}}",
                     content: {
                         text: "Well done. How is the prototype coming along?",
                     },
                 },
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "It's almost done. I just need to finalize the testing phase.",
                     },
@@ -255,8 +255,8 @@ export const goalEvaluator: Evaluator = {
 
         {
             prompt: `Actors in the scene:
-        {{user1}}: A project manager working on a software development project.
-        {{user2}}: A software developer in the project team.
+        {{name1}}: A project manager working on a software development project.
+        {{name2}}: A software developer in the project team.
 
         Goals:
         - Name: Launch the new software version
@@ -268,19 +268,19 @@ export const goalEvaluator: Evaluator = {
 
             messages: [
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "How's the progress on the new features?",
                     },
                 },
                 {
-                    user: "{{user2}}",
+                    name: "{{name2}}",
                     content: {
                         text: "We've encountered some unexpected challenges and are currently troubleshooting.",
                     },
                 },
                 {
-                    user: "{{user1}}",
+                    name: "{{name1}}",
                     content: {
                         text: "Let's move on and cancel the task.",
                     },

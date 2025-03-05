@@ -132,7 +132,7 @@ export default {
             const members = guild?.members.cache;
 
             // get the member who's stringTouuid(id) === message userId
-            const member = members?.find((member) => createUniqueUuid(runtime, member.id) === message.userId);
+            const member = members?.find((member) => createUniqueUuid(runtime, member.id) === message.entityId);
 
             if (member?.voice?.channel) {
                 voiceManager.joinChannel(member?.voice?.channel as BaseGuildVoiceChannel);
@@ -202,13 +202,13 @@ You should only respond with the name of the voice channel or none, no commentar
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Hey, let's jump into the 'General' voice and chat",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sounds good",
                     actions: ["JOIN_VOICE"],
@@ -217,13 +217,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, can you join the vc, I want to discuss our strat",
+                    text: "{{name2}}, can you join the vc, I want to discuss our strat",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure I'll join right now",
                     actions: ["JOIN_VOICE"],
@@ -232,13 +232,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey {{user2}}, we're having a team meeting in the 'conference' voice channel, plz join us",
+                    text: "hey {{name2}}, we're having a team meeting in the 'conference' voice channel, plz join us",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "OK see you there",
                     actions: ["JOIN_VOICE"],
@@ -247,13 +247,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, let's have a quick voice chat in the 'Lounge' channel.",
+                    text: "{{name2}}, let's have a quick voice chat in the 'Lounge' channel.",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "kk be there in a sec",
                     actions: ["JOIN_VOICE"],
@@ -262,13 +262,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Hey {{user2}}, can you join me in the 'Music' voice channel",
+                    text: "Hey {{name2}}, can you join me in the 'Music' voice channel",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure",
                     actions: ["JOIN_VOICE"],
@@ -277,13 +277,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "join voice chat with us {{user2}}",
+                    text: "join voice chat with us {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "coming",
                     actions: ["JOIN_VOICE"],
@@ -292,13 +292,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hop in vc {{user2}}",
+                    text: "hop in vc {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "joining now",
                     actions: ["JOIN_VOICE"],
@@ -307,13 +307,13 @@ You should only respond with the name of the voice channel or none, no commentar
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "get in vc with us {{user2}}",
+                    text: "get in vc with us {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "im in",
                     actions: ["JOIN_VOICE"],

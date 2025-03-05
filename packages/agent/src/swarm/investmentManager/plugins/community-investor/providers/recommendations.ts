@@ -17,7 +17,7 @@ export const recommendationsProvider: Provider = {
 
     const newUserRecommendation = recentRecommendations.filter(
       (m) =>
-        m.userId === message.userId &&
+        m.entityId === message.entityId &&
         m.content.recommendation.confirmed !== true
     );
 

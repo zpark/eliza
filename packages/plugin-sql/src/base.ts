@@ -297,7 +297,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getEntityById(userId: UUID): Promise<Entity | null> {
+    async getEntityById(entityId: UUID): Promise<Entity | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
@@ -311,7 +311,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 )
                 .where(
                     and(
-                        eq(entityTable.id, userId),
+                        eq(entityTable.id, entityId),
                         eq(entityTable.agentId, this.agentId)
                     )
                 );
@@ -552,7 +552,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         type: memoryTable.type,
                         createdAt: memoryTable.createdAt,
                         content: memoryTable.content,
-                        userId: memoryTable.userId,
+                        entityId: memoryTable.entityId,
                         agentId: memoryTable.agentId,
                         roomId: memoryTable.roomId,
                         unique: memoryTable.unique,
@@ -579,7 +579,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     typeof row.memory.content === "string"
                         ? JSON.parse(row.memory.content)
                         : row.memory.content,
-                userId: row.memory.userId as UUID,
+                entityId: row.memory.entityId as UUID,
                 agentId: row.memory.agentId as UUID,
                 roomId: row.memory.roomId as UUID,
                 unique: row.memory.unique,
@@ -611,7 +611,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     type: memoryTable.type,
                     createdAt: memoryTable.createdAt,
                     content: memoryTable.content,
-                    userId: memoryTable.userId,
+                    entityId: memoryTable.entityId,
                     agentId: memoryTable.agentId,
                     roomId: memoryTable.roomId,
                     unique: memoryTable.unique,
@@ -631,7 +631,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     typeof row.content === "string"
                         ? JSON.parse(row.content)
                         : row.content,
-                userId: row.userId as UUID,
+                entityId: row.entityId as UUID,
                 agentId: row.agentId as UUID,
                 roomId: row.roomId as UUID,
                 unique: row.unique,
@@ -664,7 +664,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     typeof row.memory.content === "string"
                         ? JSON.parse(row.memory.content)
                         : row.memory.content,
-                userId: row.memory.userId as UUID,
+                entityId: row.memory.entityId as UUID,
                 agentId: row.memory.agentId as UUID,
                 roomId: row.memory.roomId as UUID,
                 unique: row.memory.unique,
@@ -706,7 +706,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     typeof row.memory.content === "string"
                         ? JSON.parse(row.memory.content)
                         : row.memory.content,
-                userId: row.memory.userId as UUID,
+                entityId: row.memory.entityId as UUID,
                 agentId: row.memory.agentId as UUID,
                 roomId: row.memory.roomId as UUID,
                 unique: row.memory.unique,
@@ -795,7 +795,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async log(params: {
         body: { [key: string]: unknown };
-        userId: UUID;
+        entityId: UUID;
         roomId: UUID;
         type: string;
     }): Promise<void> {
@@ -804,7 +804,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await this.db.transaction(async (tx) => {
                     await tx.insert(logTable).values({
                         body: sql`${params.body}::jsonb`,
-                        userId: params.userId,
+                        entityId: params.entityId,
                         roomId: params.roomId,
                         type: params.type,
                     });
@@ -815,7 +815,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         error instanceof Error ? error.message : String(error),
                     type: params.type,
                     roomId: params.roomId,
-                    userId: params.userId,
+                    entityId: params.entityId,
                 });
                 throw error;
             }
@@ -923,7 +923,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     typeof row.memory.content === "string"
                         ? JSON.parse(row.memory.content)
                         : row.memory.content,
-                userId: row.memory.userId as UUID,
+                entityId: row.memory.entityId as UUID,
                 agentId: row.memory.agentId as UUID,
                 roomId: row.memory.roomId as UUID,
                 unique: row.memory.unique,
@@ -967,7 +967,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 type: tableName,
                 content: sql`${contentToInsert}::jsonb`,
                 metadata: sql`${memory.metadata || {}}::jsonb`,
-                userId: memory.userId,
+                entityId: memory.entityId,
                 roomId: memory.roomId,
                 agentId: memory.agentId,
                 unique: memory.unique ?? isUnique,
@@ -1085,15 +1085,15 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async getGoals(params: {
         roomId: UUID;
-        userId?: UUID | null;
+        entityId?: UUID | null;
         onlyInProgress?: boolean;
         count?: number;
     }): Promise<Goal[]> {
         return this.withDatabase(async () => {
             const conditions = [eq(goalTable.roomId, params.roomId)];
 
-            if (params.userId) {
-                conditions.push(eq(goalTable.userId, params.userId));
+            if (params.entityId) {
+                conditions.push(eq(goalTable.entityId, params.entityId));
             }
 
             if (params.onlyInProgress) {
@@ -1115,7 +1115,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             return result.map((row) => ({
                 id: row.id as UUID,
                 roomId: row.roomId as UUID,
-                userId: row.userId as UUID,
+                entityId: row.entityId as UUID,
                 name: row.name ?? "",
                 status: (row.status ?? "NOT_STARTED") as GoalStatus,
                 description: row.description ?? "",
@@ -1157,7 +1157,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     await tx.insert(goalTable).values({
                         id: goal.id ?? v4(),
                         roomId: goal.roomId,
-                        userId: goal.userId,
+                        entityId: goal.entityId,
                         name: goal.name,
                         status: goal.status,
                         objectives: sql`${goal.objectives}::jsonb`,
@@ -1396,7 +1396,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     )
                 );
 
-            return result.map((row) => row.userId as UUID);
+            return result.map((row) => row.entityId as UUID);
         });
     }
 
@@ -1543,7 +1543,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async getRelationships(params: { 
-        userId: UUID;
+        entityId: UUID;
         tags?: string[];
     }): Promise<Relationship[]> {
         return this.withDatabase(async () => {
@@ -1553,7 +1553,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     .from(relationshipTable)
                     .where(
                         and(
-                            eq(relationshipTable.sourceEntityId, params.userId),
+                            eq(relationshipTable.sourceEntityId, params.entityId),
                             eq(relationshipTable.agentId, this.agentId)
                         )
                     );

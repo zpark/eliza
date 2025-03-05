@@ -26,7 +26,7 @@ import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type ExtraContentFields = {
-    user: string;
+    name: string;
     createdAt: number;
     isLoading?: boolean;
 };
@@ -50,9 +50,9 @@ function MessageContent({
         <div className="flex flex-col">
             <ChatBubbleMessage
                 isLoading={message.isLoading}
-                {...(message.user === "user" ? { variant: "sent" } : {})}
+                {...(message.name === "Anon" ? { variant: "sent" } : {})}
             >
-                {message.user === "user" ? message.text : <AIWriter>{message.text}</AIWriter>}
+                {message.name === "Anon" ? message.text : <AIWriter>{message.text}</AIWriter>}
                 {/* Attachments */}
                 <div>
                     {message.attachments?.map((attachment: IAttachment) => (
@@ -157,14 +157,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
         const newMessages = [
             {
                 text: input,
-                user: "user",
+                name: "Anon",
                 createdAt: Date.now(),
                 attachments,
                 worldId,
             },
             {
                 text: input,
-                user: "system",
+                name: "system",
                 isLoading: true,
                 createdAt: Date.now(),
                 worldId,
@@ -290,7 +290,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     {messages.map((message: ContentWithUser) => {
                         return (
                             <div
-                                key={message.user + message.createdAt}
+                                key={message.name + message.createdAt}
                                 style={{
                                     display: "flex",
                                     flexDirection: "column",
@@ -299,10 +299,10 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                 }}
                             >
                                 <ChatBubble
-                                    variant={getMessageVariant(message.user)}
+                                    variant={getMessageVariant(message.name)}
                                     className="flex flex-row items-center gap-2"
                                 >
-                                    {message.user !== "user" ? (
+                                    {message.name !== "Anon" ? (
                                         <>
                                             <Avatar className="size-8 p-1 border rounded-full select-none">
                                                 <AvatarImage src="/elizaos-icon.png" />

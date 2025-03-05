@@ -39,7 +39,7 @@ export interface Content {
  */
 export interface ActionExample {
   /** User associated with the example */
-  user: string;
+  name: string;
 
   /** Content of the example */
   content: Content;
@@ -50,7 +50,7 @@ export interface ActionExample {
  */
 export interface ConversationExample {
   /** UUID of user in conversation */
-  userId: UUID;
+  entityId: UUID;
 
   /** Content of the conversation */
   content: Content;
@@ -90,7 +90,7 @@ export interface Goal {
   roomId: UUID;
 
   /** User ID of goal owner */
-  userId: UUID;
+  entityId: UUID;
 
   /** Name/title of the goal */
   name: string;
@@ -212,7 +212,7 @@ export interface Memory {
   id?: UUID;
 
   /** Associated user ID */
-  userId: UUID;
+  entityId: UUID;
 
   /** Associated agent ID */
   agentId?: UUID;
@@ -244,7 +244,7 @@ export interface Memory {
  */
 export interface MessageExample {
   /** Associated user */
-  user: string;
+  name: string;
 
   /** Message content */
   content: Content;
@@ -671,7 +671,7 @@ export interface IDatabaseAdapter {
   ensureEmbeddingDimension(dimension: number): Promise<void>;
 
   /** Get entity by ID */
-  getEntityById(userId: UUID): Promise<Entity | null>;
+  getEntityById(entityId: UUID): Promise<Entity | null>;
 
   /** Get entities for room */
   getEntitiesForRoom(roomId: UUID, includeComponents?: boolean): Promise<Entity[]>;
@@ -728,7 +728,7 @@ export interface IDatabaseAdapter {
 
   log(params: {
     body: { [key: string]: unknown };
-    userId: UUID;
+    entityId: UUID;
     roomId: UUID;
     type: string;
   }): Promise<void>;
@@ -762,7 +762,7 @@ export interface IDatabaseAdapter {
 
   getGoals(params: {
     roomId: UUID;
-    userId?: UUID | null;
+    entityId?: UUID | null;
     onlyInProgress?: boolean;
     count?: number;
   }): Promise<Goal[]>;
@@ -804,28 +804,28 @@ export interface IDatabaseAdapter {
 
   updateRoom(room: Room): Promise<void>;
 
-  getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
+  getRoomsForParticipant(entityId: UUID): Promise<UUID[]>;
 
   getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
 
   getRooms(worldId: UUID): Promise<Room[]>;
   
-  addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+  addParticipant(entityId: UUID, roomId: UUID): Promise<boolean>;
 
-  removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+  removeParticipant(entityId: UUID, roomId: UUID): Promise<boolean>;
 
-  getParticipantsForEntity(userId: UUID): Promise<Participant[]>;
+  getParticipantsForEntity(entityId: UUID): Promise<Participant[]>;
 
   getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
 
   getParticipantUserState(
     roomId: UUID,
-    userId: UUID
+    entityId: UUID
   ): Promise<"FOLLOWED" | "MUTED" | null>;
 
   setParticipantUserState(
     roomId: UUID,
-    userId: UUID,
+    entityId: UUID,
     state: "FOLLOWED" | "MUTED" | null
   ): Promise<void>;
 
@@ -864,7 +864,7 @@ export interface IDatabaseAdapter {
    * @returns Promise resolving to an array of Relationship objects
    */
   getRelationships(params: {
-    userId: UUID;
+    entityId: UUID;
     tags?: string[];
   }): Promise<Relationship[]>;
 
@@ -999,7 +999,7 @@ export interface IAgentRuntime {
   registerEvaluator(evaluator: Evaluator): void;
 
   ensureConnection({
-    userId,
+    entityId,
     roomId,
     userName,
     name,
@@ -1009,7 +1009,7 @@ export interface IAgentRuntime {
     type,
     worldId
   }: {
-    userId: UUID;
+    entityId: UUID;
     roomId: UUID;
     userName?: string;
     name?: string;
@@ -1020,7 +1020,7 @@ export interface IAgentRuntime {
     worldId?: UUID;
   }): Promise<void>;
 
-  ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
+  ensureParticipantInRoom(entityId: UUID, roomId: UUID): Promise<void>;
 
   ensureWorldExists({
     id,
@@ -1155,7 +1155,7 @@ export interface ITeeLogService extends Service {
   log(
     agentId: string,
     roomId: string,
-    userId: string,
+    entityId: string,
     type: string,
     content: string
   ): Promise<boolean>;
@@ -1188,7 +1188,7 @@ export interface TeeLog {
   id: string;
   agentId: string;
   roomId: string;
-  userId: string;
+  entityId: string;
   type: string;
   content: string;
   timestamp: number;
@@ -1198,7 +1198,7 @@ export interface TeeLog {
 export interface TeeLogQuery {
   agentId?: string;
   roomId?: string;
-  userId?: string;
+  entityId?: string;
   type?: string;
   containsContent?: string;
   startTimestamp?: number;
@@ -1267,7 +1267,7 @@ export interface RemoteAttestationMessage {
   agentId: string;
   timestamp: number;
   message: {
-    userId: string;
+    entityId: string;
     roomId: string;
     content: string;
   };
@@ -1327,7 +1327,7 @@ export type World = {
       ownerId: string;
     };
     roles?: {
-      [userId: UUID]: Role;
+      [entityId: UUID]: Role;
     };
     [key: string]: unknown;
   };

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { CLOUD_API_URL, CLI_VERSION, CLOUD_URL } from "@/src/tee/phala/constants";
+import { PHALA_CLOUD_API_URL, CLI_VERSION, CLOUD_URL } from "@/src/tee/phala/constants";
 import { getApiKey } from "@/src/tee/phala/credential";
 import type {
     CreateCvmResponse,
@@ -164,7 +164,7 @@ function formatCvmsTable(cvms: GetCvmsByUserIdResponse): void {
 
 async function queryTeepods(): Promise<any> {
     try {
-        const response = await axios.get(`${CLOUD_API_URL}/api/v1/teepods`, {
+        const response = await axios.get(`${PHALA_CLOUD_API_URL}/api/v1/teepods`, {
             headers: { ...headers, "X-API-Key": await retrieveApiKey() },
         });
         return response.data;
@@ -180,7 +180,7 @@ async function queryTeepods(): Promise<any> {
 async function queryImages(teepodId: string): Promise<any> {
     try {
         const response = await axios.get(
-            `${CLOUD_API_URL}/api/v1/teepods/${teepodId}/images`,
+            `${PHALA_CLOUD_API_URL}/api/v1/teepods/${teepodId}/images`,
             {
                 headers: { ...headers, "X-API-Key": await retrieveApiKey() },
             },
@@ -198,7 +198,7 @@ async function queryImages(teepodId: string): Promise<any> {
 async function queryCvmsByUserId(): Promise<GetCvmsByUserIdResponse | null> {
     try {
         const userInfo = await getUserInfo();
-        const response = await axios.get(`${CLOUD_API_URL}/api/v1/cvms?user_id=${userInfo?.id}`, {
+        const response = await axios.get(`${PHALA_CLOUD_API_URL}/api/v1/cvms?user_id=${userInfo?.id}`, {
             headers: { ...headers, "X-API-Key": await retrieveApiKey() },
         });
         return response.data as GetCvmsByUserIdResponse;
@@ -211,7 +211,7 @@ async function queryCvmsByUserId(): Promise<GetCvmsByUserIdResponse | null> {
 async function createCvm(vm_config: any): Promise<CreateCvmResponse | null> {
     try {
         const response = await axios.post(
-            `${CLOUD_API_URL}/api/v1/cvms/from_cvm_configuration`,
+            `${PHALA_CLOUD_API_URL}/api/v1/cvms/from_cvm_configuration`,
             vm_config,
             {
                 headers: { ...headers, "X-API-Key": await retrieveApiKey() },
@@ -232,7 +232,7 @@ async function getPubkeyFromCvm(
 ): Promise<GetPubkeyFromCvmResponse | null> {
     try {
         const response = await axios.post(
-            `${CLOUD_API_URL}/api/v1/cvms/pubkey/from_cvm_configuration`,
+            `${PHALA_CLOUD_API_URL}/api/v1/cvms/pubkey/from_cvm_configuration`,
             vm_config,
             {
                 headers: { ...headers, "X-API-Key": await retrieveApiKey() },
@@ -253,7 +253,7 @@ async function getCvmByAppId(
 ): Promise<GetCvmByAppIdResponse | null> {
     try {
         const response = await axios.get(
-            `${CLOUD_API_URL}/api/v1/cvms/app_${appId}`,
+            `${PHALA_CLOUD_API_URL}/api/v1/cvms/app_${appId}`,
             {
                 headers: { ...headers, "X-API-Key": await retrieveApiKey() },
             },
@@ -270,11 +270,11 @@ async function getCvmByAppId(
 
 async function getUserInfo(): Promise<GetUserInfoResponse | null> {
     try {
-        const getUserAuth = await axios.get(`${CLOUD_API_URL}/api/v1/auth/me`, {
+        const getUserAuth = await axios.get(`${PHALA_CLOUD_API_URL}/api/v1/auth/me`, {
             headers: { ...headers, "X-API-Key": await retrieveApiKey() },
         });
         const username = getUserAuth.data.username;
-        const getUserId = await axios.get(`${CLOUD_API_URL}/api/v1/users/search?q=${username}`, {
+        const getUserId = await axios.get(`${PHALA_CLOUD_API_URL}/api/v1/users/search?q=${username}`, {
             headers: { ...headers, "X-API-Key": await retrieveApiKey() },
         });
         const userId = getUserId.data.users[0].id;
@@ -291,7 +291,7 @@ async function upgradeCvm(
 ): Promise<UpgradeCvmResponse | null> {
     try {
         const response = await axios.put(
-            `${CLOUD_API_URL}/api/v1/cvms/app_${appId}/compose`,
+            `${PHALA_CLOUD_API_URL}/api/v1/cvms/app_${appId}/compose`,
             vm_config,
             {
                 headers: { ...headers, "X-API-Key": await retrieveApiKey() },
@@ -310,7 +310,7 @@ async function upgradeCvm(
 async function startCvm(appId: string): Promise<any> {
     try {
         const response = await axios.post(
-            `${CLOUD_API_URL}/api/v1/cvms/app_${appId}/start`,
+            `${PHALA_CLOUD_API_URL}/api/v1/cvms/app_${appId}/start`,
             { app_id: appId },
             {
                 headers: { ...headers, "X-API-Key": await retrieveApiKey() },

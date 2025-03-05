@@ -227,7 +227,7 @@ export default class Birdeye {
 				// Create memory for this timeslot
 				await this.runtime.getMemoryManager("messages").createMemory({
 					id: createUniqueUuid(this.runtime, `sentiment-${timeslot.toISOString()}`),
-					userId: this.runtime.agentId,
+					entityId: this.runtime.agentId,
 					agentId: this.runtime.agentId,
 					content: {
 						text: "",
@@ -286,7 +286,7 @@ export default class Birdeye {
 			// Mark as processed even if no tweets
 			await this.runtime.getMemoryManager("messages").createMemory({
 				id: sentiment.id,
-				userId: sentiment.userId,
+				entityId: sentiment.entityId,
 				agentId: sentiment.agentId,
 				content: {
 					...sentiment.content,
@@ -323,7 +323,7 @@ export default class Birdeye {
 		// Update the sentiment analysis
 		await this.runtime.getMemoryManager("messages").createMemory({
 			id: sentiment.id,
-			userId: sentiment.userId,
+			entityId: sentiment.entityId,
 			agentId: sentiment.agentId,
 			content: {
 				text: json.text,

@@ -12,7 +12,7 @@ import {
     parseConfirmationResponse,
     parseTokenResponse
 } from "../utils.js";
-import type { TrustTradingService } from "../tradingService.js";
+import type { CommunityInvestorService } from "../tradingService.js";
 import { ServiceTypes } from "../types.js";
 
 const tokenDetailsTemplate = `You are a crypto expert.
@@ -153,19 +153,19 @@ export const getTokenDetails: any = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Are you just looking for details, or are you recommending this token?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I am just looking for details",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Ok, here are the details...",
                     actions: ["GET_TOKEN_DETAILS"],
@@ -176,12 +176,12 @@ export const getTokenDetails: any = {
     similes: ["TOKEN_DETAILS"],
 
     async handler(runtime: IAgentRuntime, message: Memory, _state: State, _options, callback: any) {
-        if (!runtime.getService(ServiceTypes.TRUST_TRADING)) {
+        if (!runtime.getService(ServiceTypes.COMMUNITY_INVESTOR)) {
             console.log("no trading service");
             return;
         }
 
-        const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+        const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
 
         if(!tradingService) {
             throw new Error("No trading service found");
@@ -195,7 +195,7 @@ export const getTokenDetails: any = {
         });
 
         if (!rawMessages.length) {
-            logger.error(`No messages found for user ${message.userId}`);
+            logger.error(`No messages found for user ${message.entityId}`);
             return;
         }
 
@@ -279,7 +279,7 @@ export const getTokenDetails: any = {
                         : undefined,
                         actions: ["GET_TOKEN_DETAILS"],
                 },
-                userId: message.userId,
+                entityId: message.entityId,
                 agentId: message.agentId,
                 roomId: message.roomId,
                 metadata: message.metadata,
@@ -291,7 +291,7 @@ export const getTokenDetails: any = {
         return true;
     },
     async validate(_, message) {
-        if (message.agentId === message.userId) return false;
+        if (message.agentId === message.entityId) return false;
         return true;
     },
 };

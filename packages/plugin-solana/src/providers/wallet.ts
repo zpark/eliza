@@ -27,13 +27,13 @@ export const walletProvider: Provider = {
 
             const portfolio = portfolioCache;
             const agentName = state?.agentName || 'The agent';
-            
+
             // Values that can be injected into templates
             const values: Record<string, string> = {
-                'total_usd': new BigNumber(portfolio.totalUsd).toFixed(2),
-                'total_sol': portfolio.totalSol.toString(),
+                total_usd: new BigNumber(portfolio.totalUsd).toFixed(2),
+                total_sol: portfolio.totalSol.toString(),
             };
-            
+
             // Add token balances to values
             portfolio.items.forEach((item, index) => {
                 if (new BigNumber(item.uiAmount).isGreaterThan(0)) {
@@ -44,14 +44,14 @@ export const walletProvider: Provider = {
                     values[`token_${index}_sol`] = item.valueSol.toString();
                 }
             });
-            
+
             // Add market prices to values
             if (portfolio.prices) {
-                values['sol_price'] = new BigNumber(portfolio.prices.solana.usd).toFixed(2);
-                values['btc_price'] = new BigNumber(portfolio.prices.bitcoin.usd).toFixed(2);
-                values['eth_price'] = new BigNumber(portfolio.prices.ethereum.usd).toFixed(2);
+                values.sol_price = new BigNumber(portfolio.prices.solana.usd).toFixed(2);
+                values.btc_price = new BigNumber(portfolio.prices.bitcoin.usd).toFixed(2);
+                values.eth_price = new BigNumber(portfolio.prices.ethereum.usd).toFixed(2);
             }
-            
+
             // Format the text output
             let text = `${agentName}'s Solana Wallet\n`;
             text += `Total Value: $${values.total_usd} (${values.total_sol} SOL)\n\n`;
@@ -67,9 +67,9 @@ export const walletProvider: Provider = {
             } else {
                 for (const item of nonZeroItems) {
                     const valueUsd = new BigNumber(item.valueUsd).toFixed(2);
-                    text += `${item.name} (${item.symbol}): ${new BigNumber(
-                        item.uiAmount,
-                    ).toFixed(6)} ($${valueUsd} | ${item.valueSol} SOL)\n`;
+                    text += `${item.name} (${item.symbol}): ${new BigNumber(item.uiAmount).toFixed(
+                        6,
+                    )} ($${valueUsd} | ${item.valueSol} SOL)\n`;
                 }
             }
 
@@ -84,7 +84,7 @@ export const walletProvider: Provider = {
             return {
                 data: portfolio,
                 values: values,
-                text: text
+                text: text,
             };
         } catch (error) {
             console.error('Error in Solana wallet provider:', error);

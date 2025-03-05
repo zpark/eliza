@@ -1,5 +1,5 @@
-import { RemoteAttestationQuote } from "@elizaos/core";
-import { TdxQuoteHashAlgorithms } from "@phala/dstack-sdk";
+import type { RemoteAttestationQuote } from '@elizaos/core';
+import type { TdxQuoteHashAlgorithms } from '@phala/dstack-sdk';
 
 /**
  * Abstract class for deriving keys from the TEE.

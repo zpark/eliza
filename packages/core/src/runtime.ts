@@ -383,7 +383,7 @@ export class AgentRuntime implements IAgentRuntime {
       id: item.id,
       agentId: this.agentId,
       roomId: this.agentId,
-      userId: this.agentId,
+      entityId: this.agentId,
       content: item.content,
       metadata: {
         type: MemoryType.DOCUMENT,
@@ -406,7 +406,7 @@ export class AgentRuntime implements IAgentRuntime {
         id: createUniqueUuid(this, `${item.id}-fragment-${i}`),
         agentId: this.agentId,
         roomId: this.agentId,
-        userId: this.agentId,
+        entityId: this.agentId,
         content: { text: fragments[i] },
         metadata: {
           type: MemoryType.FRAGMENT,
@@ -655,11 +655,11 @@ export class AgentRuntime implements IAgentRuntime {
     return evaluators;
   }
 
-  async ensureParticipantInRoom(userId: UUID, roomId: UUID) {
+  async ensureParticipantInRoom(entityId: UUID, roomId: UUID) {
     // Make sure entity exists in database before adding as participant
-    const entity = await this.databaseAdapter.getEntityById(userId);
+    const entity = await this.databaseAdapter.getEntityById(entityId);
     if (!entity) {
-      throw new Error(`User ${userId} not found`);
+      throw new Error(`User ${entityId} not found`);
     }
     // Get current participants
     const participants = await this.databaseAdapter.getParticipantsForRoom(
@@ -667,28 +667,28 @@ export class AgentRuntime implements IAgentRuntime {
     );
 
     // Only add if not already a participant
-    if (!participants.includes(userId)) {
+    if (!participants.includes(entityId)) {
       // Add participant using the tenant-specific ID that now exists in the entities table
-      const added = await this.databaseAdapter.addParticipant(userId, roomId);
+      const added = await this.databaseAdapter.addParticipant(entityId, roomId);
 
       if (!added) {
         throw new Error(
-          `Failed to add participant ${userId} to room ${roomId}`
+          `Failed to add participant ${entityId} to room ${roomId}`
         );
       }
 
-      if (userId === this.agentId) {
+      if (entityId === this.agentId) {
         logger.log(
           `Agent ${this.character.name} linked to room ${roomId} successfully.`
         );
       } else {
-        logger.log(`User ${userId} linked to room ${roomId} successfully.`);
+        logger.log(`User ${entityId} linked to room ${roomId} successfully.`);
       }
     }
   }
 
   async ensureConnection({
-    userId,
+    entityId,
     roomId,
     userName,
     name,
@@ -698,7 +698,7 @@ export class AgentRuntime implements IAgentRuntime {
     serverId,
     worldId,
   }: {
-    userId: UUID;
+    entityId: UUID;
     roomId: UUID;
     userName?: string;
     name?: string;
@@ -708,7 +708,7 @@ export class AgentRuntime implements IAgentRuntime {
     serverId?: string;
     worldId?: UUID;
   }) {
-    if (userId === this.agentId) {
+    if (entityId === this.agentId) {
       throw new Error("Agent should not connect to itself");
     }
 
@@ -724,11 +724,11 @@ export class AgentRuntime implements IAgentRuntime {
       },
     };
 
-    const entity = await this.databaseAdapter.getEntityById(userId);
+    const entity = await this.databaseAdapter.getEntityById(entityId);
 
     if (!entity) {
       await this.databaseAdapter.createEntity({
-        id: userId,
+        id: entityId,
         names,
         metadata,
         agentId: this.agentId,
@@ -760,7 +760,7 @@ export class AgentRuntime implements IAgentRuntime {
 
     // Now add participants using the original IDs (will be transformed internally)
     try {
-      await this.ensureParticipantInRoom(userId, roomId);
+      await this.ensureParticipantInRoom(entityId, roomId);
       await this.ensureParticipantInRoom(this.agentId, roomId);
     } catch (error) {
       logger.error(
@@ -807,7 +807,7 @@ export class AgentRuntime implements IAgentRuntime {
   /**
    * Ensure the existence of a room between the agent and a user. If no room exists, a new room is created and the user
    * and agent are added as participants. The room ID is returned.
-   * @param userId - The user ID to create a room with.
+   * @param entityId - The user ID to create a room with.
    * @returns The room ID of the room between the agent and the user.
    * @throws An error if the room cannot be created.
    */
@@ -875,7 +875,7 @@ export class AgentRuntime implements IAgentRuntime {
       })
     ))
 
-    const providers = providerData.map((result) => result.values).flat();
+    const providers = providerData.flatMap((result) => result.values);
 
     // get cached state for this message ID
     const cachedState = (await this.stateCache.get(message.id)) || {
@@ -893,7 +893,7 @@ export class AgentRuntime implements IAgentRuntime {
 
     const values = {
       ...cachedState.values,
-      ...providerData.map((result) => result.values).flat(),
+      ...providerData.flatMap((result) => result.values),
       ...(additionalKeys || {}),
     }
 

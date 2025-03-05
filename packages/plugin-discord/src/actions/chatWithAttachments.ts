@@ -261,13 +261,13 @@ ${currentSummary.trim()}
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Can you summarize the attachments b3e23, c4f67, and d5a89?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure thing! I'll pull up those specific attachments and provide a summary of their content.",
                     actions: ["CHAT_WITH_ATTACHMENTS"],
@@ -276,13 +276,13 @@ ${currentSummary.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "I need a technical summary of the PDFs I sent earlier - a1b2c3.pdf, d4e5f6.pdf, and g7h8i9.pdf",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I'll take a look at those specific PDF attachments and put together a technical summary for you. Give me a few minutes to review them.",
                     actions: ["CHAT_WITH_ATTACHMENTS"],
@@ -291,13 +291,13 @@ ${currentSummary.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Can you watch this video for me and tell me which parts you think are most relevant to the report I'm writing? (the one I attached in my last message)",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sure, no problem.",
                     actions: ["CHAT_WITH_ATTACHMENTS"],
@@ -306,13 +306,13 @@ ${currentSummary.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "can you read my blog post and give me a detailed breakdown of the key points I made, and then suggest a handful of tweets to promote it?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "great idea, give me a minute",
                     actions: ["CHAT_WITH_ATTACHMENTS"],

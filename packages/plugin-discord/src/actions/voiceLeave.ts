@@ -115,13 +115,13 @@ export default {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Hey {{user2}} please leave the voice channel",
+                    text: "Hey {{name2}} please leave the voice channel",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure",
                     actions: ["LEAVE_VOICE"],
@@ -130,13 +130,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "I have to go now but thanks for the chat",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "You too, talk to you later",
                     actions: ["LEAVE_VOICE"],
@@ -145,14 +145,14 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Great call everyone, hopping off now",
                     actions: ["LEAVE_VOICE"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Agreed, I'll hop off too",
                     actions: ["LEAVE_VOICE"],
@@ -161,13 +161,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Hey {{user2}} I need you to step away from the voice chat for a bit",
+                    text: "Hey {{name2}} I need you to step away from the voice chat for a bit",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "No worries, I'll leave the voice channel",
                     actions: ["LEAVE_VOICE"],
@@ -176,13 +176,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, I think we covered everything, you can leave the voice chat now",
+                    text: "{{name2}}, I think we covered everything, you can leave the voice chat now",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sounds good, see you both later",
                     actions: ["LEAVE_VOICE"],
@@ -191,13 +191,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "leave voice {{user2}}",
+                    text: "leave voice {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "ok leaving",
                     actions: ["LEAVE_VOICE"],
@@ -206,13 +206,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "plz leave the voice chat {{user2}}",
+                    text: "plz leave the voice chat {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "aight im out",
                     actions: ["LEAVE_VOICE"],
@@ -221,13 +221,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "yo {{user2}} gtfo the vc",
+                    text: "yo {{name2}} gtfo the vc",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sorry, talk to you later",
                     actions: ["LEAVE_VOICE"],

@@ -1,5 +1,5 @@
 import { addHeader } from "../prompts";
-import { ChannelType, IAgentRuntime, Memory, Provider } from "../types";
+import { ChannelType, type IAgentRuntime, type Memory, type Provider } from "../types";
 
 export const characterProvider: Provider = {
   name: "CHARACTER",
@@ -88,7 +88,7 @@ export const characterProvider: Provider = {
 
             return example
               .map((message) => {
-                let messageString = `${message.user}: ${message.content.text}${
+                let messageString = `${message.name}: ${message.content.text}${
                   message.content.actions
                     ? ` (actions: ${message.content.actions.join(", ")})`
                     : ""

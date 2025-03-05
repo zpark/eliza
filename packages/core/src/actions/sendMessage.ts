@@ -101,7 +101,7 @@ export const sendMessageAction: Action = {
         await callback(response.content);
       }
 
-      const sourceEntityId = message.userId;
+      const sourceEntityId = message.entityId;
       const roomId = message.roomId;
       const _agentId = runtime.agentId;
       const room = await runtime.databaseAdapter.getRoom(roomId);
@@ -260,13 +260,13 @@ export const sendMessageAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Send a message to @dev_guru on telegram saying 'Hello!'",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Message sent to dev_guru on telegram.",
           actions: ["SEND_MESSAGE"],
@@ -275,13 +275,13 @@ export const sendMessageAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Post 'Important announcement!' in #announcements",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Message sent to announcements.",
           actions: ["SEND_MESSAGE"],
@@ -290,13 +290,13 @@ export const sendMessageAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "DM Jimmy and tell him 'Meeting at 3pm'",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Message sent to Jimmy.",
           actions: ["SEND_MESSAGE"],

@@ -8,7 +8,7 @@ export interface TeeLog {
     id: string;
     agentId: string;
     roomId: string;
-    userId: string;
+    entityId: string;
     type: string;
     content: string;
     timestamp: number;
@@ -18,7 +18,7 @@ export interface TeeLog {
 export interface TeeLogQuery {
     agentId?: string;
     roomId?: string;
-    userId?: string;
+    entityId?: string;
     type?: string;
     containsContent?: string;
     startTimestamp?: number;

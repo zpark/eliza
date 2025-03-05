@@ -2,7 +2,7 @@ import type { ZodSchema, z } from "zod";
 import { createUniqueUuid } from "..";
 import { composePrompt } from "../prompts";
 import { logger } from "../logger";
-import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelType, ModelTypes, Role, type State, type UUID } from "../types";
+import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, type ModelType, ModelTypes, Role, type State, type UUID } from "../types";
 
 export const generateObject = async ({
   runtime,
@@ -144,7 +144,7 @@ Return the results in this JSON format:
 {
 "roleAssignments": [
   {
-    "userId": "discord_id",
+    "entityId": "<UUID of the entity being assigned to>",
     "newRole": "ROLE_NAME"
   }
 ]
@@ -189,7 +189,7 @@ async function generateObjectArray({
 }
 
 interface RoleAssignment {
-  userId: UUID;
+  entityId: UUID;
   newRole: Role;
 }
 
@@ -233,7 +233,7 @@ const updateRoleAction: Action = {
       const world = await runtime.databaseAdapter.getWorld(worldId);
 
       // Get requester ID and convert to UUID for consistent lookup
-      const requesterId = message.userId;
+      const requesterId = message.entityId;
 
       // Get roles from world metadata
       if (!world.metadata?.roles) {
@@ -286,7 +286,7 @@ const updateRoleAction: Action = {
     }
 
     const serverId = world.serverId;
-    const requesterId = message.userId;
+    const requesterId = message.entityId;
 
     if (!world || !world.metadata) {
       logger.error(`No world or metadata found for server ${serverId}`);
@@ -350,16 +350,16 @@ const updateRoleAction: Action = {
     let worldUpdated = false;
 
     for (const assignment of result) {
-      let targetEntity = entities.find(e => e.id === assignment.userId);
+      let targetEntity = entities.find(e => e.id === assignment.entityId);
       if(!targetEntity) {
-        targetEntity = entities.find(e => e.id === assignment.userId);
+        targetEntity = entities.find(e => e.id === assignment.entityId);
         console.log("Trying to write to generated tenant ID")
       }
       if (!targetEntity) {
         console.log("Could not find an ID ot assign to")
       }
 
-      const currentRole = world.metadata.roles[assignment.userId];
+      const currentRole = world.metadata.roles[assignment.entityId];
 
       // Validate role modification permissions
       if (!canModifyRole(requesterRole, currentRole, assignment.newRole)) {
@@ -372,7 +372,7 @@ const updateRoleAction: Action = {
       }
 
       // Update role in world metadata
-      world.metadata.roles[assignment.userId] = assignment.newRole;
+      world.metadata.roles[assignment.entityId] = assignment.newRole;
 
       worldUpdated = true;
 
@@ -393,30 +393,30 @@ const updateRoleAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
-          text: "Make {{user2}} an ADMIN",
+          text: "Make {{name2}} an ADMIN",
           source: "discord",
         },
       },
       {
-        user: "{{user3}}",
+        name: "{{name3}}",
         content: {
-          text: "Updated {{user2}}'s role to ADMIN.",
+          text: "Updated {{name2}}'s role to ADMIN.",
           actions: ["UPDATE_ROLE"],
         },
       },
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Set @alice and @bob as admins",
           source: "discord",
         },
       },
       {
-        user: "{{user3}}",
+        name: "{{name3}}",
         content: {
           text: "Updated alice's role to ADMIN.\nUpdated bob's role to ADMIN.",
           actions: ["UPDATE_ROLE"],
@@ -425,14 +425,14 @@ const updateRoleAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Ban @troublemaker",
           source: "discord", 
         }
       },
       {
-        user: "{{user3}}",
+        name: "{{name3}}",
         content: {
           text: "I cannot ban users.",
           actions: ["REPLY"],

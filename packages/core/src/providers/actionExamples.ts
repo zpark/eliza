@@ -4,7 +4,7 @@ import {
   formatActions,
 } from "../actions";
 import { addHeader } from "../prompts";
-import {
+import type {
   Action,
   Evaluator,
   IAgentRuntime,

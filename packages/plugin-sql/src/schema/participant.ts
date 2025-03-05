@@ -19,7 +19,7 @@ export const participantTable = pgTable(
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),
-            entityId: uuid("userId").references(() => entityTable.id, { onDelete: "cascade" }),
+            entityId: uuid("entityId").references(() => entityTable.id, { onDelete: "cascade" }),
         roomId: uuid("roomId").references(() => roomTable.id, { onDelete: "cascade" }),
         agentId: uuid("agentId").references(() => agentTable.id, { onDelete: "cascade" }),
         roomState: text("roomState"),

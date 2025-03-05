@@ -68,7 +68,7 @@ export function teeRouter(
             const teeLogQuery: TeeLogQuery = {
                 agentId: query.agentId || '',
                 roomId: query.roomId || '',
-                userId: query.userId || '',
+                entityId: query.entityId || '',
                 type: query.type || '',
                 containsContent: query.containsContent || '',
                 startTimestamp: query.startTimestamp || undefined,

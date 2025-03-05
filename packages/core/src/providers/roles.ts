@@ -86,12 +86,12 @@ export const roleProvider: Provider = {
       const members: { name: string; username: string; names: string[] }[] = [];
 
       // Process roles
-      for (const userId in roles) {
-        const userRole = roles[userId];
+      for (const entityId of Object.keys(roles) as UUID[]) {
+        const userRole = roles[entityId];
 
         // get the user from the database
         const user = await runtime.databaseAdapter.getEntityById(
-          userId as UUID
+          entityId
         );
 
         const name = user.metadata[room.source]?.name;

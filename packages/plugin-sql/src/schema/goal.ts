@@ -12,7 +12,7 @@ export const goalTable = pgTable(
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),
-        userId: uuid("userId").references(() => entityTable.id, { onDelete: "cascade" }),
+        entityId: uuid("entityId").references(() => entityTable.id, { onDelete: "cascade" }),
         agentId: uuid("agentId").references(() => agentTable.id, { onDelete: "cascade" }),
         name: text("name"),
         status: text("status"),
@@ -28,7 +28,7 @@ export const goalTable = pgTable(
         }).onDelete("cascade"),
         foreignKey({
             name: "fk_user",
-            columns: [table.userId],
+            columns: [table.entityId],
             foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]

@@ -61,19 +61,6 @@ export class MemoryManager implements IMemoryManager {
         }
     }
 
-    private validateMetadataTransition(oldMetadata: MemoryMetadata | undefined, newMetadata: MemoryMetadata) {
-        if (oldMetadata?.type && oldMetadata.type !== newMetadata.type) {
-            throw new Error(`Cannot change memory type from ${oldMetadata.type} to ${newMetadata.type}`);
-        }
-    }
-
-    private transformUserIdIfNeeded(memory: Memory): Memory {
-        return {
-          ...memory,
-          userId: memory.userId
-        };
-      }
-
     /**
      * Adds an embedding vector to a memory object. If the memory already has an embedding, it is returned as is.
      * @param memory The memory object to add an embedding to.
@@ -203,8 +190,6 @@ export class MemoryManager implements IMemoryManager {
      * @returns A Promise that resolves when the operation completes.
      */
     async createMemory(memory: Memory, unique = false): Promise<UUID> {
-        memory = this.transformUserIdIfNeeded(memory);
-
         if (memory.metadata) {
             this.validateMetadata(memory.metadata);  // This will check type first
             this.validateMetadataRequirements(memory.metadata);

@@ -220,7 +220,7 @@ export class StudioLMManager {
         currentInitState: this.initialized,
         managerInitState: this.isInitialized(),
         modelType: params.modelType,
-        contextLength: params.context?.length,
+        contextLength: params.prompt?.length,
         timestamp: new Date().toISOString()
       });
 
@@ -231,7 +231,7 @@ export class StudioLMManager {
 
       const messages: ChatMessage[] = [
         { role: "system", content: "You are a helpful AI assistant. Respond to the current request only." },
-        { role: "user", content: params.context }
+        { role: "user", content: params.prompt }
       ];
 
       logger.info("StudioLM preparing request:", {
@@ -243,8 +243,8 @@ export class StudioLMManager {
       });
 
       logger.info("Incoming context structure:", {
-        contextLength: params.context.length,
-        hasAction: params.context.includes("action"),
+        contextLength: params.prompt.length,
+        hasAction: params.prompt.includes("action"),
         runtime: !!params.runtime,
         stopSequences: params.stopSequences
       });

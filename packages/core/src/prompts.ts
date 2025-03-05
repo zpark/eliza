@@ -75,7 +75,7 @@ export const addHeader = (header: string, body: string) => {
  *
  * This function generates random user names and populates placeholders
  * in the provided template with these names. Placeholders in the template should follow the format `{{userX}}`
- * where `X` is the position of the user (e.g., `{{user1}}`, `{{user2}}`).
+ * where `X` is the position of the user (e.g., `{{name1}}`, `{{name2}}`).
  *
  * @param {string} template - The template string containing placeholders for random user names.
  * @param {number} length - The number of random user names to generate.
@@ -83,7 +83,7 @@ export const addHeader = (header: string, body: string) => {
  *
  * @example
  * // Given a template and a length
- * const template = "Hello, {{user1}}! Meet {{user2}} and {{user3}}.";
+ * const template = "Hello, {{name1}}! Meet {{name2}} and {{name3}}.";
  * const length = 3;
  *
  * // Composing the random user string will result in:
@@ -136,10 +136,10 @@ export const formatPosts = ({
 
     const formattedPosts = sortedRooms.map(([roomId, roomMessages]) => {
         const messageStrings = roomMessages
-            .filter((message: Memory) => message.userId)
+            .filter((message: Memory) => message.entityId)
             .map((message: Memory) => {
                 const actor = actors.find(
-                    (actor: Entity) => actor.id === message.userId
+                    (actor: Entity) => actor.id === message.entityId
                 );
                 // TODO: These are okay but not great
                 const userName = actor?.names[0] || "Unknown User";
@@ -177,13 +177,13 @@ export const formatMessages = ({
 }) => {
   const messageStrings = messages
     .reverse()
-    .filter((message: Memory) => message.userId)
+    .filter((message: Memory) => message.entityId)
     .map((message: Memory) => {
       const messageText = (message.content as Content).text;
       const messageActions = (message.content as Content).actions;
       const messageThought = (message.content as Content).thought
       const formattedName =
-        actors.find((actor: Entity) => actor.id === message.userId)?.names[0] ||
+        actors.find((actor: Entity) => actor.id === message.entityId)?.names[0] ||
         "Unknown User";
 
       const attachments = (message.content as Content).attachments;
@@ -202,7 +202,7 @@ export const formatMessages = ({
 
       const timestamp = formatTimestamp(message.createdAt);
 
-      const shortId = message.userId.slice(-5);
+      const shortId = message.entityId.slice(-5);
 
       return `${timeString} (${timestamp}) [${shortId}] ${formattedName}: ${messageThought ? `(thinking: *${messageThought}*) ` : ""}${messageText}${attachmentString}${
         messageActions && messageActions.length > 0 ? ` (actions: ${messageActions.join(", ")})` : ""
@@ -244,7 +244,7 @@ If responding with the RESPOND action, include a list of optional providers that
 Response format should be formatted in a valid JSON block like this:
 \`\`\`json
 {
-    "user": "{{agentName}}",
+    "name": "{{agentName}}",
     "action": "RESPOND" | "IGNORE" | "STOP",
     "providers": ["<string>", "<string>", ...]
 }
@@ -266,7 +266,7 @@ Response format should be formatted in a valid JSON block like this:
 \`\`\`json
 {
     "thought": "<string>",
-    "user": "{{agentName}}",
+    "name": "{{agentName}}",
     "text": "<string>",
     "actions": ["<string>", "<string>", ...],
     "providers": ["<string>", "<string>", ...]

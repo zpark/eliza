@@ -29,7 +29,8 @@ export class TeeLogService extends Service implements ITeeLogService {
     private teeLogManager: TeeLogManager;
 
     static serviceType: ServiceType = ServiceTypes.TEE;
-    capabilityDescription = "The agent is able to log TEE attestation events and is probably running in a TEE";
+    capabilityDescription =
+        'The agent is able to log TEE attestation events and is probably running in a TEE';
 
     constructor(runtime: IAgentRuntime) {
         super();
@@ -108,7 +109,7 @@ export class TeeLogService extends Service implements ITeeLogService {
     async log(
         agentId: string,
         roomId: string,
-        userId: string,
+        entityId: string,
         type: string,
         content: string,
     ): Promise<boolean> {
@@ -116,7 +117,7 @@ export class TeeLogService extends Service implements ITeeLogService {
             return false;
         }
 
-        return this.teeLogManager.log(agentId, roomId, userId, type, content);
+        return this.teeLogManager.log(agentId, roomId, entityId, type, content);
     }
 
     async getAllAgents(): Promise<TeeAgent[]> {

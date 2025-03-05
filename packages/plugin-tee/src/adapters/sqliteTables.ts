@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "tee_logs" (
     "id" TEXT PRIMARY KEY,
     "agentId" TEXT NOT NULL,
     "roomId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "entityId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -23,7 +23,7 @@ Here is the current post text again. Remember to include an action if the curren
 # Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
 Response format should be formatted in a valid JSON block like this:
 \`\`\`json
-{ "thought": "<string>", "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
+{ "thought": "<string>", "name": "{{agentName}}", "text": "<string>", "action": "<string>" }
 \`\`\`
 
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send. Do not including any thinking or internal reflection in the "text" field. "thought" should be a short description of what the agent is thinking about before responding, inlcuding a brief justification for the response.`;
@@ -134,7 +134,7 @@ export class TwitterInteractionClient {
 
           const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
 
-          const userIdUUID = createUniqueUuid(
+          const entityId = createUniqueUuid(
             this.runtime,
             tweet.userId === this.client.profile.id
               ? this.runtime.agentId
@@ -142,7 +142,7 @@ export class TwitterInteractionClient {
           );
 
           await this.runtime.ensureConnection({
-            userId: userIdUUID,
+            entityId,
             roomId,
             userName: tweet.username,
             name: tweet.name,
@@ -160,7 +160,7 @@ export class TwitterInteractionClient {
               source: "twitter",
             },
             agentId: this.runtime.agentId,
-            userId: userIdUUID,
+            entityId,
             roomId,
           };
 
@@ -261,12 +261,12 @@ export class TwitterInteractionClient {
 
     if (!tweetExists) {
       logger.log("tweet does not exist, saving");
-      const userIdUUID = createUniqueUuid(this.runtime, tweet.userId);
+      const entityId = createUniqueUuid(this.runtime, tweet.userId);
 
       const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
 
       await this.runtime.ensureConnection({
-        userId: userIdUUID,
+        entityId,
         roomId,
         userName: tweet.username,
         name: tweet.name,
@@ -285,7 +285,7 @@ export class TwitterInteractionClient {
             ? createUniqueUuid(this.runtime, tweet.inReplyToStatusId)
             : undefined,
         },
-        userId: userIdUUID,
+        entityId,
         roomId,
         createdAt: tweet.timestamp * 1000,
       };
@@ -326,9 +326,9 @@ export class TwitterInteractionClient {
                 example
                   .map(
                     (msg) =>
-                      `${msg.user}: ${msg.content.text}${
+                      `${msg.name}: ${msg.content.text}${
                         msg.content.actions
-                          ? ` [Actions: ${msg.content.actions.join(", ")}]`
+                          ? ` (Actions: ${msg.content.actions.join(", ")})`
                           : ""
                       }`
                   )
@@ -382,7 +382,7 @@ export class TwitterInteractionClient {
           const responseMessages = [
             {
               id: createUniqueUuid(this.runtime, tweet.id),
-              userId: this.runtime.agentId,
+              entityId: this.runtime.agentId,
               agentId: this.runtime.agentId,
               content: response,
               roomId: message.roomId,
@@ -457,10 +457,10 @@ export class TwitterInteractionClient {
         .getMemoryById(createUniqueUuid(this.runtime, currentTweet.id));
       if (!memory) {
         const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
-        const userId = createUniqueUuid(this.runtime, currentTweet.userId);
+        const entityId = createUniqueUuid(this.runtime, currentTweet.userId);
 
         await this.runtime.ensureConnection({
-          userId,
+          entityId,
           roomId,
           userName: currentTweet.username,
           name: currentTweet.name,
@@ -482,7 +482,7 @@ export class TwitterInteractionClient {
           },
           createdAt: currentTweet.timestamp * 1000,
           roomId,
-          userId:
+          entityId:
             currentTweet.userId === this.twitterUserId
               ? this.runtime.agentId
               : createUniqueUuid(this.runtime, currentTweet.userId),

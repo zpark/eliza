@@ -67,13 +67,13 @@ export const unfollowRoomAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Hey {{user2}} stop participating in this channel for now",
+                    text: "Hey {{name2}} stop participating in this channel for now",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Alright, I will stop chiming in",
                     actions: ["UNFOLLOW_ROOM"],
@@ -82,25 +82,25 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Has anyone tried the new update",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Yes, it's pretty slick",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
-                    text: "{{user3}}, please stop following this chat",
+                    text: "{{name3}}, please stop following this chat",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Understood",
                     actions: ["UNFOLLOW_ROOM"],
@@ -109,32 +109,32 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey {{user3}} stop participating here so frequently",
+                    text: "hey {{name3}} stop participating here so frequently",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "I'll only respond when mentioned",
                     actions: ["UNFOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "thoughts on the budget",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}} should we increase it",
+                    text: "{{name3}} should we increase it",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "A small increase could work given our past results...",
                 },
@@ -142,26 +142,26 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}}, unfollow this room for now",
+                    text: "{{name3}}, unfollow this room for now",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "I'll only engage when asked",
                     actions: ["UNFOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
-                    text: "wait {{user3}} come back and give me your thoughts",
+                    text: "wait {{name3}} come back and give me your thoughts",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Okay... I think it's intuitive, parallel tests are nice",
                 },
@@ -169,13 +169,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "yo {{user2}} chill on all the messages damn",
+                    text: "yo {{name2}} chill on all the messages damn",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "my bad, I'll step back",
                     actions: ["UNFOLLOW_ROOM"],
@@ -184,13 +184,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} STOP MESSAGING IN THIS ROOM",
+                    text: "{{name2}} STOP MESSAGING IN THIS ROOM",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "No problem, I've got other stuff to work on",
                     actions: ["UNFOLLOW_ROOM"],
@@ -199,13 +199,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} ur bein annoyin pls stop",
+                    text: "{{name2}} ur bein annoyin pls stop",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sry, ill chill",
                     actions: ["UNFOLLOW_ROOM"],
@@ -214,13 +214,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, please cease engaging in this room",
+                    text: "{{name2}}, please cease engaging in this room",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "No sweat",
                     actions: ["UNFOLLOW_ROOM"],
@@ -229,19 +229,19 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Excited for the weekend, any plans folks",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}} you're getting a bit too chatty, tone it down",
+                    text: "{{name3}} you're getting a bit too chatty, tone it down",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Noted",
                     actions: ["UNFOLLOW_ROOM"],
@@ -250,13 +250,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey {{user2}} can u like... not",
+                    text: "hey {{name2}} can u like... not",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sorry, I'll go work on other things",
                     actions: ["UNFOLLOW_ROOM"],
@@ -265,13 +265,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, your eagerness is disruptive, please desist",
+                    text: "{{name2}}, your eagerness is disruptive, please desist",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "My apologies, I shall withdraw post-haste",
                     actions: ["UNFOLLOW_ROOM"],
@@ -280,13 +280,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} stahp followin dis room plz",
+                    text: "{{name2}} stahp followin dis room plz",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "kk sry ill stahppp",
                     actions: ["UNFOLLOW_ROOM"],
@@ -295,13 +295,13 @@ export const unfollowRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "stfu you stupid bot",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sry",
                     actions: ["UNFOLLOW_ROOM"],

@@ -161,7 +161,7 @@ export class TwitterPostClient {
         // Create a memory for the tweet
         await runtime.getMemoryManager("messages").createMemory({
             id: createUniqueUuid(this.runtime, tweet.id),
-            userId: runtime.agentId,
+            entityId: runtime.agentId,
             agentId: runtime.agentId,
             content: {
                 text: rawTweetContent.trim(),
@@ -297,7 +297,7 @@ export class TwitterPostClient {
                 .join(", ")
             const state = await this.runtime.composeState(
                 {
-                    userId: this.runtime.agentId,
+                    entityId: this.runtime.agentId,
                     roomId: roomId,
                     agentId: this.runtime.agentId,
                     content: {

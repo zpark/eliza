@@ -192,7 +192,7 @@ export class TwitterTestSuite implements TestSuite {
         id: "12345",
         text: "@testUser What do you think about AI?",
         username: "randomUser",
-        userId: "randomUserId",
+        entityId: "randomUserId",
         timestamp: Date.now() / 1000,
         conversationId: "67890",
         permanentUrl: "https://twitter.com/randomUser/status/12345",
@@ -209,7 +209,7 @@ export class TwitterTestSuite implements TestSuite {
         message: {
           content: { text: testTweet.text, source: "twitter"  },
           agentId: runtime.agentId,
-          userId: createUniqueUuid(runtime, testTweet.userId),
+          entityId: createUniqueUuid(runtime, testTweet.entityId),
           roomId: createUniqueUuid(runtime, testTweet.conversationId),
         },
         thread: [],

@@ -187,7 +187,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
   // Get existing relationships for the room
   const existingRelationships = await runtime.databaseAdapter.getRelationships({
-    userId: message.userId,
+    entityId: message.entityId,
   });
 
   // Get actors in the room for name resolution
@@ -217,7 +217,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
       roomType: state.roomType || "group", // Can be "group", "voice", or "dm"
       entitiesInRoom: JSON.stringify(entitiesInRoom),
       existingRelationships: JSON.stringify(existingRelationships),
-      senderId: message.userId,
+      senderId: message.entityId,
     },
     template:
       runtime.character.templates?.reflectionTemplate || reflectionTemplate,
@@ -246,7 +246,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
   for (const fact of newFacts) {
     const factMemory = await factsManager.addEmbeddingToMemory({
-      userId: agentId,
+      entityId: agentId,
       agentId,
       content: { text: fact.claim },
       roomId,
@@ -357,15 +357,15 @@ Current Room: general-chat
 Message Sender: John (user-123)`,
       messages: [
         {
-          user: "John",
+          name: "John",
           content: { text: "Hey everyone, I'm new here!" },
         },
         {
-          user: "Sarah",
+          name: "Sarah",
           content: { text: "Welcome John! How did you find our community?" },
         },
         {
-          user: "John",
+          name: "John",
           content: { text: "Through a friend who's really into AI" },
         },
       ],
@@ -407,19 +407,19 @@ Current Room: tech-help
 Message Sender: Emma (user-456)`, 
       messages: [
         {
-          user: "Emma",
+          name: "Emma",
           content: { text: "My app keeps crashing when I try to upload files" },
         },
         {
-          user: "Alex",
+          name: "Alex",
           content: { text: "Have you tried clearing your cache?" },
         },
         {
-          user: "Emma",
+          name: "Emma",
           content: { text: "No response..." },
         },
         {
-          user: "Alex", 
+          name: "Alex", 
           content: { text: "Emma, are you still there? We can try some other troubleshooting steps." },
         }
       ],
@@ -456,23 +456,23 @@ Current Room: book-club
 Message Sender: Lisa (user-789)`,
       messages: [
         {
-          user: "Lisa",
+          name: "Lisa",
           content: { text: "What did everyone think about chapter 5?" },
         },
         {
-          user: "Max",
+          name: "Max",
           content: { text: "The symbolism was fascinating! The red door clearly represents danger." },
         },
         {
-          user: "Max",
+          name: "Max",
           content: { text: "And did anyone notice how the author used weather to reflect the protagonist's mood?" },
         },
         {
-          user: "Max",
+          name: "Max",
           content: { text: "Plus the foreshadowing in the first paragraph was brilliant!" },
         },
         {
-          user: "Max",
+          name: "Max",
           content: { text: "I also have thoughts about the character development..." },
         }
       ],

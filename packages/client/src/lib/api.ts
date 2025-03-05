@@ -82,7 +82,7 @@ export const apiClient = {
             // Use FormData only when there's a file
             const formData = new FormData();
             formData.append("text", message);
-            formData.append("user", "user");
+            formData.append("name", "Anon");
             formData.append("file", selectedFile);
             // Add roomId if provided
             if (roomId) {
@@ -103,7 +103,7 @@ export const apiClient = {
                 method: "POST",
                 body: {
                     text: message,
-                    user: "user",
+                    name: "Anon",
                     roomId: roomId || undefined,
                     worldId
                 },
@@ -134,7 +134,7 @@ export const apiClient = {
             body: formData,
         });
     },
-    sendAudioMessage: async (agentId: string, audioBlob: Blob, options?: { roomId?: string; userId?: string; userName?: string; name?: string }) => {
+    sendAudioMessage: async (agentId: string, audioBlob: Blob, options?: { roomId?: string; entityId?: string; userName?: string; name?: string }) => {
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.wav");
         
@@ -151,7 +151,7 @@ export const apiClient = {
             body: formData,
         });
     },
-    speechConversation: async (agentId: string, text: string, options?: { roomId?: string; userId?: string; userName?: string; name?: string }) => {
+    speechConversation: async (agentId: string, text: string, options?: { roomId?: string; entityId?: string; userName?: string; name?: string }) => {
         return fetcher({
             url: `/agents/${agentId}/speech/conversation`,
             method: "POST",

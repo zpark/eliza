@@ -71,6 +71,7 @@ type UserJoinedParams = {
   runtime: IAgentRuntime;
   user: any;
   serverId: string;
+  entityId: UUID;
   channelId: string;
   channelType: ChannelType;
   source: string;
@@ -106,7 +107,7 @@ const messageReceivedHandler = async ({
     runtime.getMemoryManager("messages").createMemory(message),
   ]);
 
-  if (message.userId === runtime.agentId) return false;
+  if (message.entityId === runtime.agentId) return false;
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
@@ -173,8 +174,7 @@ const messageReceivedHandler = async ({
   const providers = responseObject.providers;
 
   const shouldRespond =
-    responseObject &&
-    responseObject.action &&
+    responseObject?.action &&
     responseObject.action === "RESPOND";
 
   state = await runtime.composeState(message, {}, null, providers);
@@ -208,7 +208,7 @@ const messageReceivedHandler = async ({
     const responseMessages: Memory[] = [
       {
         id: v4() as UUID,
-        userId: runtime.agentId,
+        entityId: runtime.agentId,
         agentId: runtime.agentId,
         content: responseContent,
         roomId: message.roomId,
@@ -535,6 +535,7 @@ const syncRegularServerUsers = async (
  * Syncs a single user into an entity
  */
 const syncSingleUser = async (
+  entityId: UUID,
   runtime: IAgentRuntime,
   user: any,
   serverId: string,
@@ -555,7 +556,7 @@ const syncSingleUser = async (
     const worldId = createUniqueUuid(runtime, serverId);
 
     await runtime.ensureConnection({
-      userId: user.id,
+      entityId,
       roomId,
       userName: user.username || user.displayName || `User${user.id}`,
       name: user.displayName || user.username || `User${user.id}`,
@@ -619,20 +620,20 @@ const handleServerSync = async ({
       // Process users in batches to avoid overwhelming the system
       const batchSize = 50;
       for (let i = 0; i < users.length; i += batchSize) {
-        const userBatch = users.slice(i, i + batchSize);
+        const entityBatch = users.slice(i, i + batchSize);
 
         // check if user is in any of these rooms in rooms
         const firstRoomUserIsIn = rooms.length > 0 ? rooms[0] : null;
 
         // Process each user in the batch
         await Promise.all(
-          userBatch.map(async (user: Entity) => {
+          entityBatch.map(async (entity: Entity) => {
             try {
               await runtime.ensureConnection({
-                userId: user.id,
+                entityId: entity.id,
                 roomId: firstRoomUserIsIn.id,
-                userName: user.metadata[source].username,
-                name: user.metadata[source].name,
+                userName: entity.metadata[source].username,
+                name: entity.metadata[source].name,
                 source: source,
                 channelId: firstRoomUserIsIn.channelId,
                 serverId: world.serverId,
@@ -641,7 +642,7 @@ const handleServerSync = async ({
               });
             } catch (err) {
               logger.warn(
-                `Failed to sync user ${user.metadata.username}: ${err}`
+                `Failed to sync user ${entity.metadata.username}: ${err}`
               );
             }
           })
@@ -696,7 +697,7 @@ const syncMultipleUsers = async (
         batch.map(async (user) => {
           try {
             await runtime.ensureConnection({
-              userId: user.id,
+              entityId: user.id,
               roomId,
               userName: user.username || `User${user.id}`,
               name:
@@ -751,24 +752,18 @@ const events = {
   SERVER_JOINED: [handleServerSync],
   SERVER_CONNECTED: [handleServerSync],
 
-  // Keep the legacy handler for backward compatibility during transition
-  // This can be removed once all platform plugins are updated
-  SERVER_JOINED_LEGACY: [
-    async ({ runtime, world, source }: ServerJoinedParams) => {
-      await syncServerUsers(runtime, world, source);
-    },
-  ],
-
   USER_JOINED: [
     async ({
       runtime,
       user,
       serverId,
+      entityId,
       channelId,
       channelType,
       source,
     }: UserJoinedParams) => {
       await syncSingleUser(
+        entityId,
         runtime,
         user,
         serverId,

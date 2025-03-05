@@ -113,7 +113,7 @@ export const updateEntityAction: Action = {
         await callback(response.content);
       }
 
-      const sourceEntityId = message.userId;
+      const sourceEntityId = message.entityId;
       const roomId = message.roomId;
       const agentId = runtime.agentId;
       const room = await runtime.databaseAdapter.getRoom(roomId);
@@ -228,13 +228,13 @@ export const updateEntityAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Please update my telegram username to @dev_guru",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated your telegram information.",
           actions: ["UPDATE_ENTITY"],
@@ -243,13 +243,13 @@ export const updateEntityAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Set Jimmy's twitter username to @jimmy_codes",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated Jimmy's twitter information.",
           actions: ["UPDATE_ENTITY"],
@@ -258,13 +258,13 @@ export const updateEntityAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Update my discord username to dev_guru#1234",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated your discord information.",
           actions: ["UPDATE_ENTITY"],

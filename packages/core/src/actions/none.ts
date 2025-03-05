@@ -24,24 +24,24 @@ export const noneAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "Hey whats up" },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: { text: "oh hey", actions: ["NONE"] },
             },
         ],
 
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "did u see some faster whisper just came out",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "yeah but its a pain to get into node.js",
                     actions: ["NONE"],
@@ -50,50 +50,50 @@ export const noneAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "the things that were funny 6 months ago are very cringe now",
                     actions: ["NONE"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "lol true",
                     actions: ["NONE"],
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "too real haha", actions: ["NONE"] },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "gotta run", actions: ["NONE"] },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: { text: "Okay, ttyl", actions: ["NONE"] },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "", actions: ["IGNORE"] },
             },
         ],
 
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "heyyyyyy", actions: ["NONE"] },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: { text: "whats up long time no see" },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "chillin man. playing lots of fortnite. what about you",
                     actions: ["NONE"],
@@ -103,43 +103,43 @@ export const noneAction: Action = {
 
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "u think aliens are real", actions: ["NONE"] },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: { text: "ya obviously", actions: ["NONE"] },
             },
         ],
 
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "drop a joke on me", actions: ["NONE"] },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "why dont scientists trust atoms cuz they make up everything lmao",
                     actions: ["NONE"],
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: { text: "haha good one", actions: ["NONE"] },
             },
         ],
 
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "hows the weather where ur at",
                     actions: ["NONE"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: { text: "beautiful all week", actions: ["NONE"] },
             },
         ],

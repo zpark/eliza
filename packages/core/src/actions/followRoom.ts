@@ -105,13 +105,13 @@ export const followRoomAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey {{user2}} follow this channel",
+                    text: "hey {{name2}} follow this channel",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure, I will now follow this room and chime in",
                     actions: ["FOLLOW_ROOM"],
@@ -120,26 +120,26 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}}, please start participating in discussions in this channel",
+                    text: "{{name3}}, please start participating in discussions in this channel",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Got it",
                     actions: ["FOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I'm struggling with the new database migration",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "well you did back up your data first right",
                 },
@@ -147,32 +147,32 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "yeah i like your idea",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey {{user3}} can you follow this convo",
+                    text: "hey {{name3}} can you follow this convo",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Sure thing, I'm on it",
                     actions: ["FOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "actually, unfollow it",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Haha, okay no problem",
                     actions: ["UNFOLLOW_ROOM"],
@@ -181,13 +181,13 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} stay in this chat pls",
+                    text: "{{name2}} stay in this chat pls",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "you got it, i'm here",
                     actions: ["FOLLOW_ROOM"],
@@ -196,26 +196,26 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "FOLLOW THIS CHAT {{user3}}",
+                    text: "FOLLOW THIS CHAT {{name3}}",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "I'M ON IT",
                     actions: ["FOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "CAKE SHORTAGE ANYONE",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "WHAT WHERE'S THE CAKE AT",
                 },
@@ -223,13 +223,13 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} folo this covo",
+                    text: "{{name2}} folo this covo",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "kk i'm following",
                     actions: ["FOLLOW_ROOM"],
@@ -238,19 +238,19 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Do machines have consciousness",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Deep question, no clear answer yet",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Depends on how we define consciousness",
                 },
@@ -258,26 +258,26 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, monitor this convo please",
+                    text: "{{name2}}, monitor this convo please",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "On it",
                     actions: ["FOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Please engage in our discussion {{user2}}",
+                    text: "Please engage in our discussion {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Gladly, I'm here to participate",
                     actions: ["FOLLOW_ROOM"],
@@ -286,20 +286,20 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "PLS follow this convo {{user3}}",
+                    text: "PLS follow this convo {{name3}}",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "I'm in, let's do this",
                     actions: ["FOLLOW_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I LIKE TURTLES",
                 },
@@ -307,25 +307,25 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "beach day tmrw who down",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "wish i could but gotta work",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey {{user3}} follow this chat",
+                    text: "hey {{name3}} follow this chat",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "sure",
                     actions: ["FOLLOW_ROOM"],
@@ -334,13 +334,13 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}}, partake in our discourse henceforth",
+                    text: "{{name3}}, partake in our discourse henceforth",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "I shall eagerly engage, good sir",
                     actions: ["FOLLOW_ROOM"],
@@ -349,25 +349,25 @@ export const followRoomAction: Action = {
         ],
         [
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "wuts ur fav clr",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "blu cuz calmmm",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "hey respond to everything in this channel {{user3}}",
+                    text: "hey respond to everything in this channel {{name3}}",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "k",
                     actions: ["FOLLOW_ROOM"],

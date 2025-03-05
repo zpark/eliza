@@ -8,7 +8,7 @@ import {
 } from "@elizaos/core";
 import { z } from "zod";
 import { formatRecommenderReport } from "../reports";
-import type { TrustTradingService } from "../tradingService";
+import type { CommunityInvestorService } from "../tradingService";
 import {
     ServiceTypes,
     type PositionWithBalance,
@@ -77,7 +77,7 @@ Total P&L: {{totalPnL}}
 type DataActionState = {
     runtime: IAgentRuntime;
     message: Memory;
-    tradingService: TrustTradingService;
+    tradingService: CommunityInvestorService;
     tokens: TypesTokenPerformance[];
     positions: PositionWithBalance[];
     transactions: TypesTransaction[];
@@ -97,7 +97,7 @@ function createAction<Params extends z.AnyZodObject = z.AnyZodObject>(
 }
 
 // Available actions
-const actions = [
+const _actions = [
     createAction({
         name: "refresh_token",
         description: "Refresh token information from chain",
@@ -108,7 +108,7 @@ const actions = [
         async handler({ tradingService, tokens }, params) {
             // Normalize token address
             const tokenAddress = params.tokenAddress.toLowerCase();
-            // Update token information using the TrustTradingService
+            // Update token information using the CommunityInvestorService
             await tradingService.updateTokenPerformance(params.chain, tokenAddress);
             // Could also update trade history, position balances, etc.
         },
@@ -129,7 +129,7 @@ const actions = [
             positionIds: z.array(z.string().uuid()).describe("Position IDs to close"),
         }),
         async handler({runtime}, { positionIds }) {
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+            const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
             for (const positionId of positionIds) {
                 await tradingService.closePosition(positionId as UUID);
             }
@@ -142,7 +142,7 @@ const actions = [
             entityId: z.string().uuid().describe("Entity ID to update"),
         }),
         async handler({runtime, message}, { entityId }) {
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+            const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
             // Use db method instead - assuming this is the correct replacement
             await tradingService.initializeRecommenderMetrics(entityId as UUID, message.content.source);
         },
@@ -159,7 +159,7 @@ const actions = [
                 // Get token address from position
                 const position = positions.find(p => p.id === positionId);
                 if (position) {
-                    const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+                    const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
                     await tradingService.updateTokenPerformance(position.chain, position.tokenAddress);
                 }
             }
@@ -198,7 +198,7 @@ async function runActions(
     positions: PositionWithBalance[],
     transactions: TypesTransaction[]
 ) {
-    const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+    const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
     
     return Promise.all(
         actions.map(async (actionCall) => {
@@ -246,9 +246,9 @@ export const dataProvider: Provider = {
             );
 
             // Get entity info if message is from a user
-            const clientUserId = message.userId === message.agentId ? "" : message.userId;
+            const clientUserId = message.entityId === message.agentId ? "" : message.entityId;
             const entity = await runtime.databaseAdapter.getEntityById(clientUserId as UUID);
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+            const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
 
             // Add updatedAt to RecommenderMetrics to make it compatible
             const recommenderMetrics = entity

@@ -60,7 +60,7 @@ export class MessageManager {
       return;
     }
 
-    const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+    const entityId = createUniqueUuid(this.runtime, message.author.id);
 
     const userName = message.author.bot
       ? `${message.author.username}#${message.author.discriminator}`
@@ -82,7 +82,7 @@ export class MessageManager {
     }
 
     await this.runtime.ensureConnection({
-      userId: userIdUUID,
+      entityId: entityId,
       roomId,
       userName,
       name: name,
@@ -120,13 +120,13 @@ export class MessageManager {
         return;
       }
 
-      const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+      const entityId = createUniqueUuid(this.runtime, message.author.id);
 
       const messageId = createUniqueUuid(this.runtime, message.id);
 
       const newMessage: Memory = {
         id: messageId,
-        userId: userIdUUID,
+        entityId: entityId,
         agentId: this.runtime.agentId,
         roomId: roomId,
         content: {
@@ -164,7 +164,7 @@ export class MessageManager {
 
             const memory: Memory = {
               id: createUniqueUuid(this.runtime, m.id),
-              userId: this.runtime.agentId,
+              entityId: this.runtime.agentId,
               agentId: this.runtime.agentId,
               content: {
                 ...content,
@@ -207,10 +207,10 @@ export class MessageManager {
     const mentionRegex = /<@!?(\d+)>/g;
     processedContent = processedContent.replace(
       mentionRegex,
-      (match, userId) => {
-        const user = message.mentions.users.get(userId);
+      (match, entityId) => {
+        const user = message.mentions.users.get(entityId);
         if (user) {
-          return `${user.username} (@${userId})`;
+          return `${user.username} (@${entityId})`;
         }
         return match;
       }

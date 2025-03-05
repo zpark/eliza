@@ -4,7 +4,7 @@ import {
 } from "@elizaos/core";
 import { z, ZodError } from "zod";
 
-const twitterUsernameSchema = z
+const _twitterUsernameSchema = z
     .string()
     .min(1, "An X/Twitter Username must be at least 1 character long")
     .max(15, "An X/Twitter Username cannot exceed 15 characters")

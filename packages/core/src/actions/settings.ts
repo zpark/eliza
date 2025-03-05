@@ -26,7 +26,7 @@ interface SettingUpdate {
 const messageCompletionFooter = `\n# Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
 Response format should be formatted in a valid JSON block like this:
 \`\`\`json
-{ "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
+{ "name": "{{agentName}}", "text": "<string>", "action": "<string>" }
 \`\`\`
 
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send. Do not including any thinking or internal reflection in the "text" field. "thought" should be a short description of what the agent is thinking about before responding, inlcuding a brief justification for the response.`;
@@ -724,14 +724,14 @@ const updateSettingsAction: Action = {
     _state: State
   ): Promise<boolean> => {
     try {
-      if (!message.userId) {
+      if (!message.entityId) {
         logger.error("No user ID in message for settings validation");
         return false;
       }
 
       // Log the user ID for debugging
       logger.info(
-        `Validating settings action for user ${message.userId} (normalized: ${message.userId})`
+        `Validating settings action for user ${message.entityId} (normalized: ${message.entityId})`
       );
 
       // Validate that we're in a DM channel
@@ -749,10 +749,10 @@ const updateSettingsAction: Action = {
       }
 
       // Find the server where this user is the owner
-      logger.info(`Looking for server where user ${message.userId} is owner`);
-      const world = await findWorldForOwner(runtime, message.userId);
+      logger.info(`Looking for server where user ${message.entityId} is owner`);
+      const world = await findWorldForOwner(runtime, message.entityId);
       if (!world) {
-        logger.error(`No server ownership found for user ${message.userId}`);
+        logger.error(`No server ownership found for user ${message.entityId}`);
         return false;
       }
 
@@ -790,10 +790,10 @@ const updateSettingsAction: Action = {
 
     try {
       // Find the server where this user is the owner
-      logger.info(`Handler looking for server for user ${message.userId}`);
-      const serverOwnership = await findWorldForOwner(runtime, message.userId);
+      logger.info(`Handler looking for server for user ${message.entityId}`);
+      const serverOwnership = await findWorldForOwner(runtime, message.entityId);
       if (!serverOwnership) {
-        logger.error(`No server found for user ${message.userId} in handler`);
+        logger.error(`No server found for user ${message.entityId} in handler`);
         await generateErrorResponse(runtime, state, callback);
         return;
       }
@@ -884,14 +884,14 @@ const updateSettingsAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "I want to set up the welcome channel to #general",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Perfect! I've updated your welcome channel to #general. Next, we should configure the automated greeting message that new members will receive.",
           actions: ["SETTING_UPDATED"],
@@ -901,14 +901,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Let's set the bot prefix to !",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Great choice! I've set the command prefix to '!'. Now you can use commands like !help, !info, etc.",
           actions: ["SETTING_UPDATED"],
@@ -918,14 +918,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Enable auto-moderation for bad language",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Auto-moderation for inappropriate language has been enabled. I'll now filter messages containing offensive content.",
           actions: ["SETTING_UPDATED"],
@@ -935,14 +935,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "For server logs, use the #server-logs channel",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've configured #server-logs as your logging channel. All server events like joins, leaves, and moderation actions will be recorded there.",
           actions: ["SETTING_UPDATED"],
@@ -952,14 +952,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "I'd like to have role self-assignment in the #roles channel",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Role self-assignment has been set up in the #roles channel. Members can now assign themselves roles by interacting with messages there.",
           actions: ["SETTING_UPDATED"],
@@ -969,14 +969,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Make music commands available in voice-text channels only",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated your music command settings - they'll now only work in voice-text channels. This helps keep other channels clear of music spam.",
           actions: ["SETTING_UPDATED"],
@@ -986,14 +986,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "For server timezone, set it to EST",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Server timezone has been set to Eastern Standard Time (EST). All scheduled events and timestamps will now display in this timezone.",
           actions: ["SETTING_UPDATED"],
@@ -1003,14 +1003,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Set verification level to email verified users only",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated the verification requirement to email verified accounts only. This adds an extra layer of security to your server.",
           actions: ["SETTING_UPDATED"],
@@ -1020,14 +1020,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "I want to turn off level-up notifications",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Level-up notifications have been disabled. Members will still earn experience and level up, but there won't be any automatic announcements. You can still view levels with the appropriate commands.",
           actions: ["SETTING_UPDATED"],
@@ -1037,14 +1037,14 @@ const updateSettingsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "My server name is 'Gaming Lounge'",
           source: "discord",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Great! I've saved 'Gaming Lounge' as your server name. This helps me personalize responses and know how to refer to your community. We've completed all the required settings! Your server is now fully configured and ready to use. You can always adjust these settings later if needed.",
           actions: ["ONBOARDING_COMPLETE"],

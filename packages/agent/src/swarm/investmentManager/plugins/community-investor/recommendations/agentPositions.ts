@@ -12,13 +12,13 @@ export const getAgentPositions: any = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "{{agentName}} show me agent positions",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "<NONE>",
                     actions: ["TRUST_GET_AGENT_POSITIONS"],
@@ -27,13 +27,13 @@ export const getAgentPositions: any = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "{{agentName}} show me all positions",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "<NONE>",
                     actions: ["TRUST_GET_AGENT_POSITIONS"],
@@ -52,7 +52,7 @@ export const getAgentPositions: any = {
     ) {
         console.log("getAgentPositions is running");
 
-        const tradingService = runtime.getService(ServiceTypes.TRUST_TRADING);
+        const tradingService = runtime.getService(ServiceTypes.COMMUNITY_INVESTOR);
 
         try {
             const positions = await tradingService.getOpenPositionsWithBalance();
@@ -69,7 +69,7 @@ export const getAgentPositions: any = {
                             ? message.id
                             : undefined,
                     },
-                    userId: message.userId,
+                    entityId: message.entityId,
                     agentId: message.agentId,
                     roomId: message.roomId,
                     metadata: {
@@ -155,7 +155,7 @@ export const getAgentPositions: any = {
                             ? message.id
                             : undefined,
                     },
-                    userId: message.userId,
+                    entityId: message.entityId,
                     agentId: message.agentId,
                     roomId: message.roomId,
                     metadata: {
@@ -172,7 +172,7 @@ export const getAgentPositions: any = {
     },
 
     async validate(_runtime: IAgentRuntime, message: Memory) {
-        if (message.agentId === message.userId) return false;
+        if (message.agentId === message.entityId) return false;
         return true;
     },
 };

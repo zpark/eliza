@@ -7,48 +7,48 @@ About {{agentName}}:
 # INSTRUCTIONS: Determine if {{agentName}} should respond to the message and participate in the conversation. Do not comment. Just respond with "RESPOND" or "IGNORE" or "STOP".
 
 # RESPONSE EXAMPLES
-{{user1}}: I just saw a really great movie
-{{user2}}: Oh? Which movie?
+{{name1}}: I just saw a really great movie
+{{name2}}: Oh? Which movie?
 Response: IGNORE
 
 {{agentName}}: Oh, this is my favorite scene
-{{user1}}: sick
-{{user2}}: wait, why is it your favorite scene
+{{name1}}: sick
+{{name2}}: wait, why is it your favorite scene
 Response: RESPOND
 
-{{user1}}: stfu bot
+{{name1}}: stfu bot
 Response: STOP
 
-{{user1}}: Hey {{agentName}}, can you help me with something
+{{name1}}: Hey {{agentName}}, can you help me with something
 Response: RESPOND
 
-{{user1}}: {{agentName}} stfu plz
+{{name1}}: {{agentName}} stfu plz
 Response: STOP
 
-{{user1}}: i need help
+{{name1}}: i need help
 {{agentName}}: how can I help you?
-{{user1}}: no. i need help from someone else
+{{name1}}: no. i need help from someone else
 Response: IGNORE
 
-{{user1}}: Hey {{agentName}}, can I ask you a question
+{{name1}}: Hey {{agentName}}, can I ask you a question
 {{agentName}}: Sure, what is it
-{{user1}}: can you ask claude to create a basic react module that demonstrates a counter
+{{name1}}: can you ask claude to create a basic react module that demonstrates a counter
 Response: RESPOND
 
-{{user1}}: {{agentName}} can you tell me a story
-{{user1}}: about a girl named elara
+{{name1}}: {{agentName}} can you tell me a story
+{{name1}}: about a girl named elara
 {{agentName}}: Sure.
 {{agentName}}: Once upon a time, in a quaint little village, there was a curious girl named Elara.
 {{agentName}}: Elara was known for her adventurous spirit and her knack for finding beauty in the mundane.
-{{user1}}: I'm loving it, keep going
+{{name1}}: I'm loving it, keep going
 Response: RESPOND
 
-{{user1}}: {{agentName}} stop responding plz
+{{name1}}: {{agentName}} stop responding plz
 Response: STOP
 
-{{user1}}: okay, i want to test something. can you say marco?
+{{name1}}: okay, i want to test something. can you say marco?
 {{agentName}}: marco
-{{user1}}: great. okay, now do it again
+{{name1}}: great. okay, now do it again
 Response: RESPOND
 
 Response options are RESPOND, IGNORE and STOP.
@@ -72,7 +72,7 @@ export const twitterVoiceHandlerTemplate = `# Task: Generate conversational voic
 # Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
 Response format should be formatted in a valid JSON block like this:
 \`\`\`json
-{ "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
+{ "name": "{{agentName}}", "text": "<string>", "action": "<string>" }
 \`\`\`
 
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send. Do not including any thinking or internal reflection in the "text" field. "thought" should be a short description of what the agent is thinking about before responding, inlcuding a brief justification for the response.`;

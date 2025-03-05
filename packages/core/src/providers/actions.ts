@@ -1,6 +1,6 @@
 import { formatActionNames, formatActions } from "../actions";
 import { addHeader } from "../prompts";
-import { Action, IAgentRuntime, Memory, Provider, State } from "../types";
+import { type Action, type IAgentRuntime, type Memory, type Provider, State } from "../types";
 
 export const actionsProvider: Provider = {
   name: "ACTIONS",

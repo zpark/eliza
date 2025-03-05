@@ -104,7 +104,7 @@ export const greetAction: Action = {
 
             // Create memory of greeting
             await runtime.getMemoryManager("messages").createMemory({
-                userId: runtime.agentId,
+                entityId: runtime.agentId,
                 agentId: runtime.agentId,
                 roomId: message.roomId,
                 content,
@@ -122,32 +122,32 @@ export const greetAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} joined the server",
+                    text: "{{name2}} joined the server",
                     source: "discord",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
-                    text: "Welcome {{user2}}! I'm the community manager. Feel free to introduce yourself!",
+                    text: "Welcome {{name2}}! I'm the community manager. Feel free to introduce yourself!",
                     actions: ["GREET_NEW_USER"],
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Can someone greet {{user2}}?",
+                    text: "Can someone greet {{name2}}?",
                     source: "discord",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
-                    text: "Hi {{user2}}! Welcome to our community!",
+                    text: "Hi {{name2}}! Welcome to our community!",
                     actions: ["GREET_NEW_USER"],
                 },
             },

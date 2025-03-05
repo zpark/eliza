@@ -64,7 +64,7 @@ export const choiceAction: Action = {
 
     const userRole = await getUserServerRole(
       runtime,
-      message.userId,
+      message.entityId,
       room.serverId
     );
 
@@ -213,13 +213,13 @@ export const choiceAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "post",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Selected option: post for task: Confirm Twitter Post",
           actions: ["CHOOSE_OPTION"],
@@ -228,13 +228,13 @@ export const choiceAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "I choose cancel",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "Selected option: cancel for task: Confirm Twitter Post",
           actions: ["CHOOSE_OPTION"],

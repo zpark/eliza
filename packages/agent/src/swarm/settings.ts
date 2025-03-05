@@ -169,8 +169,8 @@ export async function startOnboardingDM(
     }
     // Create memory of the initial message
     await runtime.getMemoryManager("messages").createMemory({
-      agentId: runtime.agentId as UUID,
-      userId: runtime.agentId as UUID,
+      agentId: runtime.agentId,
+      entityId: runtime.agentId,
       roomId: roomId,
       content: {
         text: randomMessage,

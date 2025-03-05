@@ -50,7 +50,7 @@ export default class Twitter {
 					// Create memory for the tweet
 					await this.runtime.getMemoryManager("messages").createMemory({
 						id: tweetId,
-						userId: this.runtime.agentId,
+						entityId: this.runtime.agentId,
 						agentId: this.runtime.agentId,
 						content: {
 							text: item.text,

@@ -189,13 +189,13 @@ ${mediaTranscript.trim()}
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Please transcribe the audio file I just sent.",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure, I'll transcribe the full audio for you.",
                     actions: ["TRANSCRIBE_MEDIA"],
@@ -204,13 +204,13 @@ ${mediaTranscript.trim()}
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Can I get a transcript of that video recording?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Absolutely, give me a moment to generate the full transcript of the video.",
                     actions: ["TRANSCRIBE_MEDIA"],

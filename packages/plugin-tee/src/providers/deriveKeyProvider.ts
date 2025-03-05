@@ -174,7 +174,11 @@ interface ProviderResult {
 
 const phalaDeriveKeyProvider: Provider = {
     name: 'phala-derive-key',
-    get: async (runtime: IAgentRuntime, _message?: Memory, _state?: State): Promise<ProviderResult> => {
+    get: async (
+        runtime: IAgentRuntime,
+        _message?: Memory,
+        _state?: State,
+    ): Promise<ProviderResult> => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaDeriveKeyProvider(teeMode);
         const agentId = runtime.agentId;
@@ -182,10 +186,10 @@ const phalaDeriveKeyProvider: Provider = {
             // Validate wallet configuration
             if (!runtime.getSetting('WALLET_SECRET_SALT')) {
                 logger.error('Wallet secret salt is not configured in settings');
-                return { 
-                    data: null, 
+                return {
+                    data: null,
                     values: {},
-                    text: 'Wallet secret salt is not configured in settings'
+                    text: 'Wallet secret salt is not configured in settings',
                 };
             }
 
@@ -197,43 +201,45 @@ const phalaDeriveKeyProvider: Provider = {
                     agentId,
                 );
                 const evmKeypair = await provider.deriveEcdsaKeypair(secretSalt, 'evm', agentId);
-                
+
                 // Original data structure
                 const walletData = {
                     solana: solanaKeypair.keypair.publicKey,
                     evm: evmKeypair.keypair.address,
                 };
-                
+
                 // Values for template injection
                 const values = {
-                    'solana_public_key': solanaKeypair.keypair.publicKey.toString(),
-                    'evm_address': evmKeypair.keypair.address,
+                    solana_public_key: solanaKeypair.keypair.publicKey.toString(),
+                    evm_address: evmKeypair.keypair.address,
                 };
-                
+
                 // Text representation
                 const text = `Solana Public Key: ${values.solana_public_key}\nEVM Address: ${values.evm_address}`;
-                
+
                 return {
                     data: walletData,
                     values: values,
-                    text: text
+                    text: text,
                 };
             } catch (error) {
                 logger.error('Error creating PublicKey:', error);
-                return { 
-                    data: null, 
+                return {
+                    data: null,
                     values: {},
-                    text: `Error creating PublicKey: ${error instanceof Error ? error.message : 'Unknown error'}`
+                    text: `Error creating PublicKey: ${
+                        error instanceof Error ? error.message : 'Unknown error'
+                    }`,
                 };
             }
         } catch (error) {
             logger.error('Error in derive key provider:', error.message);
-            return { 
-                data: null, 
+            return {
+                data: null,
                 values: {},
                 text: `Failed to fetch derive key information: ${
                     error instanceof Error ? error.message : 'Unknown error'
-                }`
+                }`,
             };
         }
     },
@@ -250,11 +256,15 @@ class SgxGramineDeriveKeyProvider extends DeriveKeyProvider {}
 
 const sgxGramineDeriveKeyProvider: Provider = {
     name: 'sgx-gramine-derive-key',
-    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State): Promise<ProviderResult> => {
+    get: async (
+        _runtime: IAgentRuntime,
+        _message?: Memory,
+        _state?: State,
+    ): Promise<ProviderResult> => {
         return {
             data: { provider: 'sgx-gramine' },
-            values: { 'provider_name': 'SGX Gramine' },
-            text: 'SGX Gramine Derive Key Provider'
+            values: { provider_name: 'SGX Gramine' },
+            text: 'SGX Gramine Derive Key Provider',
         };
     },
 };

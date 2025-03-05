@@ -379,7 +379,7 @@ export class SttTtsPlugin implements Plugin {
             try {
                 const responseMemory: Memory = {
                     id: createUniqueUuid(this.runtime, `${memory.id}-voice-response-${Date.now()}`),
-                    userId: this.runtime.agentId,
+                    entityId: this.runtime.agentId,
                     agentId: this.runtime.agentId,
                     content: {
                         ...content,

@@ -17,7 +17,7 @@ export interface ServerOwnershipState {
  */
 export async function getUserServerRole(
   runtime: IAgentRuntime,
-  userId: string,
+  entityId: string,
   serverId: string
 ): Promise<Role> {
   try {
@@ -28,13 +28,13 @@ export async function getUserServerRole(
       return Role.NONE;
     }
 
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as Role;
+    if (world.metadata.roles[entityId]?.role) {
+      return world.metadata.roles[entityId].role as Role;
     }
 
     // Also check original ID format
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as Role;
+    if (world.metadata.roles[entityId]?.role) {
+      return world.metadata.roles[entityId].role as Role;
     }
 
     return Role.NONE;
@@ -49,10 +49,10 @@ export async function getUserServerRole(
  */
 export async function findWorldForOwner(
   runtime: IAgentRuntime,
-  userId: string
+  entityId: string
 ): Promise<World | null> {
   try {
-    if (!userId) {
+    if (!entityId) {
       logger.error("User ID is required to find server");
       return null;
     }
@@ -67,12 +67,12 @@ export async function findWorldForOwner(
 
     // Find world where the user is the owner
     for (const world of worlds) {
-      if (world.metadata?.ownership?.ownerId === userId) {
+      if (world.metadata?.ownership?.ownerId === entityId) {
         return world;
       }
     }
 
-    logger.info(`No server found for owner ${userId}`);
+    logger.info(`No server found for owner ${entityId}`);
     return null;
   } catch (error) {
     logger.error(`Error finding server for owner: ${error}`);

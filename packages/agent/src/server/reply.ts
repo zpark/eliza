@@ -38,13 +38,13 @@ const replyAction = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Hello there!",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Hi! How can I help you today?",
                     actions: ["REPLY"],
@@ -53,13 +53,13 @@ const replyAction = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "What's your favorite color?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I really like deep shades of blue. They remind me of the ocean and the night sky.",
                     actions: ["REPLY"],
@@ -68,13 +68,13 @@ const replyAction = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Can you explain how neural networks work?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Let me break that down for you in simple terms...",
                     actions: ["REPLY"],
@@ -83,13 +83,13 @@ const replyAction = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Could you help me solve this math problem?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Of course! Let's work through it step by step.",
                     actions: ["REPLY"],

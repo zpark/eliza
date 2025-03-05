@@ -226,7 +226,7 @@ export class MessageManager {
 
         try {
             // Convert IDs to UUIDs
-            const userId = createUniqueUuid(this.runtime, ctx.from.id.toString()) as UUID;
+            const entityId = createUniqueUuid(this.runtime, ctx.from.id.toString()) as UUID;
             const userName = ctx.from.username || ctx.from.first_name || "Unknown User";
             const chatId = createUniqueUuid(this.runtime, ctx.chat?.id.toString());
             const roomId = chatId;
@@ -252,7 +252,7 @@ export class MessageManager {
             // Create the memory object
             const memory: Memory = {
                 id: messageId,
-                userId,
+                entityId,
                 agentId: this.runtime.agentId,
                 roomId,
                 content: {
@@ -298,7 +298,7 @@ export class MessageManager {
             }
 
             await this.runtime.ensureConnection({
-                userId,
+                entityId,
                 roomId,
                 userName,
                 name: userName,
@@ -348,7 +348,7 @@ export class MessageManager {
 
                         const responseMemory: Memory = {
                             id: createUniqueUuid(this.runtime, sentMessage.message_id.toString()),
-                            userId: this.runtime.agentId,
+                            entityId: this.runtime.agentId,
                             agentId: this.runtime.agentId,
                             roomId,
                             content: {
@@ -393,7 +393,7 @@ export class MessageManager {
         const reactionEmoji = (reaction.new_reaction[0] as ReactionType).type;
 
         try {
-            const userId = createUniqueUuid(this.runtime, ctx.from.id.toString()) as UUID;
+            const entityId = createUniqueUuid(this.runtime, ctx.from.id.toString()) as UUID;
             const roomId = createUniqueUuid(this.runtime, ctx.chat.id.toString());
 
             const reactionId = createUniqueUuid(this.runtime, `${reaction.message_id}-${ctx.from.id}-${Date.now()}`);
@@ -401,7 +401,7 @@ export class MessageManager {
             // Create reaction memory
             const memory: Memory = {
                 id: reactionId,
-                userId,
+                entityId,
                 agentId: this.runtime.agentId,
                 roomId,
                 content: {
@@ -421,7 +421,7 @@ export class MessageManager {
                     const sentMessage = await ctx.reply(content.text);
                     const responseMemory: Memory = {
                         id: createUniqueUuid(this.runtime, sentMessage.message_id.toString()),
-                        userId: this.runtime.agentId,
+                        entityId: this.runtime.agentId,
                         agentId: this.runtime.agentId,
                         roomId,
                         content: {

@@ -1,7 +1,7 @@
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { ChannelType } from "@elizaos/core";
 import { ServiceTypes } from "../types.ts";
-import { DiscordService } from "../index.ts";
+import type { DiscordService } from "../index.ts";
 
 const channelStateProvider: Provider = {
     name: "channelState",
@@ -27,7 +27,7 @@ const channelStateProvider: Provider = {
         let channelType = "";
         let serverName = "";
         let channelId = "";
-        let serverId = room.serverId;
+        const serverId = room.serverId;
 
         if (room.type === ChannelType.DM) {
             channelType = "DM";

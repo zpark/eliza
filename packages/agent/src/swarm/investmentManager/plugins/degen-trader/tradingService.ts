@@ -2687,7 +2687,7 @@ export class DegenTradingService extends Service {
           },
           agentId: this.runtime.agentId,
           roomId: this.runtime.agentId,
-          userId: this.runtime.agentId,
+          entityId: this.runtime.agentId,
           unique: true,
           metadata: {
             type: "transaction",
@@ -3956,7 +3956,7 @@ export class DegenTradingService extends Service {
           },
           agentId: this.runtime.agentId,
           roomId: this.runtime.agentId,
-          userId: this.runtime.agentId,
+          entityId: this.runtime.agentId,
         },
         "positions"
       );

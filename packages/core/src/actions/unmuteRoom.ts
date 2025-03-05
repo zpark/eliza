@@ -90,26 +90,26 @@ export const unmuteRoomAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}}, you can unmute this channel now",
+                    text: "{{name3}}, you can unmute this channel now",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Done",
                     actions: ["UNMUTE_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I could use some help troubleshooting this bug.",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Can you post the specific error message",
                 },
@@ -117,13 +117,13 @@ export const unmuteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}}, please unmute this room. We could use your input again.",
+                    text: "{{name2}}, please unmute this room. We could use your input again.",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sounds good",
                     actions: ["UNMUTE_ROOM"],
@@ -132,13 +132,13 @@ export const unmuteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} wait you should come back and chat in here",
+                    text: "{{name2}} wait you should come back and chat in here",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "im back",
                     actions: ["UNMUTE_ROOM"],
@@ -147,13 +147,13 @@ export const unmuteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "unmute urself {{user2}}",
+                    text: "unmute urself {{name2}}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "unmuted",
                     actions: ["UNMUTE_ROOM"],
@@ -162,13 +162,13 @@ export const unmuteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "ay {{user2}} get back in here",
+                    text: "ay {{name2}} get back in here",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sup yall",
                     actions: ["UNMUTE_ROOM"],

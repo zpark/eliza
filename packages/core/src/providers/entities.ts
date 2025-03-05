@@ -1,6 +1,6 @@
 import { addHeader } from "../prompts";
 import { formatEntities, getEntityDetails } from "../entities";
-import { Entity, IAgentRuntime, Memory, Provider } from "../types";
+import type { Entity, IAgentRuntime, Memory, Provider } from "../types";
 
 export const entitiesProvider: Provider = {
   name: "ENTITIES",

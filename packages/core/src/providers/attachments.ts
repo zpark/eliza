@@ -1,6 +1,6 @@
-import { Provider } from "../types";
+import type { Provider } from "../types";
 import { addHeader } from "../prompts";
-import { IAgentRuntime, Memory } from "../types";
+import type { IAgentRuntime, Memory } from "../types";
 
 export const attachmentsProvider: Provider = {
   name: "ATTACHMENTS",

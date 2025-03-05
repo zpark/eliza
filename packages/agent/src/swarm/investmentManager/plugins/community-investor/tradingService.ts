@@ -51,8 +51,8 @@ export type TradingEvent =
 /**
  * Unified Trading Service that centralizes all trading operations
  */
-export class TrustTradingService extends Service {
-    static serviceType = ServiceTypes.TRUST_TRADING;
+export class CommunityInvestorService extends Service {
+    static serviceType = ServiceTypes.COMMUNITY_INVESTOR;
     capabilityDescription = "The agent is able to trade on the Solana blockchain";
 
     // Memory managers
@@ -99,8 +99,8 @@ export class TrustTradingService extends Service {
         this.tradingConfig = DEFAULT_TRADING_CONFIG;
     }
 
-    static async start(runtime: IAgentRuntime): Promise<TrustTradingService> {
-        const tradingService = new TrustTradingService(runtime);
+    static async start(runtime: IAgentRuntime): Promise<CommunityInvestorService> {
+        const tradingService = new CommunityInvestorService(runtime);
         return tradingService;
     }
 
@@ -1417,7 +1417,7 @@ export class TrustTradingService extends Service {
             // Create memory object
             const memory: Memory = {
                 id: uuidv4() as UUID,
-                userId: this.runtime.agentId as UUID,
+                entityId: this.runtime.agentId,
                 roomId: "global" as UUID,
                 content: {
                     text: `Token performance data for ${token.symbol || token.address} on ${token.chain}`,
@@ -1450,7 +1450,7 @@ export class TrustTradingService extends Service {
             // Create memory object
             const memory: Memory = {
                 id: uuidv4() as UUID,
-                userId: this.runtime.agentId as UUID,
+                entityId: this.runtime.agentId,
                 roomId: "global" as UUID,
                 content: {
                     text: `Position data for token ${position.tokenAddress} by entity ${position.entityId}`,
@@ -1483,7 +1483,7 @@ export class TrustTradingService extends Service {
             // Create memory object
             const memory: Memory = {
                 id: uuidv4() as UUID,
-                userId: this.runtime.agentId as UUID,
+                entityId: this.runtime.agentId,
                 roomId: "global" as UUID,
                 content: {
                     text: `Transaction data for position ${transaction.positionId} token ${transaction.tokenAddress} ${transaction.type}`,
@@ -1524,7 +1524,7 @@ export class TrustTradingService extends Service {
             // Create memory object
             const memory: Memory = {
                 id: uuidv4() as UUID,
-                userId: this.runtime.agentId as UUID,
+                entityId: this.runtime.agentId,
                 roomId: "global" as UUID,
                 content: {
                     text: `Token recommendation for ${recommendation.tokenAddress} by entity ${recommendation.entityId}`,
@@ -1557,7 +1557,7 @@ export class TrustTradingService extends Service {
             // Create memory object
             const memory: Memory = {
                 id: uuidv4() as UUID,
-                userId: this.runtime.agentId as UUID,
+                entityId: this.runtime.agentId,
                 roomId: "global" as UUID,
                 content: {
                     text: `Recommender metrics for ${metrics.entityId}`,
@@ -1590,7 +1590,7 @@ export class TrustTradingService extends Service {
             // Create memory object
             const memory: Memory = {
                 id: uuidv4() as UUID,
-                userId: this.runtime.agentId as UUID,
+                entityId: this.runtime.agentId,
                 roomId: "global" as UUID,
                 content: {
                     text: `Recommender metrics history for ${history.entityId}`,

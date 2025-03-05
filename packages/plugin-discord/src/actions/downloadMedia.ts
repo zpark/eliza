@@ -142,13 +142,13 @@ export default {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Downloading the YouTube video now, one sec",
                     actions: ["DOWNLOAD_MEDIA"],
@@ -157,13 +157,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Can you grab this video for me? https://vimeo.com/123456789",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Sure thing, I'll download that Vimeo video for you",
                     actions: ["DOWNLOAD_MEDIA"],
@@ -172,13 +172,13 @@ export default {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "I need this video downloaded: https://www.youtube.com/watch?v=abcdefg",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "No problem, I'm on it. I'll have that YouTube video downloaded in a jiffy",
                     actions: ["DOWNLOAD_MEDIA"],

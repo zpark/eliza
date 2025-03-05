@@ -92,47 +92,47 @@ export const muteRoomAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}}, please mute this channel. No need to respond here for now.",
+                    text: "{{name3}}, please mute this channel. No need to respond here for now.",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Got it",
                     actions: ["MUTE_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
-                    text: "@{{user1}} we could really use your input on this",
+                    text: "@{{name1}} we could really use your input on this",
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user3}}, please mute this channel for the time being",
+                    text: "{{name3}}, please mute this channel for the time being",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "Understood",
                     actions: ["MUTE_ROOM"],
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "Hey what do you think about this new design",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
                     text: "",
                     actions: ["IGNORE"],
@@ -141,26 +141,26 @@ export const muteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} plz mute this room",
+                    text: "{{name2}} plz mute this room",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "np going silent",
                     actions: ["MUTE_ROOM"],
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "whos going to the webxr meetup in an hour btw",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "",
                     actions: ["IGNORE"],
@@ -169,13 +169,13 @@ export const muteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "too many messages here {{user2}}",
+                    text: "too many messages here {{name2}}",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "my bad ill mute",
                     actions: ["MUTE_ROOM"],
@@ -184,13 +184,13 @@ export const muteRoomAction: Action = {
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "yo {{user2}} dont talk in here",
+                    text: "yo {{name2}} dont talk in here",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "sry",
                     actions: ["MUTE_ROOM"],
