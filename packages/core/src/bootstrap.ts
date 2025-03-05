@@ -15,7 +15,6 @@ import { composeContext } from "./context.ts";
 import { createUniqueUuid } from "./entities.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import { reflectionEvaluator } from "./evaluators/reflection.ts";
-import { capabilitiesProvider } from "./providers/capabilities.ts";
 import {
   formatMessages,
   getActorDetails
@@ -78,7 +77,15 @@ About {{agentName}}:
 
 {{recentMessages}}
 
-# INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
+# INSTRUCTIONS: 
+If this conversation is part of an onboarding process (look for actions like BEGIN_ONBOARDING, SETTING_UPDATED, or SETTING_UPDATE_FAILED in recent messages), ALWAYS respond with RESPOND.
+
+If the user's message doesn't provide the information requested during onboarding, {{agentName}} should still respond with a polite reminder about what information is needed and provide examples of acceptable responses.
+
+For non-onboarding conversations:
+- Respond with the word RESPOND if {{agentName}} should respond to the message. 
+- Respond with STOP if a user asks {{agentName}} to be quiet. 
+- Respond with IGNORE if {{agentName}} should ignore the message.
 ${shouldRespondFooter}`;
 
 export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
@@ -99,11 +106,21 @@ Examples of {{agentName}}'s dialog and actions:
 
 {{attachments}}
 
+# Capabilities
+Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
+
 {{providers}}
 
 {{actions}}
 
 {{messageDirections}}
+
+# INSTRUCTIONS:
+If this conversation is part of an onboarding process (look for actions like BEGIN_ONBOARDING, SETTING_UPDATED, or SETTING_UPDATE_FAILED in recent messages), and the user's response doesn't provide the requested information:
+1. Politely acknowledge their message
+2. Remind them what information you need
+3. Provide examples of acceptable responses
+4. Keep the tone friendly and helpful
 
 {{recentMessages}}
 
@@ -853,7 +870,6 @@ export const bootstrapPlugin: Plugin = {
     roleProvider,
     settingsProvider,
     relationshipsProvider,
-    capabilitiesProvider,
   ],
   services: [TaskService],
 };
