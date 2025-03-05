@@ -15,6 +15,7 @@ import { composeContext } from "./context.ts";
 import { createUniqueUuid } from "./entities.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import { reflectionEvaluator } from "./evaluators/reflection.ts";
+import { capabilitiesProvider } from "./providers/capabilities.ts";
 import {
   formatMessages,
   getActorDetails
@@ -97,9 +98,6 @@ Examples of {{agentName}}'s dialog and actions:
 {{characterMessageExamples}}
 
 {{attachments}}
-
-# Capabilities
-Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
 
 {{providers}}
 
@@ -855,6 +853,7 @@ export const bootstrapPlugin: Plugin = {
     roleProvider,
     settingsProvider,
     relationshipsProvider,
+    capabilitiesProvider,
   ],
   services: [TaskService],
 };

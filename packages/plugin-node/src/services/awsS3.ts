@@ -27,6 +27,7 @@ interface JsonUploadResult extends UploadResult {
 
 export class AwsS3Service extends Service implements IFileService {
     static serviceType: ServiceType = ServiceTypes.REMOTE_FILES;
+    capabilityDescription: string = "The agent is able to upload and download files from AWS S3";
 
     private s3Client: S3Client | null = null;
     private bucket = "";

@@ -8,6 +8,7 @@ import { TELEGRAM_SERVICE_NAME } from "./constants.ts";
 
 export class TelegramService extends Service {
     static serviceType = TELEGRAM_SERVICE_NAME;
+    capabilityDescription: string = "The agent is able to send and receive messages on telegram";
     private bot: Telegraf<Context>;
     public messageManager: MessageManager;
     private options;
@@ -48,10 +49,18 @@ export class TelegramService extends Service {
         return tg;
     }
 
-    static async stop(_runtime: IAgentRuntime) {
+    static async stop(runtime: IAgentRuntime) {
         // Implement shutdown if necessary
+        const tgClient = runtime.getService(TELEGRAM_SERVICE_NAME);
+        if (tgClient) {
+            await tgClient.stop();
+        }
     }
-    
+
+    async stop(): Promise<void> {
+        this.bot.stop();
+    }
+
     private async initializeBot(): Promise<void> {
         this.bot.launch({ dropPendingUpdates: true, allowedUpdates: [ "message", "message_reaction" ] });
         logger.log("✨ Telegram bot successfully launched and is running!");

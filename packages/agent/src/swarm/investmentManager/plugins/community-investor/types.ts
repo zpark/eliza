@@ -726,4 +726,6 @@ export interface TradePerformance {
     rapidDump: boolean;
 }
 
-export const SERVICE_TYPE = "trust_trading";
+export const ServiceTypes = {
+    TRUST_TRADING: "trust_trading",
+} as const;

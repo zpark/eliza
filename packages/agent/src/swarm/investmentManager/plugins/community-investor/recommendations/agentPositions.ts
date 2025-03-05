@@ -3,7 +3,7 @@ import type {
     Memory
 } from "@elizaos/core";
 import { formatFullReport } from "../reports";
-import { SERVICE_TYPE, type TokenPerformance, type Transaction } from "../types";
+import { ServiceTypes, type TokenPerformance, type Transaction } from "../types";
 
 export const getAgentPositions: any = {
     name: "TRUST_GET_AGENT_POSITIONS",
@@ -52,7 +52,7 @@ export const getAgentPositions: any = {
     ) {
         console.log("getAgentPositions is running");
 
-        const tradingService = runtime.getService(SERVICE_TYPE);
+        const tradingService = runtime.getService(ServiceTypes.TRUST_TRADING);
 
         try {
             const positions = await tradingService.getOpenPositionsWithBalance();

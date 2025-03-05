@@ -19,6 +19,8 @@ const PROVIDER_CONFIG = {
 
 export class SolanaService extends Service {
     static serviceType: string = SOLANA_SERVICE_NAME;
+    capabilityDescription: string = "The agent is able to interact with the Solana blockchain, and has access to the wallet data";
+    
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
@@ -63,12 +65,14 @@ export class SolanaService extends Service {
             logger.error('SolanaService not found');
             return;
         }
-        if (client.updateInterval) {
-            clearInterval(client.updateInterval);
-            client.updateInterval = null;
-        }
+        await client.stop();
+    }
 
-        return Promise.resolve();
+    async stop(): Promise<void> {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            this.updateInterval = null;
+        }
     }
 
     private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<any> {

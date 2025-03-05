@@ -9,7 +9,7 @@ import {
 import { v4 as uuid } from "uuid";
 import type { TrustTradingService } from "../tradingService";
 import type { MessageRecommendation } from "./schema";
-import { RecommendationType, Conviction, SERVICE_TYPE } from "../types";
+import { RecommendationType, Conviction, ServiceTypes } from "../types";
 
 // Use type intersection for extended metadata
 type ExtendedMetadata = MemoryMetadata & {
@@ -70,7 +70,7 @@ export const confirmRecommendation: Action = {
 
     async handler(runtime: IAgentRuntime, message, _state, _options, callback: any) {
         console.log("confirmRecommendation is running");
-        if (!runtime.getService(SERVICE_TYPE)) {
+        if (!runtime.getService(ServiceTypes.TRUST_TRADING)) {
             console.log("no trading service");
             return;
         }
@@ -102,7 +102,7 @@ export const confirmRecommendation: Action = {
         }
 
         const tradingService = runtime.getService<TrustTradingService>(
-            SERVICE_TYPE
+            ServiceTypes.TRUST_TRADING
         )!;
 
         if (!tradingService.hasWallet("solana")) {

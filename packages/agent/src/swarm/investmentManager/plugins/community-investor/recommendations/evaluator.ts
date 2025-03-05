@@ -11,7 +11,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { z } from "zod";
 import type { TrustTradingService } from "../tradingService.js";
-import { SERVICE_TYPE, type RecommendationMemory } from "../types.js";
+import { ServiceTypes, type RecommendationMemory } from "../types.js";
 import {
     extractXMLFromResponse,
     getZodJsonSchema,
@@ -384,13 +384,13 @@ async function handler(
 
     const { agentId, roomId } = state;
 
-    if (!runtime.getService(SERVICE_TYPE)) {
+    if (!runtime.getService(ServiceTypes.TRUST_TRADING)) {
         console.log("no trading service");
         return;
     }
 
     const tradingService = runtime.getService<TrustTradingService>(
-         SERVICE_TYPE
+         ServiceTypes.TRUST_TRADING
     )!;
 
     if (!tradingService.hasWallet("solana")) {

@@ -13,7 +13,7 @@ import {
     parseTokenResponse
 } from "../utils.js";
 import type { TrustTradingService } from "../tradingService.js";
-import { SERVICE_TYPE } from "../types.js";
+import { ServiceTypes } from "../types.js";
 
 const tokenDetailsTemplate = `You are a crypto expert.
 
@@ -176,12 +176,12 @@ export const getTokenDetails: any = {
     similes: ["TOKEN_DETAILS"],
 
     async handler(runtime: IAgentRuntime, message: Memory, _state: State, _options, callback: any) {
-        if (!runtime.getService(SERVICE_TYPE)) {
+        if (!runtime.getService(ServiceTypes.TRUST_TRADING)) {
             console.log("no trading service");
             return;
         }
 
-        const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
+        const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
 
         if(!tradingService) {
             throw new Error("No trading service found");

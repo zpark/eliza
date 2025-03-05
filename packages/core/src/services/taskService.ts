@@ -16,6 +16,8 @@ export class TaskService extends Service {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
   static serviceType: ServiceType = ServiceTypes.TASK;
+  capabilityDescription: string = "The agent is able to schedule and execute tasks";
+
 
   static async start(runtime: IAgentRuntime): Promise<TaskService> {
     const service = new TaskService(runtime);

@@ -140,7 +140,8 @@ export class DegenTradingService extends Service {
   // For tracking pending sells
   private pendingSells: { [tokenAddress: string]: bigint } = {};
 
-  static serviceType = "degen_trader";
+  static serviceType = ServiceTypes.DEGEN_TRADING;
+  capabilityDescription: string = "The agent is able to trade on the Solana blockchain";
 
   private tradingConfig: TradingConfig = {
     intervals: {
@@ -1173,7 +1174,7 @@ export class DegenTradingService extends Service {
     logger.info("Creating scheduled tasks...");
 
     const tasks = await this.runtime.databaseAdapter.getTasks({
-      tags: ["queue", "repeat", "degen_trader"],
+      tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
     });
 
     if (!tasks.find((task) => task.name === "BUY_SIGNAL")) {
@@ -1182,7 +1183,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "BUY_SIGNAL",
         description: "Generate buy signals",
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: this.tradingConfig.intervals.priceCheck,
@@ -1197,7 +1198,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "VALIDATE_DATA_SOURCES",
         description: "Validate data sources quality",
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: 900000, // Check every 15 minutes
@@ -1212,7 +1213,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "CIRCUIT_BREAKER_CHECK",
         description: "Check for circuit breaker conditions",
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: 300000, // Check every 5 minutes
@@ -1353,7 +1354,7 @@ export class DegenTradingService extends Service {
 
       // Clean up scheduled tasks
       const tasks = await this.runtime.databaseAdapter.getTasks({
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
       });
 
       for (const task of tasks) {
@@ -1505,7 +1506,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "MONITOR_TOKEN",
         description: `Monitor token ${data.tokenAddress}`,
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           tokenAddress: data.tokenAddress,
           initialPrice,
@@ -1541,7 +1542,7 @@ export class DegenTradingService extends Service {
     try {
       // Find monitoring tasks for this process
       const tasks = await this.runtime.databaseAdapter.getTasks({
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
       });
 
       // Delete all related monitoring tasks
@@ -1760,7 +1761,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "MONITOR_TRAILING_STOP",
         description: `Monitor trailing stop for ${tokenAddress}`,
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           tokenAddress,
           updatedAt: Date.now(),
@@ -2126,7 +2127,7 @@ export class DegenTradingService extends Service {
           roomId: this.runtime.agentId,
           name: "MONITOR_TOKEN",
           description: `Monitor token ${tokenAddress}`,
-          tags: ["queue", "repeat", "degen_trader", "monitor", tokenAddress],
+          tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING, "monitor", tokenAddress],
           metadata: {
             tokenAddress,
             buyPrice,
@@ -4083,7 +4084,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "BUY_SIGNAL",
         description: `Buy token ${signal.tokenAddress}`,
-        tags: ["queue", "degen_trader"],
+        tags: ["queue", ServiceTypes.DEGEN_TRADING],
         metadata: {
           signal,
           tradeAmount,
@@ -4197,7 +4198,7 @@ export class DegenTradingService extends Service {
         id: taskId,
         name: "EXECUTE_SELL",
         description: `Execute sell for ${signal.tokenAddress}`,
-        tags: ["queue", "repeat", "degen_trader"],
+        tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           signal,
           expectedReceiveAmount,

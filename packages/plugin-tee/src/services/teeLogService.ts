@@ -29,6 +29,7 @@ export class TeeLogService extends Service implements ITeeLogService {
     private teeLogManager: TeeLogManager;
 
     static serviceType: ServiceType = ServiceTypes.TEE;
+    capabilityDescription: string = "The agent is able to log TEE attestation events and is probably running in a TEE";
 
     constructor(runtime: IAgentRuntime) {
         super();

@@ -7,7 +7,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { formatRecommenderReport } from "../reports";
 import type { TrustTradingService } from "../tradingService";
-import { SERVICE_TYPE } from "../types";
+import { ServiceTypes } from "../types";
 
 export const getRecommenderReport: Action = {
     name: "GET_RECOMMENDER_REPORT",
@@ -71,7 +71,7 @@ export const getRecommenderReport: Action = {
             logger.error("No entity found, no entity score can be generated");
             return;
         }
-        const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
+        const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
 
         const metrics = entity
             ? await tradingService.getRecommenderMetrics(entity.id)

@@ -33,6 +33,7 @@ function getYoutubeDL() {
 
 export class VideoService extends Service implements IVideoService {
     static serviceType: ServiceType = ServiceTypes.VIDEO;
+    capabilityDescription: string = "The agent is able to download and process videos";
     private cacheKey = "content/video";
     private dataDir = "./content_cache";
 

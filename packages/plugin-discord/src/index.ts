@@ -44,6 +44,7 @@ import { VoiceManager } from "./voice.ts";
 
 export class DiscordService extends Service implements IDiscordService {
   static serviceType: string = DISCORD_SERVICE_NAME;
+  capabilityDescription: string = "The agent is able to send and receive messages on discord";
   client: DiscordJsClient;
   character: Character;
   messageManager: MessageManager;
@@ -217,10 +218,14 @@ export class DiscordService extends Service implements IDiscordService {
     try {
       // disconnect websocket
       // this unbinds all the listeners
-      await client.client.destroy();
+      await client.stop();
     } catch (e) {
       logger.error("client-discord instance stop err", e);
     }
+  }
+
+  async stop() {
+    await this.client.destroy();
   }
 
   private async onClientReady(readyClient: { user: { tag: any; id: any } }) {

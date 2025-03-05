@@ -10,6 +10,7 @@ import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/a
 
 export class PdfService extends Service implements IPdfService {
     static serviceType: ServiceType = ServiceTypes.PDF;
+    capabilityDescription: string = "The agent is able to convert PDF files to text";
 
     constructor(runtime: IAgentRuntime) {
         super();

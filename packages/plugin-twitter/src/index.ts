@@ -46,6 +46,7 @@ export class TwitterClientInstance implements ITwitterClient {
 
 export class TwitterService extends Service {
     static serviceType: string = TWITTER_SERVICE_NAME;
+    capabilityDescription: string = "The agent is able to send and receive messages on twitter";
     private static instance: TwitterService;
     private clients: Map<string, TwitterClientInstance> = new Map();
 

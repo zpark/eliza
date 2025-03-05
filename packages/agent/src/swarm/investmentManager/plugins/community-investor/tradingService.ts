@@ -29,7 +29,7 @@ import {
     RecommendationType,
     type RecommenderMetrics,
     type RecommenderMetricsHistory,
-    SERVICE_TYPE,
+    ServiceTypes,
     type TokenMarketData,
     type TokenMetadata,
     type TokenPerformance,
@@ -52,7 +52,8 @@ export type TradingEvent =
  * Unified Trading Service that centralizes all trading operations
  */
 export class TrustTradingService extends Service {
-    static serviceType = SERVICE_TYPE;
+    static serviceType = ServiceTypes.TRUST_TRADING;
+    capabilityDescription: string = "The agent is able to trade on the Solana blockchain";
 
     // Memory managers
     private tokenMemoryManager: IMemoryManager;

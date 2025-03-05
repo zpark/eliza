@@ -579,6 +579,9 @@ export abstract class Service extends EventEmitter {
   /** Service type */
   static serviceType: string;
 
+  /** Service name */
+  abstract capabilityDescription: string;
+
   /** Service configuration */
   config?: { [key: string]: any };
 
