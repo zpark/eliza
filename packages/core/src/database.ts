@@ -532,6 +532,13 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
     abstract getTask(id: UUID): Promise<Task | null>;
 
     /**
+     * Retrieves a specific task by its name.
+     * @param name The name of the task to retrieve
+     * @returns Promise resolving to the Task object if found, null otherwise
+     */
+    abstract getTasksByName(name: string): Promise<Task[]>;
+
+    /**
      * Updates an existing task in the database.
      * @param id The UUID of the task to update
      * @param task Partial Task object containing the fields to update

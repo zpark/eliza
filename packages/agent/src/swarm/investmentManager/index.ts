@@ -175,7 +175,7 @@ export default {
   plugins: [
     // degenIntelPlugin,
     // degenTraderPlugin,
-    communityTraderPlugin,
+    // communityTraderPlugin,
   ],
   character,
   init: (runtime: IAgentRuntime) => initCharacter({ runtime, config }),

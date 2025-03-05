@@ -297,7 +297,7 @@ export const dataProvider: Provider = {
             const metrics = recommenderMetrics
                 ? {
                     ...recommenderMetrics,
-                    updatedAt: new Date() // Add missing updatedAt property
+                    updatedAt: Date.now() // Add missing updatedAt property
                   } as TypesRecommenderMetrics
                 : undefined;
 
@@ -428,7 +428,7 @@ export const dataProvider: Provider = {
                     const metrics = recommenderMetrics
                         ? {
                             ...recommenderMetrics,
-                            updatedAt: new Date() // Add missing updatedAt property
+                            updatedAt: Date.now() // Add missing updatedAt property
                           } as TypesRecommenderMetrics
                         : undefined;
 

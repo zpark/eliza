@@ -1173,7 +1173,7 @@ export class DegenTradingService extends Service {
     logger.info("Creating scheduled tasks...");
 
     const tasks = await this.runtime.databaseAdapter.getTasks({
-      tags: ["queue", "schedule", "degen_trader"],
+      tags: ["queue", "repeat", "degen_trader"],
     });
 
     if (!tasks.find((task) => task.name === "GENERATE_BUY_SIGNAL")) {
@@ -1182,7 +1182,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "GENERATE_BUY_SIGNAL",
         description: "Generate buy signals",
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: this.tradingConfig.intervals.priceCheck,
@@ -1197,7 +1197,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "SYNC_WALLET",
         description: "Sync wallet",
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: this.tradingConfig.intervals.walletSync,
@@ -1212,7 +1212,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "MONITOR_PERFORMANCE",
         description: "Monitor portfolio performance",
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: this.tradingConfig.intervals.performanceMonitor,
@@ -1227,7 +1227,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "VALIDATE_DATA_SOURCES",
         description: "Validate data sources quality",
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: 900000, // Check every 15 minutes
@@ -1242,7 +1242,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "CIRCUIT_BREAKER_CHECK",
         description: "Check for circuit breaker conditions",
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: 300000, // Check every 5 minutes
@@ -1383,7 +1383,7 @@ export class DegenTradingService extends Service {
 
       // Clean up scheduled tasks
       const tasks = await this.runtime.databaseAdapter.getTasks({
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
       });
 
       for (const task of tasks) {
@@ -1535,7 +1535,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "MONITOR_TOKEN",
         description: `Monitor token ${data.tokenAddress}`,
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           tokenAddress: data.tokenAddress,
           initialPrice,
@@ -1571,7 +1571,7 @@ export class DegenTradingService extends Service {
     try {
       // Find monitoring tasks for this process
       const tasks = await this.runtime.databaseAdapter.getTasks({
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
       });
 
       // Delete all related monitoring tasks
@@ -1790,7 +1790,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "MONITOR_TRAILING_STOP",
         description: `Monitor trailing stop for ${tokenAddress}`,
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           tokenAddress,
           updatedAt: Date.now(),
@@ -2137,7 +2137,7 @@ export class DegenTradingService extends Service {
         marketCap: marketData.marketCap,
         volume24h: marketData.volume24h,
         liquidity: marketData.liquidity,
-        updatedAt: new Date().toISOString(),
+        updatedAt: Date.now(),
       });
 
       // Create monitoring task for this token if it doesn't exist
@@ -2156,7 +2156,7 @@ export class DegenTradingService extends Service {
           roomId: this.runtime.agentId,
           name: "MONITOR_TOKEN",
           description: `Monitor token ${tokenAddress}`,
-          tags: ["queue", "schedule", "degen_trader", "monitor", tokenAddress],
+          tags: ["queue", "repeat", "degen_trader", "monitor", tokenAddress],
           metadata: {
             tokenAddress,
             buyPrice,
@@ -3191,7 +3191,7 @@ export class DegenTradingService extends Service {
         birdeye: birdeyeStatus,
         twitter: twitterStatus,
         cmc: cmcStatus,
-        updatedAt: new Date().toISOString(),
+        updatedAt: Date.now(),
       });
 
       // Take action if data quality is poor
@@ -4227,7 +4227,7 @@ export class DegenTradingService extends Service {
         id: taskId,
         name: "EXECUTE_SELL",
         description: `Execute sell for ${signal.tokenAddress}`,
-        tags: ["queue", "schedule", "degen_trader"],
+        tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           signal,
           expectedReceiveAmount,

@@ -9,9 +9,9 @@ import BuySignal from "./providers/buy-signal";
 export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	worldId = runtime.agentId; // this is global data for the agent
 
-	// first, get all tasks with tags "queue", "schedule", "degen_intel" and delete them
+	// first, get all tasks with tags "queue", "repeat", "degen_intel" and delete them
 	const tasks = await runtime.databaseAdapter.getTasks({
-		tags: ["queue", "schedule", "degen_intel"]
+		tags: ["queue", "repeat", "degen_intel"]
 	});
 
 	for (const task of tasks) {
@@ -37,7 +37,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 60, // 1 hour
 		},
-		tags: ["queue", "schedule", "degen_intel"],
+		tags: ["queue", "repeat", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({	
@@ -59,7 +59,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
-		tags: ["queue", "schedule", "degen_intel"],
+		tags: ["queue", "repeat", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -81,7 +81,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 15, // 15 minutes
 		},
-		tags: ["queue", "schedule", "degen_intel"],
+		tags: ["queue", "repeat", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -103,7 +103,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
-		tags: ["queue", "schedule", "degen_intel"],
+		tags: ["queue", "repeat", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -125,7 +125,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
-		tags: ["queue", "schedule", "degen_intel"],
+		tags: ["queue", "repeat", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -147,6 +147,6 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 60 * 24, // 24 hours
 		},
-		tags: ["queue", "schedule", "degen_intel"],
+		tags: ["queue", "repeat", "degen_intel"],
 	});
 };
