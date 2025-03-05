@@ -7,6 +7,7 @@ import {
   type Memory,
   ModelTypes,
   RoleName,
+  ServiceTypes,
   type State,
   composeContext,
   createUniqueUuid,
@@ -14,6 +15,10 @@ import {
   getWorldSettings,
   logger
 } from "@elizaos/core";
+import { TwitterService } from "@elizaos/plugin-twitter";
+
+// Define Twitter service type constant
+const TWITTER_SERVICE = "twitter";
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -89,7 +94,7 @@ async function ensureTwitterClient(
   serverId: string,
   worldSettings: { [key: string]: string | boolean | number | null }
 ) {
-  const manager = runtime.getService(ServiceTypes.TWITTER);
+  const manager = runtime.getService(TWITTER_SERVICE) as TwitterService;
   if (!manager) {
     throw new Error("Twitter client manager not found");
   }
