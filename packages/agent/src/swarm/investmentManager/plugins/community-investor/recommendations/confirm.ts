@@ -9,7 +9,7 @@ import {
 import { v4 as uuid } from "uuid";
 import type { TrustTradingService } from "../tradingService";
 import type { MessageRecommendation } from "./schema";
-import { RecommendationType, Conviction } from "../types";
+import { RecommendationType, Conviction, SERVICE_TYPE } from "../types";
 
 // Use type intersection for extended metadata
 type ExtendedMetadata = MemoryMetadata & {
@@ -70,7 +70,7 @@ export const confirmRecommendation: Action = {
 
     async handler(runtime: IAgentRuntime, message, _state, _options, callback: any) {
         console.log("confirmRecommendation is running");
-        if (!runtime.getService("trust_trading")) {
+        if (!runtime.getService(SERVICE_TYPE)) {
             console.log("no trading service");
             return;
         }
@@ -102,7 +102,7 @@ export const confirmRecommendation: Action = {
         }
 
         const tradingService = runtime.getService<TrustTradingService>(
-            "trust_trading"
+            SERVICE_TYPE
         )!;
 
         if (!tradingService.hasWallet("solana")) {
@@ -215,7 +215,7 @@ export const confirmRecommendation: Action = {
                             recommendation.conviction === "MEDIUM" ? Conviction.MEDIUM :
                             Conviction.LOW,
                         tokenAddress: recommendation.tokenAddress!,
-                        type: recommendation.type === "buy" ? RecommendationType.BUY :
+                        type: recommendation.type === "BUY" ? RecommendationType.BUY :
                             RecommendationType.SELL,
                         timestamp: message.createdAt
                             ? new Date(message.createdAt)
@@ -249,7 +249,7 @@ export const confirmRecommendation: Action = {
 
                 if (callback && result) {
                     switch (recommendation.type) {
-                        case "buy": {
+                        case "BUY": {
                             const responseMemory: Memory = {
                                 id: newUUID,
                                 content: {
@@ -269,7 +269,7 @@ export const confirmRecommendation: Action = {
                             break;
                         }
                         case "DONT_BUY":
-                        case "sell":
+                        case "SELL":
                         case "DONT_SELL":
                             break;
                     }

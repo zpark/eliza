@@ -33,8 +33,8 @@ type PositionPerformance = {
 export function calculatePositionPerformance(
     txs: Transaction[]
 ): PositionPerformance {
-    const buyTx = txs.find((tx) => tx.type === "buy");
-    const sellTxs = txs.filter((tx) => tx.type === "sell");
+    const buyTx = txs.find((tx) => tx.type === "BUY");
+    const sellTxs = txs.filter((tx) => tx.type === "SELL");
 
     const totalInvestment = buyTx?.amount ?? 0n;
     const totalInvestmentUsd = Number(buyTx?.valueUsd ?? 0);

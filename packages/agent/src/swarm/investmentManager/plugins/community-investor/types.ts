@@ -106,9 +106,9 @@ export enum Conviction {
  * IMPORTANT: Must match the enum in config.ts
  */
 export enum RecommendationType {
-    BUY = "buy",
+    BUY = "BUY",
     DONT_BUY = "DONT_BUY",
-    SELL = "sell",
+    SELL = "SELL",
     DONT_SELL = "DONT_SELL",
     NONE = "NONE",
     HOLD = "HOLD"
@@ -163,8 +163,8 @@ export type PositionWithBalance = Position & {
  * IMPORTANT: Must match the enum in config.ts
  */
 export enum TransactionType {
-    BUY = "buy",
-    SELL = "sell",
+    BUY = "BUY",
+    SELL = "SELL",
     TRANSFER_IN = "transfer_in",
     TRANSFER_OUT = "transfer_out"
 }
@@ -726,6 +726,4 @@ export interface TradePerformance {
     rapidDump: boolean;
 }
 
-export interface Entity extends CoreEntity {
-    platform?: string;
-}
+export const SERVICE_TYPE = "trust_trading";

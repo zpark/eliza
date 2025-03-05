@@ -177,7 +177,7 @@ class MemoryManagerService {
   getMemoryManager(tableName: string): IMemoryManager | null {
     const manager = this.memoryManagers.get(tableName);
     if (!manager) {
-      logger.error(`Memory manager ${tableName} not found`);
+      logger.debug(`Memory manager ${tableName} not found`);
       return null;
     }
     return manager;
@@ -413,7 +413,6 @@ export class AgentRuntime implements IAgentRuntime {
           }
         }
         if (plugin.services) {
-          console.log("plugin.services", plugin.services);
           await Promise.all(
             plugin.services.map((service) => this.registerService(service))
           );

@@ -7,7 +7,7 @@ import {
 } from "@elizaos/core";
 import { v4 as uuidv4 } from 'uuid';
 import { formatFullReport } from "../reports";
-import type { TokenPerformance, Transaction } from "../types";
+import { SERVICE_TYPE, type TokenPerformance, type Transaction } from "../types";
 import type { TrustTradingService } from "../tradingService";
 
 export const getSimulatedPositions: Action = {
@@ -50,7 +50,7 @@ export const getSimulatedPositions: Action = {
 
     async handler(runtime, message, _state, _options, callback: any) {
         console.log("getSimulatedPositions is running");
-        const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+        const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
 
         try {
             const [positions, user] = await Promise.all([
@@ -130,7 +130,7 @@ export const getSimulatedPositions: Action = {
                     id: uuidv4() as UUID,
                     positionId: position?.id as UUID || uuidv4() as UUID,
                     chain: position?.chain || '',
-                    type: tx.type.toUpperCase() as "buy" | "sell" | "transfer_in" | "transfer_out",
+                    type: tx.type.toUpperCase() as "BUY" | "SELL" | "transfer_in" | "transfer_out",
                     tokenAddress: tx.tokenAddress,
                     transactionHash: tx.transactionHash,
                     amount: BigInt(tx.amount),

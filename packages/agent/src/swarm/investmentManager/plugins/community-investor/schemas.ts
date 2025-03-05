@@ -9,8 +9,8 @@ import type { Transaction } from "./types.js";
 
 // Define consistent transaction types
 export const TransactionType = {
-  BUY: "buy",
-  SELL: "sell",
+  BUY: "BUY",
+  SELL: "SELL",
   TRANSFER_IN: "transfer_in",
   TRANSFER_OUT: "transfer_out"
 } as const;
@@ -174,7 +174,7 @@ export function transformTransaction(dbTx: any, positionId = "unknown", chain = 
     chain: dbTx.chain || chain,
     tokenAddress: dbTx.tokenAddress || dbTx.token_address,
     transactionHash: dbTx.transactionHash || dbTx.transaction_hash,
-    type: type === "buy" || type === "sell" ? type : "buy",
+    type: type === "BUY" || type === "SELL" ? type : "BUY",
     amount: typeof dbTx.amount === 'bigint' ? dbTx.amount : 
             typeof dbTx.amount === 'string' ? BigInt(dbTx.amount) : 
             typeof dbTx.amount === 'number' ? BigInt(Math.floor(dbTx.amount)) : BigInt(0),
@@ -231,7 +231,7 @@ export function transformTokenRecommendation(dbRec: any): TokenRecommendation {
       entityId: dbRec.entityId || dbRec.recommender_id,
       chain: dbRec.chain || "unknown",
       tokenAddress: dbRec.tokenAddress || dbRec.token_address,
-      type: dbRec.type || "buy",
+      type: dbRec.type || "BUY",
       conviction: dbRec.conviction || "MEDIUM",
       initialMarketCap: dbRec.initialMarketCap || dbRec.initial_market_cap || "0",
       initialLiquidity: dbRec.initialLiquidity || dbRec.initial_liquidity || "0",

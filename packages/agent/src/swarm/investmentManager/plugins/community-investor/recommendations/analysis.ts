@@ -13,6 +13,7 @@ import {
     parseTokenResponse
 } from "../utils.js";
 import type { TrustTradingService } from "../tradingService.js";
+import { SERVICE_TYPE } from "../types.js";
 
 const tokenDetailsTemplate = `You are a crypto expert.
 
@@ -145,7 +146,6 @@ Respond in the following format:
 
 Now, based on the messages provided, please respond with the most recent ticker or token address mentioned from the user.`
 
-const SERVICE_TYPE = "trading";
 
 export const getTokenDetails: any = {
     name: "GET_TOKEN_DETAILS",
@@ -176,12 +176,16 @@ export const getTokenDetails: any = {
     similes: ["TOKEN_DETAILS"],
 
     async handler(runtime: IAgentRuntime, message: Memory, _state: State, _options, callback: any) {
-        if (!runtime.getService("trust_trading")) {
+        if (!runtime.getService(SERVICE_TYPE)) {
             console.log("no trading service");
             return;
         }
 
-        const tradingService = runtime.getService(SERVICE_TYPE) as TrustTradingService;
+        const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
+
+        if(!tradingService) {
+            throw new Error("No trading service found");
+        }
 
         // Get a users most recent message containing a token
         const rawMessages = await runtime.messageManager.getMemories({

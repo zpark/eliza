@@ -98,12 +98,12 @@ function calculateTradeMetrics(
             lastTradeTime = new Date(tx.timestamp);
 
         switch (tx.type) {
-            case "buy":
+            case "BUY":
                 totalBought += normalizedAmount;
                 totalBoughtValue += value;
                 volumeUsd += value;
                 break;
-            case "sell":
+            case "SELL":
                 totalSold += normalizedAmount;
                 totalSoldValue += value;
                 volumeUsd += value;

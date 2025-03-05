@@ -11,12 +11,13 @@ import { z } from "zod";
 import { CoingeckoClient } from "../clients";
 import { formatRecommenderReport } from "../reports";
 import type { TrustTradingService } from "../tradingService";
-import type {
-    PositionWithBalance,
-    TokenPerformance,
-    RecommenderMetrics as TypesRecommenderMetrics,
-    TokenPerformance as TypesTokenPerformance,
-    Transaction as TypesTransaction
+import {
+    SERVICE_TYPE,
+    type PositionWithBalance,
+    type TokenPerformance,
+    type RecommenderMetrics as TypesRecommenderMetrics,
+    type TokenPerformance as TypesTokenPerformance,
+    type Transaction as TypesTransaction
 } from "../types";
 import { getZodJsonSchema, render } from "../utils";
 // Create a simple formatter module inline if it doesn't exist
@@ -167,7 +168,7 @@ const actions = [
             positionIds: z.array(z.string().uuid()).describe("Position IDs to close"),
         }),
         async handler({runtime}, { positionIds }) {
-            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+            const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
             for (const positionId of positionIds) {
                 await tradingService.closePosition(positionId as UUID);
             }
@@ -180,7 +181,7 @@ const actions = [
             entityId: z.string().uuid().describe("Entity ID to update"),
         }),
         async handler({runtime, message}, { entityId }) {
-            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+            const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
             // Use db method instead - assuming this is the correct replacement
             await tradingService.initializeRecommenderMetrics(entityId as UUID, message.content.source);
         },
@@ -197,7 +198,7 @@ const actions = [
                 // Get token address from position
                 const position = positions.find(p => p.id === positionId);
                 if (position) {
-                    const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+                    const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
                     await tradingService.updateTokenPerformance(position.chain, position.tokenAddress);
                 }
             }
@@ -236,7 +237,7 @@ async function runActions(
     positions: PositionWithBalance[],
     transactions: TypesTransaction[]
 ) {
-    const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+    const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
     
     return Promise.all(
         actions.map(async (actionCall) => {
@@ -280,13 +281,13 @@ export const dataProvider: Provider = {
 
             // Generate token reports
             const tokenReports = await Promise.all(
-                tokens.map(async (token) => formatTokenPerformance(token as TypesTokenPerformance))
+                tokens.map(async (token) => formatTokenPerformance(token))
             );
 
             // Get entity info if message is from a user
             const clientUserId = message.userId === message.agentId ? "" : message.userId;
             const entity = await runtime.databaseAdapter.getEntityById(clientUserId as UUID);
-            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+            const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
 
             // Add updatedAt to RecommenderMetrics to make it compatible
             const recommenderMetrics = entity
@@ -347,7 +348,7 @@ export const dataProvider: Provider = {
             const tokens: TokenPerformance[] = [];
             const positions: PositionWithBalance[] = [];
             const transactions: TypesTransaction[] = [];
-            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+            const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
 
             // Get open positions
             const openPositions = await tradingService.getOpenPositionsWithBalance();
@@ -412,10 +413,10 @@ export const dataProvider: Provider = {
                     }
 
                     const tokenReports = await Promise.all(
-                        tokens.map(async (token) => formatTokenPerformance(token as TypesTokenPerformance))
+                        tokens.map(async (token) => formatTokenPerformance(token))
                     );
 
-                    const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+                    const tradingService = runtime.getService<TrustTradingService>(SERVICE_TYPE);
 
                     const entity = await runtime.databaseAdapter.getEntityById(message.userId as UUID);
 

@@ -11,7 +11,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { z } from "zod";
 import type { TrustTradingService } from "../tradingService.js";
-import type { RecommendationMemory } from "../types.js";
+import { SERVICE_TYPE, type RecommendationMemory } from "../types.js";
 import {
     extractXMLFromResponse,
     getZodJsonSchema,
@@ -384,13 +384,13 @@ async function handler(
 
     const { agentId, roomId } = state;
 
-    if (!runtime.getService("trust_trading")) {
+    if (!runtime.getService(SERVICE_TYPE)) {
         console.log("no trading service");
         return;
     }
 
     const tradingService = runtime.getService<TrustTradingService>(
-         "trust_trading"
+         SERVICE_TYPE
     )!;
 
     if (!tradingService.hasWallet("solana")) {
@@ -470,15 +470,19 @@ async function handler(
             .map((r) => recommendationsManager.removeMemory(r.id as UUID))
     );
 
+    console.log("message", message);
+
     const context = composeContext({
         state: {
             schema: JSON.stringify(getZodJsonSchema(recommendationSchema)),
             message: JSON.stringify({
                 text: message.content.text,
+                userId: message.userId,
                 agentId: message.agentId,
                 roomId: message.roomId,
                 // TODO: userScreenName vs userName is bad
-                username: message.metadata[message.content.source].username ?? message.metadata[message.content.source].userScreenName,
+                // This should be handled better, especially cross platform
+                username: message.content.username ?? message.content.userName,
             }),
         } as unknown as State,
         template: recommendationTemplate,
@@ -639,6 +643,8 @@ async function handler(
             return v;
         });
 
+        console.log("forming memory from message", message)
+
         if (callback && !hasAgentRepliedTo) {
             console.log("generating text");
             if (signalInt === 0) {
@@ -697,12 +703,18 @@ async function handler(
                     token: tokenString,
                 });
 
+                console.log("context", context);
+
                 const res = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                     context: context,
                 });
 
                 const agentResponseMsg = extractXMLFromResponse(res, "message");
                 const question = parseConfirmationResponse(agentResponseMsg);
+
+                console.log("question", question);
+
+                console.log("forming response memory");
                 const responseMemory: Memory = {
                     content: {
                         text: question,
@@ -719,6 +731,7 @@ async function handler(
                     metadata: message.metadata,
                     createdAt: Date.now() * 1000,
                 };
+                console.log("response memory", responseMemory);
                 await callback(responseMemory);
             hasAgentRepliedTo = true;
         }
