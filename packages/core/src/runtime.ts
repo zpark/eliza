@@ -5,12 +5,11 @@ import { settings } from "./environment.ts";
 import {
   evaluationTemplate,
   formatEvaluatorNames,
-  formatEvaluators
+  formatEvaluators,
 } from "./evaluators.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import { MemoryManager } from "./memory.ts";
-import { parseJsonArrayFromText, splitChunks } from "./prompts.ts";
-import { addHeader, composePrompt } from "./prompts.ts";
+import { composePrompt, parseJsonArrayFromText, splitChunks } from "./prompts.ts";
 import {
   type Action,
   type Agent,
@@ -35,115 +34,9 @@ import {
   type State,
   type TaskWorker,
   type UUID,
-  type WorldData
+  type WorldData,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-
-/**
- * Manages memory-related operations and memory managers
- */
-class MemoryManagerService {
-  private runtime: IAgentRuntime;
-  private memoryManagers: Map<string, IMemoryManager>;
-
-  constructor(runtime: IAgentRuntime, knowledgeRoot: string) {
-    this.runtime = runtime;
-    this.memoryManagers = new Map();
-
-    // Initialize default memory managers
-    this.initializeDefaultManagers(knowledgeRoot);
-  }
-
-  private initializeDefaultManagers(_knowledgeRoot: string) {
-    // Message manager for storing messages
-    this.registerMemoryManager(
-      new MemoryManager({
-        runtime: this.runtime,
-        tableName: "messages",
-      })
-    );
-
-    // Description manager for storing user descriptions
-    this.registerMemoryManager(
-      new MemoryManager({
-        runtime: this.runtime,
-        tableName: "descriptions",
-      })
-    );
-
-    // Documents manager for large documents
-    this.registerMemoryManager(
-      new MemoryManager({
-        runtime: this.runtime,
-        tableName: "documents",
-      })
-    );
-
-    // Knowledge manager for searchable fragments
-    this.registerMemoryManager(
-      new MemoryManager({
-        runtime: this.runtime,
-        tableName: "fragments",
-      })
-    );
-  }
-
-  registerMemoryManager(manager: IMemoryManager): void {
-    if (!manager.tableName) {
-      throw new Error("Memory manager must have a tableName");
-    }
-
-    if (this.memoryManagers.has(manager.tableName)) {
-      logger.warn(
-        `Memory manager ${manager.tableName} is already registered. Skipping registration.`
-      );
-      return;
-    }
-
-    this.memoryManagers.set(manager.tableName, manager);
-  }
-
-  getMemoryManager(tableName: string): IMemoryManager | null {
-    const manager = this.memoryManagers.get(tableName);
-    if (!manager) {
-      logger.debug(`Memory manager ${tableName} not found`);
-      return null;
-    }
-    return manager;
-  }
-
-  private getRequiredMemoryManager(
-    tableName: string,
-    managerType: string
-  ): IMemoryManager {
-    const manager = this.getMemoryManager(tableName);
-    if (!manager) {
-      logger.error(`${managerType} manager not found`);
-      throw new Error(`${managerType} manager not found`);
-    }
-    return manager;
-  }
-
-  getMessageManager(): IMemoryManager {
-    return this.getRequiredMemoryManager("messages", "Message");
-  }
-
-  getDescriptionManager(): IMemoryManager {
-    return this.getRequiredMemoryManager("descriptions", "Description");
-  }
-
-  getDocumentsManager(): IMemoryManager {
-    return this.getRequiredMemoryManager("documents", "Documents");
-  }
-
-  getKnowledgeManager(): IMemoryManager {
-    return this.getRequiredMemoryManager("fragments", "Knowledge");
-  }
-
-  getAllManagers(): Map<string, IMemoryManager> {
-    return this.memoryManagers;
-  }
-}
 
 /**
  * Represents the runtime environment for an agent, handling message processing,
@@ -159,7 +52,7 @@ export class AgentRuntime implements IAgentRuntime {
   readonly providers: Provider[] = [];
   readonly plugins: Plugin[] = [];
   events: Map<string, ((params: any) => void)[]> = new Map();
-  stateCache = new Map<UUID, { values: State, data: any, providers: string }>();
+  stateCache = new Map<UUID, { values: State; data: any; providers: string }>();
 
   readonly fetch = fetch;
   services: Map<ServiceType, Service> = new Map();
@@ -167,7 +60,6 @@ export class AgentRuntime implements IAgentRuntime {
   public adapters: IDatabaseAdapter[];
 
   private readonly knowledgeRoot: string;
-  private readonly memoryManagerService: MemoryManagerService;
 
   models = new Map<string, ((params: any) => Promise<any>)[]>();
   routes: Route[] = [];
@@ -212,10 +104,6 @@ export class AgentRuntime implements IAgentRuntime {
 
     this.fetch = (opts.fetch as typeof fetch) ?? this.fetch;
 
-    this.memoryManagerService = new MemoryManagerService(
-      this,
-      this.knowledgeRoot
-    );
     const plugins = opts?.plugins ?? [];
 
     if (!opts?.ignoreBootstrap) {
@@ -429,111 +317,109 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   private async checkExistingKnowledge(knowledgeId: UUID): Promise<boolean> {
-    const existingDocument = await this.documentsManager.getMemoryById(
-      knowledgeId
-    );
+    const existingDocument = await this.getMemoryManager(
+      "documents"
+    ).getMemoryById(knowledgeId);
     return !!existingDocument;
   }
 
-
-  async getKnowledge(
-    message: Memory
-): Promise<KnowledgeItem[]> {
+  async getKnowledge(message: Memory): Promise<KnowledgeItem[]> {
     // Add validation for message
     if (!message?.content?.text) {
-        logger.warn("Invalid message for knowledge query:", {
-            message,
-            content: message?.content,
-            text: message?.content?.text,
-        });
-        return [];
+      logger.warn("Invalid message for knowledge query:", {
+        message,
+        content: message?.content,
+        text: message?.content?.text,
+      });
+      return [];
     }
-    
+
     // Validate processed text
     if (!message?.content?.text || message?.content?.text.trim().length === 0) {
-        logger.warn("Empty text for knowledge query");
-        return [];
+      logger.warn("Empty text for knowledge query");
+      return [];
     }
 
-    const embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, message?.content?.text);
-    const fragments = await this.knowledgeManager.searchMemories(
-        {
-            embedding,
-            roomId: message.agentId,
-            count: 5,
-            match_threshold: 0.1,
-        }
+    const embedding = await this.useModel(
+      ModelTypes.TEXT_EMBEDDING,
+      message?.content?.text
     );
+    const fragments = await this.getMemoryManager("knowledge").searchMemories({
+      embedding,
+      roomId: message.agentId,
+      count: 5,
+      match_threshold: 0.1,
+    });
 
     const uniqueSources = [
-        ...new Set(
-            fragments.map((memory) => {
-                logger.log(
-                    `Matched fragment: ${memory.content.text} with similarity: ${memory.similarity}`
-                );
-                return memory.content.source;
-            })
-        ),
+      ...new Set(
+        fragments.map((memory) => {
+          logger.log(
+            `Matched fragment: ${memory.content.text} with similarity: ${memory.similarity}`
+          );
+          return memory.content.source;
+        })
+      ),
     ];
 
     const knowledgeDocuments = await Promise.all(
-        uniqueSources.map((source) =>
-          this.documentsManager.getMemoryById(source as UUID)
-        )
+      uniqueSources.map((source) =>
+        this.getMemoryManager("documents").getMemoryById(source as UUID)
+      )
     );
 
     return knowledgeDocuments
-        .filter((memory) => memory !== null)
-        .map((memory) => ({ id: memory.id, content: memory.content }));
-}
+      .filter((memory) => memory !== null)
+      .map((memory) => ({ id: memory.id, content: memory.content }));
+  }
 
-async addKnowledge(
+  async addKnowledge(
     item: KnowledgeItem,
     options = {
-        targetTokens: 3000,
-        overlap: 200,
-        modelContextSize: 4096
+      targetTokens: 3000,
+      overlap: 200,
+      modelContextSize: 4096,
     }
-) {
+  ) {
     // First store the document
     const documentMemory: Memory = {
-        id: item.id,
-        agentId: this.agentId,
-        roomId: this.agentId,
-        userId: this.agentId,
-        content: item.content,
-        metadata: {
-            type: MemoryType.DOCUMENT,
-            timestamp: Date.now()
-        }
+      id: item.id,
+      agentId: this.agentId,
+      roomId: this.agentId,
+      userId: this.agentId,
+      content: item.content,
+      metadata: {
+        type: MemoryType.DOCUMENT,
+        timestamp: Date.now(),
+      },
     };
-    
-    await this.documentsManager.createMemory(documentMemory);
+
+    await this.getMemoryManager("documents").createMemory(documentMemory);
 
     // Create fragments using splitChunks
     const fragments = await splitChunks(
-        item.content.text,
-        options.targetTokens,
-        options.overlap
+      item.content.text,
+      options.targetTokens,
+      options.overlap
     );
-    
+
     // Store each fragment with link to source document
     for (let i = 0; i < fragments.length; i++) {
-        const fragmentMemory: Memory = {
-            id: createUniqueUuid(this, `${item.id}-fragment-${i}`),
-            agentId: this.agentId,
-            roomId: this.agentId,
-            userId: this.agentId,
-            content: { text: fragments[i] },
-            metadata: {
-                type: MemoryType.FRAGMENT,
-                documentId: item.id,  // Link to source document
-                position: i,          // Keep track of order
-                timestamp: Date.now()
-            }
-        };
-        
-        await this.knowledgeManager.createMemory(fragmentMemory);
+      const fragmentMemory: Memory = {
+        id: createUniqueUuid(this, `${item.id}-fragment-${i}`),
+        agentId: this.agentId,
+        roomId: this.agentId,
+        userId: this.agentId,
+        content: { text: fragments[i] },
+        metadata: {
+          type: MemoryType.FRAGMENT,
+          documentId: item.id, // Link to source document
+          position: i, // Keep track of order
+          timestamp: Date.now(),
+        },
+      };
+
+      await this.getMemoryManager("knowledge").createMemory(fragmentMemory);
     }
   }
 
@@ -974,43 +860,55 @@ async addKnowledge(
     additionalKeys: { [key: string]: unknown } = {},
     providerList: string[] | null = null
   ): Promise<State> {
-    const providersToGet = providerList ?
-      this.providers.filter((provider) => providerList.includes(provider.name))
+    const providersToGet = providerList
+      ? this.providers.filter((provider) =>
+          providerList.includes(provider.name)
+        )
       : this.providers;
 
-      const providerResults = (
-        await Promise.all(
-            providersToGet.map(async (provider) => {
-                const start = Date.now();
-                const result = await provider.get(this, message);
-                const duration = Date.now() - start;
-                logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
-                return result;
-            })
-        )
+    const providerResults = await Promise.all(
+      providersToGet.map(async (provider) => {
+        const start = Date.now();
+        const result = await provider.get(this, message);
+        const duration = Date.now() - start;
+        logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
+        return result;
+      })
     );
 
     // get cached state for this message ID
-    const cachedState = await this.stateCache.get(message.id) || { values: {}, data: {}, providers: "" };
+    const cachedState = (await this.stateCache.get(message.id)) || {
+      values: {},
+      data: {},
+      providers: "",
+    };
 
     const values = providerResults.map((result) => result.values).flat();
-    const text = providerResults.map((result) => result.text).filter((text) => text !== "").join("\n\n");
+    const text = providerResults
+      .map((result) => result.text)
+      .filter((text) => text !== "")
+      .join("\n\n");
     const data = providerResults.map((result) => result.data).flat();
 
     const providers = cachedState.providers + text;
 
-    const newState = { ...cachedState.values, ...values, ...cachedState.data, data, ...additionalKeys, providers };
+    const newState = {
+      ...cachedState.values,
+      ...values,
+      ...cachedState.data,
+      data,
+      ...additionalKeys,
+      providers,
+    };
     this.stateCache.set(message.id, newState);
     return newState;
   }
 
-  // IAgentRuntime interface implementation
-  registerMemoryManager(manager: IMemoryManager): void {
-    this.memoryManagerService.registerMemoryManager(manager);
-  }
-
   getMemoryManager(tableName: string): IMemoryManager | null {
-    return this.memoryManagerService.getMemoryManager(tableName);
+    return new MemoryManager({
+      runtime: this,
+      tableName: tableName,
+    });
   }
 
   getService<T extends Service>(service: ServiceType): T | null {
@@ -1046,23 +944,6 @@ async addKnowledge(
     logger.success(
       `${this.character.name}(${this.agentId}) - Service ${serviceType} registered successfully`
     );
-  }
-
-  // Memory manager getters
-  get messageManager(): IMemoryManager {
-    return this.memoryManagerService.getMessageManager();
-  }
-
-  get descriptionManager(): IMemoryManager {
-    return this.memoryManagerService.getDescriptionManager();
-  }
-
-  get documentsManager(): IMemoryManager {
-    return this.memoryManagerService.getDocumentsManager();
-  }
-
-  get knowledgeManager(): IMemoryManager {
-    return this.memoryManagerService.getKnowledgeManager();
   }
 
   registerModel(modelType: ModelType, handler: (params: any) => Promise<any>) {

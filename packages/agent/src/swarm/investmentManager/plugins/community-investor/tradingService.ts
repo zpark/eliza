@@ -79,13 +79,6 @@ export class TrustTradingService extends Service {
     ) {
         super(runtime);
         
-        // Register memory managers
-        this.tokenMemoryManager = this.registerMemoryManager("tokens");
-        this.positionMemoryManager = this.registerMemoryManager("positions");
-        this.transactionMemoryManager = this.registerMemoryManager("transactions");
-        this.recommendationMemoryManager = this.registerMemoryManager("recommendations");
-        this.recommenderMemoryManager = this.registerMemoryManager("recommenders");
-        
         // Initialize API clients
         this.birdeyeClient = BirdeyeClient.createFromRuntime(runtime);
         this.dexscreenerClient = DexscreenerClient.createFromRuntime(runtime);
@@ -120,25 +113,6 @@ export class TrustTradingService extends Service {
 
     async stop(): Promise<void> {
         return Promise.resolve();
-    }
-
-    /**
-     * Register a memory manager
-     */
-    private registerMemoryManager(name: string): IMemoryManager {
-        const existingManager = this.runtime.getMemoryManager(name);
-        if (existingManager) {
-            return existingManager;
-        }
-
-        const memoryManager = new MemoryManager({
-            tableName: name,
-            runtime: this.runtime,
-        });
-        
-        
-        this.runtime.registerMemoryManager(memoryManager);
-        return memoryManager;
     }
 
     /**

@@ -103,7 +103,7 @@ export const greetAction: Action = {
             };
 
             // Create memory of greeting
-            await runtime.messageManager.createMemory({
+            await runtime.getMemoryManager("messages").createMemory({
                 userId: runtime.agentId,
                 agentId: runtime.agentId,
                 roomId: message.roomId,

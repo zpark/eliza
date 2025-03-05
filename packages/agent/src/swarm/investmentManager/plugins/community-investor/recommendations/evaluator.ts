@@ -1,10 +1,9 @@
 import {
     composePrompt,
+    ModelTypes,
     type Evaluator,
     type IAgentRuntime,
     type Memory,
-    MemoryManager,
-    ModelTypes,
     type State,
     type UUID
 } from "@elizaos/core";
@@ -441,15 +440,6 @@ async function handler(
     if (signalInt === 3) {
         console.log("signal is 3, skipping not related to tokens at all");
         return;
-    }
-
-    if (!runtime.getMemoryManager("recommendations")) {
-        runtime.registerMemoryManager(
-            new MemoryManager({
-                runtime,
-                tableName: "recommendations",
-            })
-        );
     }
 
     // Get recent recommendations

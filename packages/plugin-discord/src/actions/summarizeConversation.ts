@@ -213,7 +213,7 @@ const summarizeAction = {
         const { objective, start, end } = dateRange;
 
         // 2. get these memories from the database
-        const memories = await runtime.messageManager.getMemories({
+        const memories = await runtime.getMemoryManager("messages").getMemories({
             roomId,
             // subtract start from current time
             start: Number.parseInt(start as string),

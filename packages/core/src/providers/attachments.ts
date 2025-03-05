@@ -12,7 +12,7 @@ export const attachmentsProvider: Provider = {
     const { roomId } = message;
     const conversationLength = runtime.getConversationLength();
 
-    const recentMessagesData = await runtime.messageManager.getMemories({
+    const recentMessagesData = await runtime.getMemoryManager("messages").getMemories({
       roomId,
       count: conversationLength,
       unique: false,

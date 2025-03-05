@@ -1,7 +1,7 @@
 import {
     type Action,
     type ActionExample,
-    type Client,
+    type Service,
     composePrompt,
     type HandlerCallback,
     type IAgentRuntime,
@@ -17,6 +17,7 @@ import BigNumber from 'bignumber.js';
 import { SOLANA_SERVICE_NAME } from '../constants';
 import { getWalletKey } from '../keypairUtils';
 import type { Item } from '../types';
+import { SolanaService } from '../service';
 
 async function getTokenDecimals(connection: Connection, mintAddress: string): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
@@ -111,7 +112,7 @@ async function getTokenFromWallet(
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
+        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
         if (!solanaClient) {
             throw new Error('SolanaService not initialized');
         }
@@ -189,7 +190,7 @@ export const executeSwap: Action = {
                 state = await runtime.composeState(message, {}, ["recentMemories"]);
             }
 
-            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
+            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
             if (!solanaClient) {
                 throw new Error('SolanaService not initialized');
             }

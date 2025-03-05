@@ -694,7 +694,7 @@ export class VoiceManager extends EventEmitter {
                     };
 
                     if (responseMemory.content.text?.trim()) {
-                        await this.runtime.messageManager.createMemory(responseMemory);
+                        await this.runtime.getMemoryManager("messages").createMemory(responseMemory);
 
                         const responseStream = await this.runtime.useModel(ModelTypes.TEXT_TO_SPEECH, content.text);
                         if (responseStream) {

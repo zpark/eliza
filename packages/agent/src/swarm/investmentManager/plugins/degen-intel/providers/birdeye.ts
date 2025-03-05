@@ -192,7 +192,7 @@ export default class Birdeye {
 
 	async fillTimeframe() {
 		// Get the latest sentiment analysis
-		const memories = await this.runtime.messageManager.getMemories({
+		const memories = await this.runtime.getMemoryManager("messages").getMemories({
 			roomId: this.sentimentRoomId,
 			end: Date.now(),
 			count: 1
@@ -225,7 +225,7 @@ export default class Birdeye {
 				}
 
 				// Create memory for this timeslot
-				await this.runtime.messageManager.createMemory({
+				await this.runtime.getMemoryManager("messages").createMemory({
 					id: createUniqueUuid(this.runtime, `sentiment-${timeslot.toISOString()}`),
 					userId: this.runtime.agentId,
 					agentId: this.runtime.agentId,
@@ -254,7 +254,7 @@ export default class Birdeye {
 		const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 		const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
 
-		const memories = await this.runtime.messageManager.getMemories({
+		const memories = await this.runtime.getMemoryManager("messages").getMemories({
 			roomId: this.sentimentRoomId,
 			start: twoDaysAgo.getTime(),
 			end: oneHourAgo.getTime()
@@ -274,7 +274,7 @@ export default class Birdeye {
 		const toDate = timeslot;
 
 		// Get tweets from the twitter feed room
-		const tweets = await this.runtime.messageManager.getMemories({
+		const tweets = await this.runtime.getMemoryManager("messages").getMemories({
 			roomId: this.twitterFeedRoomId,
 			start: fromDate.getTime(),
 			end: toDate.getTime()
@@ -284,7 +284,7 @@ export default class Birdeye {
 			logger.info(`No tweets to process for timeslot ${timeslot.toISOString()}`);
 
 			// Mark as processed even if no tweets
-			await this.runtime.messageManager.createMemory({
+			await this.runtime.getMemoryManager("messages").createMemory({
 				id: sentiment.id,
 				userId: sentiment.userId,
 				agentId: sentiment.agentId,
@@ -321,7 +321,7 @@ export default class Birdeye {
 		const json = JSON.parse(response || "{}");
 
 		// Update the sentiment analysis
-		await this.runtime.messageManager.createMemory({
+		await this.runtime.getMemoryManager("messages").createMemory({
 			id: sentiment.id,
 			userId: sentiment.userId,
 			agentId: sentiment.agentId,

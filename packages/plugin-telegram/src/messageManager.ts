@@ -359,7 +359,7 @@ export class MessageManager {
                             createdAt: sentMessage.date * 1000
                         };
 
-                        await this.runtime.messageManager.createMemory(responseMemory);
+                        await this.runtime.getMemoryManager("messages").createMemory(responseMemory);
                         memories.push(responseMemory);
                     }
 
@@ -413,7 +413,7 @@ export class MessageManager {
                 },
                 createdAt: Date.now()
             };
-            await this.runtime.messageManager.createMemory(memory);
+            await this.runtime.getMemoryManager("messages").createMemory(memory);
 
             // Create callback for handling reaction responses
             const callback: HandlerCallback = async (content: Content) => {

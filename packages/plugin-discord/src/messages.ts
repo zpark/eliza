@@ -179,7 +179,7 @@ export class MessageManager {
           }
 
           for (const m of memories) {
-            await this.runtime.messageManager.createMemory(m);
+            await this.runtime.getMemoryManager("messages").createMemory(m);
           }
           return memories;
         } catch (error) {

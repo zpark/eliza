@@ -941,10 +941,6 @@ export interface IAgentRuntime {
   events: Map<string, ((params: any) => void)[]>;
   fetch?: typeof fetch | null;
   routes: Route[];
-  messageManager: IMemoryManager;
-  descriptionManager: IMemoryManager;
-  documentsManager: IMemoryManager;
-  knowledgeManager: IMemoryManager;
 
   initialize(): Promise<void>;
 
@@ -954,8 +950,6 @@ export interface IAgentRuntime {
     overlap: number,
     modelContextSize: number
 }): Promise<void>;
-
-  registerMemoryManager(manager: IMemoryManager): void;
 
   getMemoryManager(tableName: string): IMemoryManager | null;
 

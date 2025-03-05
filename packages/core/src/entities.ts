@@ -55,7 +55,7 @@ async function getRecentInteractions(
   const results = [];
 
   // Get recent messages from the room - just for context
-  const recentMessages = await runtime.messageManager.getMemories({
+  const recentMessages = await runtime.getMemoryManager("messages").getMemories({
     roomId,
     count: 20 // Reduced from 100 since we only need context
   });

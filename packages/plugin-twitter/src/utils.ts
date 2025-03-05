@@ -55,7 +55,7 @@ export async function buildConversationThread(
         }
 
         // Handle memory storage
-        const memory = await client.runtime.messageManager.getMemoryById(
+        const memory = await client.runtime.getMemoryManager("messages").getMemoryById(
             createUniqueUuid(this.runtime, currentTweet.id)
         );
         if (!memory) {
@@ -71,7 +71,7 @@ export async function buildConversationThread(
                 type: ChannelType.GROUP
             });
 
-            await client.runtime.messageManager.createMemory({
+            await client.runtime.getMemoryManager("messages").createMemory({
                 id: createUniqueUuid(this.runtime, currentTweet.id),
                 agentId: client.runtime.agentId,
                 content: {

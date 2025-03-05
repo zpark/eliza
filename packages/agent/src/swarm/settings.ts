@@ -168,7 +168,7 @@ export async function startOnboardingDM(
       });
     }
     // Create memory of the initial message
-    await runtime.messageManager.createMemory({
+    await runtime.getMemoryManager("messages").createMemory({
       agentId: runtime.agentId as UUID,
       userId: runtime.agentId as UUID,
       roomId: roomId,

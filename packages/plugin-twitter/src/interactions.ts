@@ -117,7 +117,7 @@ export class TwitterInteractionClient {
 
                     // Check if we've already processed this tweet
                     const existingResponse =
-                        await this.runtime.messageManager.getMemoryById(
+                        await this.runtime.getMemoryManager("messages").getMemoryById(
                             tweetId
                         );
 
@@ -244,7 +244,7 @@ export class TwitterInteractionClient {
         // check if the tweet exists, save if it doesn't
         const tweetId = createUniqueUuid(this.runtime, tweet.id);
         const tweetExists =
-            await this.runtime.messageManager.getMemoryById(tweetId);
+            await this.runtime.getMemoryManager("messages").getMemoryById(tweetId);
 
         if (!tweetExists) {
             logger.log("tweet does not exist, saving");
@@ -372,7 +372,7 @@ export class TwitterInteractionClient {
                     state = await this.runtime.composeState(message, {}, ["recentMemories"]);
 
                     for (const responseMessage of responseMessages) {
-                        await this.runtime.messageManager.createMemory(
+                        await this.runtime.getMemoryManager("messages").createMemory(
                             responseMessage
                         );
                     }
@@ -429,7 +429,7 @@ export class TwitterInteractionClient {
             }
 
             // Handle memory storage
-            const memory = await this.runtime.messageManager.getMemoryById(
+            const memory = await this.runtime.getMemoryManager("messages").getMemoryById(
                 createUniqueUuid(this.runtime, currentTweet.id)
             );
             if (!memory) {
@@ -445,7 +445,7 @@ export class TwitterInteractionClient {
                     type: ChannelType.GROUP
                 });
 
-                this.runtime.messageManager.createMemory({
+                this.runtime.getMemoryManager("messages").createMemory({
                     id: createUniqueUuid(this.runtime, currentTweet.id),
                     agentId: this.runtime.agentId,
                     content: {

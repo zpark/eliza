@@ -206,7 +206,7 @@ export default class TwitterParser {
 		fromDate.setUTCSeconds(fromDate.getUTCSeconds() + 1);
 
 		/** Retrieve tweets from message manager */
-		const memories = await this.runtime.messageManager.getMemories({
+		const memories = await this.runtime.getMemoryManager("messages").getMemories({
 			roomId: this.roomId,
 			start: fromDate.getTime(),
 			end: timeslot.getTime()

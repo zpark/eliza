@@ -135,7 +135,7 @@ const checkShouldRespond = async (
 
   const [entitiesData, recentMessagesData] = await Promise.all([
     getEntityDetails({ runtime: runtime, roomId: message.roomId }),
-    runtime.messageManager.getMemories({
+    runtime.getMemoryManager("messages").getMemories({
       roomId: message.roomId,
       count: runtime.getConversationLength(),
       unique: false,
@@ -202,8 +202,8 @@ const messageReceivedHandler = async ({
 
   // First, save the incoming message
   await Promise.all([
-    runtime.messageManager.addEmbeddingToMemory(message),
-    runtime.messageManager.createMemory(message),
+    runtime.getMemoryManager("messages").addEmbeddingToMemory(message),
+    runtime.getMemoryManager("messages").createMemory(message),
   ]);
 
   const shouldRespond = await checkShouldRespond(runtime, message);
@@ -268,7 +268,7 @@ const reactionReceivedHandler = async ({
   message: Memory;
 }) => {
   try {
-    await runtime.messageManager.createMemory(message);
+    await runtime.getMemoryManager("messages").createMemory(message);
   } catch (error) {
     if (error.code === "23505") {
       logger.warn("Duplicate reaction memory, skipping");

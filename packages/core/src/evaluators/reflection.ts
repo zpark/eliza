@@ -324,7 +324,7 @@ export const reflectionEvaluator: Evaluator = {
     const lastMessageId = await runtime.databaseAdapter.getCache<string>(
       `${message.roomId}-reflection-last-processed`
     );
-    const messages = await runtime.messageManager.getMemories({
+    const messages = await runtime.getMemoryManager("messages").getMemories({
       roomId: message.roomId,
       count: runtime.getConversationLength(),
     });

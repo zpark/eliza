@@ -19,7 +19,7 @@ export const recentMemoriesProvider: Provider = {
     const isPostFormat = room?.type === ChannelType.FEED || room?.type === ChannelType.THREAD;
 
     // Get recent messages
-    const recentMessagesData = await runtime.messageManager.getMemories({
+    const recentMessagesData = await runtime.getMemoryManager("messages").getMemories({
       roomId,
       count: conversationLength,
       unique: false,
@@ -61,7 +61,7 @@ export const recentMemoriesProvider: Provider = {
       ]);
 
       // Check the existing memories in the database
-      return runtime.messageManager.getMemoriesByRoomIds({
+      return runtime.getMemoryManager("messages").getMemoriesByRoomIds({
         // filter out the current room id from rooms
         roomIds: rooms.filter((room) => room !== roomId),
         limit: 20,
