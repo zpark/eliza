@@ -277,9 +277,37 @@ const twitterPostAction: Action = {
       }
 
       const worker = {
-        name: "TWITTER_POST",
-        execute: async (runtime: IAgentRuntime, options: { option: string }) => {
-          if (options.option === "cancel") {
+        name: "Confirm Twitter Post",
+        execute: async (
+          runtime: IAgentRuntime,
+          options: { option?: string; selectedOption?: string; tweetContent?: string; [key: string]: any }
+        ) => {
+          logger.info(`[TWITTER_DEBUG] Worker execute called with options: ${JSON.stringify(options)}`);
+          
+          // Handle different option formats
+          let optionValue: string | undefined;
+          
+          if (typeof options === 'string') {
+            // Direct string option
+            optionValue = options;
+            logger.info(`[TWITTER_DEBUG] Option provided as string: ${optionValue}`);
+          } else if (options && typeof options === 'object') {
+            // Object with option property
+            if (typeof options.option === 'string') {
+              optionValue = options.option;
+              logger.info(`[TWITTER_DEBUG] Option provided in options.option: ${optionValue}`);
+            } else if (options.selectedOption && typeof options.selectedOption === 'string') {
+              // From CHOOSE_OPTION action
+              optionValue = options.selectedOption;
+              logger.info(`[TWITTER_DEBUG] Option provided in options.selectedOption: ${optionValue}`);
+            } else {
+              // When called from task service, default to post
+              optionValue = "post";
+              logger.info(`[TWITTER_DEBUG] No option provided, defaulting to: ${optionValue}`);
+            }
+          }
+          
+          if (optionValue === "cancel") {
             await callback({
               ...responseContent,
               text: "Tweet cancelled. I won't post it.",
@@ -288,7 +316,7 @@ const twitterPostAction: Action = {
             return;
           }
 
-          if(options.option !== "post") {
+          if(optionValue !== "post") {
             await callback({
               ...responseContent,
               text: "Invalid option. Should be 'post' or 'cancel'.",
@@ -298,20 +326,14 @@ const twitterPostAction: Action = {
           }
           
           try {
-            // For testing purposes, use a mock implementation
-            const useMockImplementation = true; // Set to false when ready to use real Twitter API
-            
-            if (useMockImplementation) {
-              // Simulate successful tweet posting
-              await callback({
-                ...responseContent,
-                text: `Tweet posted: '${cleanTweet}'`,
-                action: "TWITTER_POST_COMPLETED"
-              });
-              return;
+            // Get tweet content from options or task metadata
+            let tweetContent = cleanTweet;
+            if (options && typeof options === 'object' && options.tweetContent) {
+              tweetContent = options.tweetContent as string;
+              logger.info(`[TWITTER_DEBUG] Using tweet content from options: ${tweetContent}`);
             }
             
-            // Real implementation (only used when useMockImplementation is false)
+            // Real implementation
             const vals = {
               TWITTER_USERNAME: worldSettings.TWITTER_USERNAME.value,
               TWITTER_EMAIL: worldSettings.TWITTER_EMAIL.value,
@@ -322,9 +344,18 @@ const twitterPostAction: Action = {
 
             // Initialize/get Twitter client
             const client = await ensureTwitterClient(runtime, serverId, vals);
+            
+            if (!client || !client.client || !client.client.twitterClient) {
+              await callback({
+                ...responseContent,
+                text: "I couldn't post the tweet because I couldn't connect to Twitter. Please check your Twitter configuration.",
+                action: "TWITTER_POST_FAILED"
+              });
+              return;
+            }
 
             const result = await client.client.twitterClient.sendTweet(
-              cleanTweet
+              tweetContent
             );
             // result is a response object, get the data from it-- body is a readable stream
             const data = await result.json();
@@ -332,11 +363,20 @@ const twitterPostAction: Action = {
             const tweetId =
               data?.data?.create_tweet?.tweet_results?.result?.rest_id;
 
+            if (!tweetId) {
+              await callback({
+                ...responseContent,
+                text: "I encountered an error while trying to post your tweet. Please try again later.",
+                action: "TWITTER_POST_FAILED"
+              });
+              return;
+            }
+
             const tweetUrl = `https://twitter.com/${vals.TWITTER_USERNAME}/status/${tweetId}`;
 
             await callback({
               ...responseContent,
-              text: `${tweetUrl}`,
+              text: `Tweet posted: '${tweetContent}'\n${tweetUrl}`,
               url: tweetUrl,
               tweetId,
             });
@@ -354,14 +394,22 @@ const twitterPostAction: Action = {
           message: Memory,
           _state: State
         ) => {
+          // If message is undefined or doesn't have userId, this is being called from the task service
+          if (!message || !message.userId) {
+            logger.info(`[TWITTER_DEBUG] Worker validate called from task service, allowing execution`);
+            return true;
+          }
+          
           // Check user authorization
           const userRole = await getUserServerRole(runtime, message.userId, serverId);
           
-          // Get the world to check roles directly
+          // Add debug logging for role detection
+          logger.info(`[TWITTER_DEBUG] Worker validate - User ${message.userId} role for server ${serverId}: ${userRole}`);
+          
+          // Check if user is in world metadata roles directly
           const worldId = createUniqueUuid(runtime, serverId);
           const world = await runtime.databaseAdapter.getWorld(worldId);
           
-          // Check if user is authorized by role
           let isAuthorized = userRole === RoleName.OWNER || userRole === RoleName.ADMIN;
           
           // Additional role check directly from world metadata
@@ -369,11 +417,13 @@ const twitterPostAction: Action = {
             // Check if user ID is directly in roles
             if (world.metadata.roles[message.userId] === RoleName.OWNER || 
                 world.metadata.roles[message.userId] === RoleName.ADMIN) {
+              logger.info(`[TWITTER_DEBUG] Worker validate - User found directly in roles as: ${world.metadata.roles[message.userId]}`);
               isAuthorized = true;
             }
             
             // Check if user is the server owner
             if (world.metadata.ownership?.ownerId === message.userId) {
+              logger.info(`[TWITTER_DEBUG] Worker validate - User is the server owner`);
               isAuthorized = true;
             }
           }
@@ -383,8 +433,11 @@ const twitterPostAction: Action = {
       }
 
       // if the worker is not registered, register it
-      if (!runtime.getTaskWorker("TWITTER_POST")) {
+      if (!runtime.getTaskWorker("Confirm Twitter Post")) {
+        logger.info(`[TWITTER_DEBUG] Registering Confirm Twitter Post worker`);
         runtime.registerTaskWorker(worker);
+      } else {
+        logger.info(`[TWITTER_DEBUG] Confirm Twitter Post worker already registered`);
       }
 
       // Register approval task
@@ -392,7 +445,7 @@ const twitterPostAction: Action = {
         roomId: message.roomId,
         name: "Confirm Twitter Post",
         description: "Confirm the tweet to be posted.",
-        tags: ["TWITTER_POST", "AWAITING_CHOICE"],
+        tags: ["TWITTER_POST", "AWAITING_CHOICE", "queue"],
         metadata: {
           options: [
             {
@@ -404,6 +457,8 @@ const twitterPostAction: Action = {
               description: "Cancel the tweet and don't post it",
             },
           ],
+          updatedAt: Date.now(),
+          tweetContent: cleanTweet,
         },
       });
 
