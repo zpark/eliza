@@ -10,7 +10,7 @@ dotenv.config({ path: "../../.env" });
 const character: Character = {
   name: "Spartan",
   plugins: [
-    "@elizaos/plugin-anthropic",
+    //"@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
@@ -130,7 +130,7 @@ const config: OnboardingConfig = {
       required: true,
       public: true,
       secret: false,
-      validation: (value: any) => 
+      validation: (value: any) =>
         typeof value === "object" &&
         typeof value.minOwners === "number" &&
         typeof value.maxOwners === "number",

@@ -55,6 +55,7 @@ export const openaiPlugin: Plugin = {
   },
   async init(config: Record<string, string>) {
     try {
+      console.log('openai config', config)
       const validatedConfig = await configSchema.parseAsync(config);
 
       // Set all environment variables at once
@@ -77,7 +78,7 @@ export const openaiPlugin: Plugin = {
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(
-          `Invalid plugin configuration: ${error.errors
+          `Invalid plugin-openai configuration: ${error.errors
             .map((e) => e.message)
             .join(", ")}`
         );
@@ -239,7 +240,7 @@ export const openaiPlugin: Plugin = {
         apiKey: runtime.getSetting("OPENAI_API_KEY"),
         baseURL,
       });
-      
+
       const { text } = await generateText({
         model: openai.languageModel(
           runtime.getSetting("OPENAI_SMALL_MODEL") ?? "gpt-4o-mini"
@@ -263,7 +264,7 @@ export const openaiPlugin: Plugin = {
         presencePenalty: 0,
         stopSequences: [],
       });
-      
+
       const titleMatch = text.match(/<title>(.*?)<\/title>/);
       const descriptionMatch = text.match(/<description>(.*?)<\/description>/);
 
@@ -404,7 +405,7 @@ export const openaiPlugin: Plugin = {
             try {
               const response = await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg");
               const arrayBuffer = await response.arrayBuffer();
-              const transcription = await runtime.useModel(ModelTypes.TRANSCRIPTION, 
+              const transcription = await runtime.useModel(ModelTypes.TRANSCRIPTION,
                 Buffer.from(new Uint8Array(arrayBuffer)));
               console.log("generated with test_transcription:", transcription);
             } catch (error) {

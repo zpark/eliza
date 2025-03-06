@@ -24,19 +24,20 @@ export const anthropicPlugin: Plugin = {
   },
   async init(config: Record<string, string>) {
     try {
+      console.log('config', config)
       const validatedConfig = await configSchema.parseAsync(config);
 
       // Set all environment variables at once
       for (const [key, value] of Object.entries(validatedConfig)) {
         if (value) process.env[key] = value;
       }
-      
+
       // (Optional) If the Anthropics SDK supports API key verification,
       // you might add a check here.
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(
-          `Invalid plugin configuration: ${error.errors
+          `Invalid plugin-anthropic configuration: ${error.errors
             .map((e) => e.message)
             .join(", ")}`
         );
@@ -98,7 +99,7 @@ export const anthropicPlugin: Plugin = {
       name: "anthropic_plugin_tests",
       tests: [
         {
-          name: 'anthropic_test_text_small',  
+          name: 'anthropic_test_text_small',
           fn: async (runtime) => {
             try {
               const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
