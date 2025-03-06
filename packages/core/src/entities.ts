@@ -269,79 +269,49 @@ export async function getEntityDetails({
   runtime: IAgentRuntime;
   roomId: UUID;
 }) {
-  const room = await runtime.databaseAdapter.getRoom(roomId);
-  const roomEntities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, true);
-  const entities = roomEntities.map(entity => {
-    // join all fields of all component.data together
-    const allData = entity.components.reduce((acc, component) => {
-      return { ...acc, ...component.data };
-    }, {});
+  // Parallelize the two async operations
+  const [room, roomEntities] = await Promise.all([
+    runtime.databaseAdapter.getRoom(roomId),
+    runtime.databaseAdapter.getEntitiesForRoom(roomId, true)
+  ]);
 
-    // combine arrays and merge the values of objects
-    const mergedData = Object.entries(allData).reduce((acc, [key, value]) => {
-      if (!acc[key]) {
-        acc[key] = value;
-      } else if (Array.isArray(acc[key]) && Array.isArray(value)) {
-        acc[key] = [...new Set([...acc[key], ...value])];
-      } else if (typeof acc[key] === 'object' && typeof value === 'object') {
-        acc[key] = { ...acc[key], ...value };
+  // Use a Map for uniqueness checking while processing entities
+  const uniqueEntities = new Map();
+  
+  // Process entities in a single pass
+  for (const entity of roomEntities) {
+    if (uniqueEntities.has(entity.id)) continue;
+    
+    // Merge component data more efficiently
+    const allData = {};
+    for (const component of entity.components) {
+      Object.assign(allData, component.data);
+    }
+
+    // Process merged data
+    const mergedData = {};
+    for (const [key, value] of Object.entries(allData)) {
+      if (!mergedData[key]) {
+        mergedData[key] = value;
+        continue;
       }
-      return acc;
-    }, {});
+      
+      if (Array.isArray(mergedData[key]) && Array.isArray(value)) {
+        // Use Set for deduplication in arrays
+        mergedData[key] = [...new Set([...mergedData[key], ...value])];
+      } else if (typeof mergedData[key] === 'object' && typeof value === 'object') {
+        mergedData[key] = { ...mergedData[key], ...value };
+      }
+    }
 
-    return {
+    // Create the entity details
+    uniqueEntities.set(entity.id, {
       id: entity.id,
       name: entity.metadata[room.source]?.name || entity.names[0],
       names: entity.names,
       data: JSON.stringify({...mergedData, ...entity.metadata})
-    };
-  });
-
-  // Filter out nulls and ensure uniqueness by ID
-  const uniqueEntities = new Map();
-  entities
-    .filter(entity => entity !== null)
-    .forEach(entity => {
-      if (!uniqueEntities.has(entity.id)) {
-        uniqueEntities.set(entity.id, entity);
-      }
     });
+  }
 
   return Array.from(uniqueEntities.values());
-}
-
-/**
- * Format entities into a string
- * @param entities - list of entities
- * @returns string
- */
-export function formatEntities({ entities }: { entities: Entity[] }) {
-  const entityStrings = entities.map((entity: Entity) => {
-    const header = `${entity.names.join(" aka ")}\nID: ${entity.id}${(entity.metadata && Object.keys(entity.metadata).length > 0) ? `\nData: ${JSON.stringify(entity.metadata)}\n` : "\n"}`;
-    return header;
-  });
-  return entityStrings.join("\n");
-}
-
-/**
- * Resolve an entity name to their UUID
- * @param name - Name to resolve
- * @param entities - List of entities to search through
- * @returns UUID if found, throws error if not found or if input is not a valid UUID
- */
-export function resolveEntityId(name: string, entities: Entity[]): UUID {
-  // If the name is already a valid UUID, return it
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)) {
-    return name as UUID;
-  }
-
-  const entity = entities.find(a => 
-    a.names.some(n => n.toLowerCase() === name.toLowerCase())
-  );
-  
-  if (!entity) {
-    throw new Error(`Could not resolve name "${name}" to a valid UUID`);
-  }
-  
-  return entity.id;
 }

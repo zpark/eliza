@@ -38,7 +38,7 @@ export const replyAction = {
         callback: HandlerCallback,
     ) => {
 
-        state = await runtime.composeState(message, {}, [...(message.content.providers ?? []), "RECENT_MESSAGES"]);
+        state = await runtime.composeState(message, [...(message.content.providers ?? []), "RECENT_MESSAGES"]);
 
         const prompt = composePrompt({
             state,

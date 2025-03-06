@@ -1,6 +1,19 @@
+import { getEntityDetails } from "../entities";
 import { addHeader } from "../prompts";
-import { formatEntities, getEntityDetails } from "../entities";
 import type { Entity, IAgentRuntime, Memory, Provider } from "../types";
+
+/**
+ * Format entities into a string
+ * @param entities - list of entities
+ * @returns string
+ */
+function formatEntities({ entities }: { entities: Entity[] }) {
+  const entityStrings = entities.map((entity: Entity) => {
+    const header = `${entity.names.join(" aka ")}\nID: ${entity.id}${(entity.metadata && Object.keys(entity.metadata).length > 0) ? `\nData: ${JSON.stringify(entity.metadata)}\n` : "\n"}`;
+    return header;
+  });
+  return entityStrings.join("\n");
+}
 
 export const entitiesProvider: Provider = {
   name: "ENTITIES",
@@ -12,7 +25,7 @@ export const entitiesProvider: Provider = {
     // Format entities for display
     const formattedEntities = formatEntities({ entities: entitiesData ?? [] });
     // Find sender name
-    const senderName = entitiesData?.find((actor: Entity) => actor.id === entityId)
+    const senderName = entitiesData?.find((entity: Entity) => entity.id === entityId)
       ?.names[0];
     // Create formatted text with header
     const entities =

@@ -23,6 +23,7 @@ import {
     gte,
     inArray,
     lte,
+    or,
     sql
 } from "drizzle-orm";
 import { v4 } from "uuid";
@@ -1553,7 +1554,10 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     .from(relationshipTable)
                     .where(
                         and(
-                            eq(relationshipTable.sourceEntityId, params.entityId),
+                            or(
+                                eq(relationshipTable.sourceEntityId, params.entityId),
+                                eq(relationshipTable.targetEntityId, params.entityId)
+                            ),
                             eq(relationshipTable.agentId, this.agentId)
                         )
                     );

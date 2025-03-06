@@ -304,11 +304,13 @@ export class TwitterPostClient {
                         text: topics || "",
                         actions: ["TWEET"],
                     },
-                },
-                {
-                    twitterUserName: this.client.profile.username
                 }
             );
+
+            state.values = {
+                ...state.values,
+                twitterUserName: this.client.profile.username
+            };
 
             const prompt = composePrompt({
                 state,

@@ -8,7 +8,7 @@ import {
   logger,
   type Memory,
   ModelTypes,
-  parseJSONObjectFromText
+  parseJSONObjectFromText,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import { SearchMode, type Tweet } from "./client/index.ts";
@@ -234,25 +234,16 @@ export class TwitterInteractionClient {
       logger.error("Error Occured during describing image: ", error);
     }
 
-    let state = await this.runtime.composeState(message, {
+    let state = await this.runtime.composeState(message);
+
+    state.values = {
+      ...state.values,
       twitterUserName:
         this.state?.TWITTER_USERNAME ||
         this.runtime.getSetting("TWITTER_USERNAME"),
       currentPost, // TODO: move to recentMessages provider
       formattedConversation,
-      imageDescriptions:
-        imageDescriptionsArray.length > 0
-          ? `\nImages in Tweet:\n${imageDescriptionsArray
-              .map(
-                (desc, i) =>
-                  `Image ${i + 1}: Title: ${desc.title}\nDescription: ${
-                    desc.description
-                  }`
-              )
-              .join("\n\n")}`
-          : "",
-    });
-
+    };
     // check if the tweet exists, save if it doesn't
     const tweetId = createUniqueUuid(this.runtime, tweet.id);
     const tweetExists = await this.runtime
@@ -390,9 +381,7 @@ export class TwitterInteractionClient {
             },
           ];
 
-          state = await this.runtime.composeState(message, {}, [
-            "recentMemories",
-          ]);
+          state = await this.runtime.composeState(message, ["RECENT_MESSAGES"]);
 
           for (const responseMessage of responseMessages) {
             await this.runtime
@@ -400,9 +389,9 @@ export class TwitterInteractionClient {
               .createMemory(responseMessage);
           }
 
-          const responseTweetId =
-            (responseMessages[responseMessages.length - 1]?.content as any)
-              ?.tweetId;
+          const responseTweetId = (
+            responseMessages[responseMessages.length - 1]?.content as any
+          )?.tweetId;
 
           await this.runtime.processActions(
             message,

@@ -19,7 +19,7 @@ const factsProvider: Provider = {
 
         const recentMessages = formatMessages({
             messages: recentMessagesData,
-            actors: state?.entitiesData,
+            entities: state?.entitiesData,
         });
 
         const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, recentMessages);

@@ -556,7 +556,7 @@ export class AgentRuntime implements IAgentRuntime {
       );
 
       for (const responseAction of actions) {
-        state = await this.composeState(message, {}, ["RECENT_MESSAGES"]);
+        state = await this.composeState(message, ["RECENT_MESSAGES"]);
 
         logger.success(`Calling action: ${responseAction}`);
         const normalizedResponseAction = normalizeAction(responseAction);
@@ -648,7 +648,6 @@ export class AgentRuntime implements IAgentRuntime {
   ) {
     const evaluatorPromises = this.evaluators.map(
       async (evaluator: Evaluator) => {
-        logger.log("Evaluating", evaluator.name);
         if (!evaluator.handler) {
           return null;
         }
@@ -670,10 +669,16 @@ export class AgentRuntime implements IAgentRuntime {
 
     // get the evaluators that were chosen by the response handler
 
+    if(evaluators.length === 0) {
+      return [];
+    }
+
+    console.log("**** updating state ****");
+    state = await this.composeState(message, ["RECENT_MESSAGES"]);
+    console.log("**** state updated ****");
+
     await Promise.all(
       evaluators.map(async (evaluator) => {
-        state = await this.composeState(message, {}, ["RECENT_MESSAGES"]);
-        console.log("message is", message)
         if (evaluator.handler) {
           await evaluator.handler(this, message, state, {}, callback, responses);
           // log to database
@@ -879,14 +884,12 @@ export class AgentRuntime implements IAgentRuntime {
   /**
    * Composes the agent's state by gathering data from enabled providers.
    * @param message - The message to use as context for state composition
-   * @param additionalKeys - Optional key-value pairs to include in the state
    * @param filterList - Optional list of provider names to include, filtering out all others
    * @param includeList - Optional list of private provider names to include that would otherwise be filtered out
    * @returns A State object containing provider data, values, and text
    */
   async composeState(
     message: Memory,
-    additionalKeys: { [key: string]: unknown } = null,
     filterList: string[] | null = null, // only get providers that are in the filterList (this will not erase previously added providers)
     includeList: string[] | null = null // include providers that are private, dynamic or otherwise not included by default
   ): Promise<State> {
@@ -944,27 +947,20 @@ export class AgentRuntime implements IAgentRuntime {
       text: "",
     };
 
-
-    const currentProvidersText = (providerData
+    const providersText = (providerData
       .map(result => result.text)
       .filter(text => text !== "")
       .join("\n"));
 
-    const providersText =
-      cachedState.text + "\n" +
-      currentProvidersText;
-
     const values = {
       ...cachedState.values,
       ...combinedValues,
-      ...(additionalKeys || {}),
     };
     
     const newState = {
       values: {
         ...cachedState.values,
         ...values,
-        ...(additionalKeys || {}),
         providers: providersText,
       },
       data: {

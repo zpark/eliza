@@ -5,6 +5,7 @@ import type {
   State,
   Relationship,
   UUID,
+  Entity,
 } from "../types.ts";
 
 async function formatRelationships(
@@ -24,28 +25,42 @@ async function formatRelationships(
     return "";
   }
 
-  const formattedRelationships = await Promise.all(
-    sortedRelationships.map(async (rel, _index) => {
-      const formatMetadata = (metadata: any) => {
-        return JSON.stringify(
-          Object.entries(metadata)
-            .map(
-              ([key, value]) =>
-                `${key}: ${
-                  typeof value === "object" ? JSON.stringify(value) : value
-                }`
-            )
-            .join("\n")
-        );
-      };
+  // Deduplicate target entity IDs to avoid redundant fetches
+  const uniqueEntityIds = Array.from(
+    new Set(sortedRelationships.map((rel) => rel.targetEntityId as UUID))
+  );
 
-      // get the targetEntityId
-      const targetEntityId = rel.targetEntityId;
+  // Fetch all required entities in a single batch operation
+  const entities = await Promise.all(
+    uniqueEntityIds.map((id) => runtime.databaseAdapter.getEntityById(id))
+  );
 
-      // get the entity
-      const entity = await runtime.databaseAdapter.getEntityById(
-        targetEntityId as UUID
-      );
+  // Create a lookup map for efficient access
+  const entityMap = new Map<string, Entity | null>();
+  entities.forEach((entity, index) => {
+    if (entity) {
+      entityMap.set(uniqueEntityIds[index], entity);
+    }
+  });
+
+  const formatMetadata = (metadata: any) => {
+    return JSON.stringify(
+      Object.entries(metadata)
+        .map(
+          ([key, value]) =>
+            `${key}: ${
+              typeof value === "object" ? JSON.stringify(value) : value
+            }`
+        )
+        .join("\n")
+    );
+  };
+
+  // Format relationships using the entity map
+  const formattedRelationships = sortedRelationships
+    .map((rel) => {
+      const targetEntityId = rel.targetEntityId as UUID;
+      const entity = entityMap.get(targetEntityId);
 
       if (!entity) {
         return null;
@@ -56,9 +71,9 @@ async function formatRelationships(
         rel.tags ? rel.tags.join(", ") : ""
       }\n${formatMetadata(entity.metadata)}\n`;
     })
-  );
+    .filter(Boolean);
 
-  return formattedRelationships.filter(Boolean).join("\n");
+  return formattedRelationships.join("\n");
 }
 
 const relationshipsProvider: Provider = {

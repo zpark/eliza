@@ -184,15 +184,9 @@ export const executeSwap: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
-        let currentState = state;
+        state = await runtime.composeState(message, ["RECENT_MESSAGES"]);
 
         try {
-            if (!currentState) {
-                currentState = await runtime.composeState(message);
-            } else {
-                currentState = await runtime.updateRecentMessageState(currentState);
-            }
-
             const solanaService = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
             if (!solanaService) {
                 throw new Error('SolanaService not initialized');

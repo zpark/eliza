@@ -116,7 +116,16 @@ export const settingsProvider: Provider = {
     state?: State
   ): Promise<ProviderResult> => {
     try {
-      const room = await runtime.databaseAdapter.getRoom(message.roomId);
+      // Parallelize the initial database operations to improve performance
+      // These operations can run simultaneously as they don't depend on each other
+      const [room, userWorld] = await Promise.all([
+        runtime.databaseAdapter.getRoom(message.roomId),
+        findWorldForOwner(runtime, message.entityId)
+      ]).catch(error => {
+        logger.error(`Error fetching initial data: ${error}`);
+        throw new Error("Failed to retrieve room or user world information");
+      });
+      
       if (!room) {
         logger.error("No room found for settings provider");
         return {
@@ -129,24 +138,49 @@ export const settingsProvider: Provider = {
           text: "Error: Room not found",
         };
       }
+      
       const type = room.type;
       const isOnboarding = type === ChannelType.DM;
 
-      // Find server for the current user
-      let world = await findWorldForOwner(runtime, message.entityId);
-      let serverId;
+      let world, serverId, worldSettings;
 
       if (isOnboarding) {
+        // In onboarding mode, use the user's world directly
+        world = userWorld;
+        
         if (!world) {
+          logger.error("No world found for user during onboarding");
           throw new Error("No server ownership found for onboarding");
         }
+        
         serverId = world.serverId;
+        
+        // Fetch world settings based on the server ID
+        try {
+          worldSettings = await getWorldSettings(runtime, serverId);
+        } catch (error) {
+          logger.error(`Error fetching world settings: ${error}`);
+          throw new Error(`Failed to retrieve settings for server ${serverId}`);
+        }
       } else {
-        world = await runtime.databaseAdapter.getWorld(room.worldId);
-        serverId = world.serverId;
+        // For non-onboarding, we need to get the world associated with the room
+        try {
+          world = await runtime.databaseAdapter.getWorld(room.worldId);
+          serverId = world.serverId;
+          
+          // Once we have the serverId, get the settings
+          if (serverId) {
+            worldSettings = await getWorldSettings(runtime, serverId);
+          } else {
+            logger.error(`No server ID found for world ${room.worldId}`);
+          }
+        } catch (error) {
+          logger.error(`Error processing world data: ${error}`);
+          throw new Error("Failed to process world information");
+        }
       }
 
-      // If still no server found after recovery attempts
+      // If no server found after recovery attempts
       if (!serverId) {
         logger.info(
           `No server ownership found for user ${message.entityId} after recovery attempt`
@@ -173,9 +207,6 @@ export const settingsProvider: Provider = {
             };
       }
 
-      // Get current settings state from world metadata
-      const worldSettings = await getWorldSettings(runtime, serverId);
-
       if (!worldSettings) {
         logger.info(`No settings state found for server ${serverId}`);
         return isOnboarding
@@ -200,6 +231,7 @@ export const settingsProvider: Provider = {
             };
       }
 
+      // Generate the status message based on the settings
       const output = generateStatusMessage(
         runtime,
         worldSettings,

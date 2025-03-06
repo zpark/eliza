@@ -225,12 +225,12 @@ const summarizeAction = {
             unique: false,
         });
 
-        const actors = await getEntityDetails({
+        const entities = await getEntityDetails({
             runtime: runtime as IAgentRuntime,
             roomId,
         });
 
-        const actorMap = new Map(actors.map((actor) => [actor.id, actor]));
+        const actorMap = new Map(entities.map((entity) => [entity.id, entity]));
 
         const formattedMemories = memories
             .map((memory) => {

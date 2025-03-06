@@ -22,17 +22,16 @@ import {
   parseJSONObjectFromText,
   shouldRespondTemplate,
 } from "./prompts.ts";
-import { actionExamplesProvider } from "./providers/actionExamples.ts";
-import { actionsProvider } from "./providers/actions.ts";
+import { actionsProvider } from "./providers/actionExamples.ts";
 import { anxietyProvider } from "./providers/anxiety.ts";
 import { attachmentsProvider } from "./providers/attachments.ts";
 import { capabilitiesProvider } from "./providers/capabilities.ts";
 import { characterProvider } from "./providers/character.ts";
+import { choiceProvider } from "./providers/choice.ts";
 import { entitiesProvider } from "./providers/entities.ts";
 import { evaluatorsProvider } from "./providers/evaluators.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { knowledgeProvider } from "./providers/knowledge.ts";
-import { choiceProvider } from "./providers/choice.ts";
 import { recentMessagesProvider } from "./providers/recentMessages.ts";
 import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
@@ -129,7 +128,7 @@ const messageReceivedHandler = async ({
     return;
   }
 
-  let state = await runtime.composeState(message, {}, [
+  let state = await runtime.composeState(message, [
     "DYNAMIC_PROVIDERS",
     "SHOULD_RESPOND",
     "CHARACTER",
@@ -161,7 +160,7 @@ const messageReceivedHandler = async ({
 
   console.log("*** shouldRespond? ", shouldRespond);
 
-  state = await runtime.composeState(message, {}, null, providers);
+  state = await runtime.composeState(message, null, providers);
 
   let responseMessages: Memory[] = [];
 
@@ -175,13 +174,22 @@ const messageReceivedHandler = async ({
 
     console.log("*** prompt ****", prompt);
 
-    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      prompt,
-    });
+    let responseContent = null
 
-    console.log("*** response ****", response);
+    // Retry if missing required fields
+    let retries = 0;
+    const maxRetries = 3;
+    while (retries < maxRetries && (!responseContent?.thought || !responseContent?.plan || !responseContent?.actions)) {
+      console.log("*** Missing required fields, retrying... ***");
+      const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
+        prompt,
+      });
+      console.log("*** response ****", response);
+      responseContent = parseJSONObjectFromText(response) as Content;
+      console.log("*** responseContent ****", responseContent);
+      retries++;
+    }
 
-    const responseContent = parseJSONObjectFromText(response) as Content;
 
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);
@@ -461,22 +469,21 @@ export const bootstrapPlugin: Plugin = {
   events,
   evaluators: [reflectionEvaluator, goalEvaluator],
   providers: [
+    evaluatorsProvider,
+    anxietyProvider,
+    knowledgeProvider,
     timeProvider,
-    factsProvider,
+    characterProvider,
+    entitiesProvider,
+    relationshipsProvider,
     choiceProvider,
+    factsProvider,
     roleProvider,
     settingsProvider,
-    relationshipsProvider,
     capabilitiesProvider,
-    entitiesProvider,
-    evaluatorsProvider,
-    actionExamplesProvider,
+    attachmentsProvider,
     recentMessagesProvider,
     actionsProvider,
-    attachmentsProvider,
-    characterProvider,
-    knowledgeProvider,
-    anxietyProvider,
   ],
   services: [TaskService],
 };

@@ -1060,7 +1060,6 @@ export interface IAgentRuntime {
 
   composeState(
     message: Memory,
-    additionalKeys?: { [key: string]: unknown },
     filterList?: string[],
     includeList?: string[]
   ): Promise<State>;

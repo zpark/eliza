@@ -17,7 +17,7 @@ import type {
 
 /**
  * An abstract class representing a database adapter for managing various entities
- * like entities, memories, actors, goals, and rooms.
+ * like entities, memories, entities, goals, and rooms.
  */
 export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter {
     /**

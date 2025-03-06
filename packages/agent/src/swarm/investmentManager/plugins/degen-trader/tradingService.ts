@@ -768,7 +768,7 @@ export class DegenTradingService extends Service {
           systemDirections: "",
           userDirections: "",
           roomId: `trade-0000-0000-0000-${Date.now().toString(16)}`,
-          actors: JSON.stringify(["trader"]),
+          entities: JSON.stringify(["trader"]),
           recentMessages: JSON.stringify([""]),
           recentMessagesData: [],
           walletBalance: walletBalance.toString(),

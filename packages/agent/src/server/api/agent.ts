@@ -456,18 +456,18 @@ export function agentRouter(
       console.log("existingRelationship", existingRelationship);
 
       if (!existingRelationship && entityId !== runtime.agentId) {
-        const createdRelationship = await runtime.databaseAdapter.createRelationship({
-          sourceEntityId: entityId,
-          targetEntityId: runtime.agentId,
-          tags: ["message_interaction"],
-          metadata: {
-            lastInteraction: Date.now(),
-            channel: "direct",
-          },
-        });
+        const createdRelationship =
+          await runtime.databaseAdapter.createRelationship({
+            sourceEntityId: entityId,
+            targetEntityId: runtime.agentId,
+            tags: ["message_interaction"],
+            metadata: {
+              lastInteraction: Date.now(),
+              channel: "direct",
+            },
+          });
         console.log("created relationship", createdRelationship);
       }
-
 
       const messageId = createUniqueUuid(runtime, Date.now().toString());
       const attachments: Media[] = [];
@@ -519,9 +519,7 @@ export function agentRouter(
       await runtime.getMemoryManager("messages").createMemory(memory);
       console.log("created memory");
 
-      let state = await runtime.composeState(userMessage, {
-        agentName: runtime.character.name,
-      });
+      let state = await runtime.composeState(userMessage);
 
       const prompt = composePrompt({
         state,
@@ -561,9 +559,7 @@ export function agentRouter(
 
       console.log("responseMessage", responseMessage);
 
-      state = await runtime.composeState(responseMessage, {}, [
-        "recentMemories",
-      ]);
+      state = await runtime.composeState(responseMessage, ["RECENT_MESSAGES"]);
 
       console.log("state", state);
 
@@ -899,9 +895,7 @@ export function agentRouter(
       await runtime.getMemoryManager("messages").createMemory(memory);
 
       logger.debug("[SPEECH CONVERSATION] Composing state");
-      const state = await runtime.composeState(userMessage, {
-        agentName: runtime.character.name,
-      });
+      const state = await runtime.composeState(userMessage);
 
       logger.debug("[SPEECH CONVERSATION] Creating context");
       const prompt = composePrompt({

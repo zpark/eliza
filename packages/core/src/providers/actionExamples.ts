@@ -6,15 +6,14 @@ import {
 import { addHeader } from "../prompts";
 import type {
   Action,
-  Evaluator,
   IAgentRuntime,
   Memory,
-  Provider,
+  Provider
 } from "../types";
 
-export const actionExamplesProvider: Provider = {
-  name: "ACTION_EXAMPLES",
-  description: "Examples of response actions",
+export const actionsProvider: Provider = {
+  name: "ACTIONS",
+  description: "Possible response actions",
   position: -1,
   get: async (runtime: IAgentRuntime, message: Memory) => {
     // Get actions that validate for this message
@@ -45,26 +44,8 @@ export const actionExamplesProvider: Provider = {
         ? addHeader("# Action Examples", composeActionExamples(actionsData, 10))
         : "";
 
-    // Get evaluators that validate for this message
-    const evaluatorPromises = runtime.evaluators.map(
-      async (evaluator: Evaluator) => {
-        const result = await evaluator.validate(runtime, message);
-        if (result) {
-          return evaluator;
-        }
-        return null;
-      }
-    );
-
-    const resolvedEvaluators = await Promise.all(evaluatorPromises);
-
-
-    // Filter out null values
-    const evaluatorsData = resolvedEvaluators.filter(Boolean) as Evaluator[];
-
     const data = {
       actionsData,
-      evaluatorsData,
     };
 
     const values = {
@@ -75,9 +56,9 @@ export const actionExamplesProvider: Provider = {
 
     // Combine all text sections
     const text = [
-      actions,
       actionNames,
       actionExamples,
+      actions,
     ]
       .filter(Boolean)
       .join("\n\n");

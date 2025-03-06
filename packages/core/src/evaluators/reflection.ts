@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { getEntityDetails, resolveEntityId } from "../entities";
 import logger from "../logger";
 import { MemoryManager } from "../memory";
 import { composePrompt } from "../prompts";
 import {
+  Entity,
   type Evaluator,
   type IAgentRuntime,
   type Memory,
@@ -11,6 +11,7 @@ import {
   State,
   type UUID,
 } from "../types";
+import { getEntityDetails } from "../entities";
 
 // Schema definitions for the reflection output
 const relationshipSchema = z.object({
@@ -89,6 +90,44 @@ Generate a response in the following format:
   ]
 }
 \`\`\``;
+
+
+/**
+ * Resolve an entity name to their UUID
+ * @param name - Name to resolve
+ * @param entities - List of entities to search through
+ * @returns UUID if found, throws error if not found or if input is not a valid UUID
+ */
+function resolveEntity(entityId: UUID, entities: Entity[]): UUID {
+  // First try exact UUID match
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entityId)) {
+    return entityId as UUID;
+  }
+
+  let entity;
+
+  // Try to match the entityId exactly
+  entity = entities.find(a => a.id === entityId);
+  if (entity) {
+    return entity.id;
+  }
+
+  // Try partial UUID match with entityId
+  entity = entities.find(a => a.id.includes(entityId));
+  if (entity) {
+    return entity.id;
+  }
+
+  // Try name match as last resort
+  entity = entities.find(a => 
+    a.names.some(n => n.toLowerCase().includes(entityId.toLowerCase()))
+  );
+  if (entity) {
+    return entity.id;
+  }
+  
+  throw new Error(`Could not resolve name "${name}" to a valid UUID`);
+}
 
 const generateObject = async ({
   runtime,
@@ -192,12 +231,11 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
     });
 
   // Run all queries in parallel
-  const [existingRelationships, actors, entitiesInRoom, knownFacts, room] = await Promise.all([
+  const [existingRelationships, entities, knownFacts, room] = await Promise.all([
     runtime.databaseAdapter.getRelationships({
       entityId: message.entityId,
     }),
     getEntityDetails({ runtime, roomId }),
-    runtime.databaseAdapter.getEntitiesForRoom(roomId),
     factsManager.getMemories({
       roomId,
       agentId, 
@@ -207,18 +245,24 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
     runtime.databaseAdapter.getRoom(roomId)
   ]);
 
+  console.log("***** entities")
+  console.log(entities)
+
   const prompt = composePrompt({
     state: {
       ...state,
       knownFacts: formatFacts(knownFacts),
       roomType: room.type || "group", // Can be "group", "voice", or "dm"
-      entitiesInRoom: JSON.stringify(entitiesInRoom),
+      entitiesInRoom: JSON.stringify(entities),
       existingRelationships: JSON.stringify(existingRelationships),
       senderId: message.entityId,
     },
     template:
       runtime.character.templates?.reflectionTemplate || reflectionTemplate,
   });
+
+  console.log("**** prompt")
+  console.log(prompt)
 
   const reflection = await generateObject({
     runtime,
@@ -232,6 +276,9 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
     return;
   }
 
+  console.log("**** reflection")
+  console.log(reflection)
+
   // Store new facts
   const newFacts = reflection?.facts.filter(
     (fact) =>
@@ -241,7 +288,7 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
       fact.claim.trim() !== ""
   ) || [];
 
-  for (const fact of newFacts) {
+  await Promise.all(newFacts.map(async (fact) => {
     const factMemory = await factsManager.addEmbeddingToMemory({
       entityId: agentId,
       agentId,
@@ -249,8 +296,8 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
       roomId,
       createdAt: Date.now(),
     });
-    await factsManager.createMemory(factMemory, true);
-  }
+    return factsManager.createMemory(factMemory, true);
+  }));
 
   // Update or create relationships
   for (const relationship of reflection.relationships) {
@@ -258,20 +305,31 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
     let targetId: UUID;
 
     try {
-      sourceId = resolveEntityId(relationship.sourceEntityId, actors);
-      targetId = resolveEntityId(relationship.targetEntityId, actors);
+      sourceId = resolveEntity(relationship.sourceEntityId, entities);
+      targetId = resolveEntity(relationship.targetEntityId, entities);
     } catch (error) {
       console.warn("Failed to resolve relationship entities:", error);
       console.warn("relationship:\n", relationship);
       continue; // Skip this relationship if we can't resolve the IDs
     }
 
-    console.log("**** existingRelationships")
+    console.log("*** existingRelationships")
     console.log(existingRelationships)
 
-    const existingRelationship = existingRelationships.find(
-      (r) => r.sourceEntityId === sourceId && r.targetEntityId === targetId
-    );
+    const existingRelationship = existingRelationships.find((r) => {
+      console.log("*** r.sourceEntityId")
+      console.log(r.sourceEntityId)
+      console.log("*** r.targetEntityId")
+      console.log(r.targetEntityId)
+      console.log("*** sourceId")
+      console.log(sourceId)
+      console.log("*** targetId")
+      console.log(targetId)
+      return r.sourceEntityId === sourceId && r.targetEntityId === targetId
+    });
+    
+    console.log("*** existingRelationship")
+    console.log(existingRelationship)
 
     if (existingRelationship) {
       const updatedMetadata = {
@@ -284,10 +342,7 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
       );
 
       await runtime.databaseAdapter.updateRelationship({
-        id: existingRelationship.id,
-        sourceEntityId: sourceId,
-        targetEntityId: targetId,
-        agentId,
+        ...existingRelationship,
         tags: updatedTags,
         metadata: updatedMetadata,
       });
