@@ -300,7 +300,7 @@ Your response should include the valid JSON block and nothing else.`;
 
 export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
 {{providers}}
-# Instructions: Write the next message for {{agentName}}.
+# Instructions: Write a thought and plan for {{agentName}} and decide what actions to take. Also include the providers that {{agentName}} will use to have the right context for responding and acting, if any.
 First, think about what you want to do next and plan your actions. Then, write the next message and include the actions you plan to take.
 "thought" should be a short description of what the agent is thinking about and planning.
 "actions" should be an array of the actions {{agentName}} plans to take based on the thought (if none, use IGNORE, if simply responding with text, use REPLY)

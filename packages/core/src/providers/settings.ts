@@ -89,7 +89,7 @@ function generateStatusMessage(
     // Non-onboarding context - list all public settings with values and descriptions
     return `## Current Configuration\n\n${
       requiredUnconfigured > 0
-        ? `**Note:** ${requiredUnconfigured} required settings still need configuration.\n\n`
+        ? `IMPORTANT!: ${requiredUnconfigured} required settings still need configuration. ${runtime.character.name} should get onboarded with the OWNER as soon as possible.\n\n`
         : "All required settings are configured.\n\n"
     }${formattedSettings
       .map(
