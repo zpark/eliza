@@ -1,8 +1,10 @@
-import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
+import type { Character, IAgentRuntime, OnboardingConfig, UUID } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
 import twitterPostAction from "./actions/post";
 import { initCharacter, initializeAllSystems } from "../settings";
+import { logger } from "@elizaos/core";
+import { TwitterService } from "@elizaos/plugin-twitter";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -247,7 +249,13 @@ export const config: OnboardingConfig = {
       }
   }
 };
+
 export default {
   character,
-  init: (runtime: IAgentRuntime) => initCharacter({runtime, config, actions: [twitterPostAction]}),
+  init: async (runtime: IAgentRuntime) => {
+    await runtime.registerService(TwitterService);
+    const twitterService = runtime.getService("twitter");
+    if (twitterService) await TwitterService.start(runtime);
+    return initCharacter({runtime, config, actions: [twitterPostAction]});
+  },
 };
