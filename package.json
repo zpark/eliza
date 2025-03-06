@@ -11,7 +11,7 @@
     "migrate:generate": "turbo run migrate:generate --filter=./packages/plugin-sql",
     "swarm": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
     "swarm:scenario": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm --scenario \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
-    "build": "turbo run build --filter=./packages/core && turbo run build --filter=!./packages/docs",
+    "build": "turbo run build --filter=./packages/core && turbo run build --filter=./packages/plugin-sql && turbo run build --filter=!./packages/docs",
     "build:docs": "turbo run build --filter=./packages/docs",
     "build:core": "turbo run build --filter=./packages/core",
     "build:cli": "turbo run build --filter=./packages/cli && cd packages/cli && bun link",
