@@ -86,6 +86,7 @@ export function formatEvaluators(evaluators: Evaluator[]) {
 export const evaluatorsProvider: Provider = {
   name: "EVALUATORS",
   description: "Evaluators that can be used to evaluate the conversation after responding",
+  private: true,
   get: async (runtime: IAgentRuntime, message: Memory) => {
     // Get evaluators that validate for this message
     const evaluatorPromises = runtime.evaluators.map(

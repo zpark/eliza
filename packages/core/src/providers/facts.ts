@@ -15,14 +15,17 @@ const factsProvider: Provider = {
     description: "Key facts that {{agentName}} knows",
     dynamic: true,
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-        const recentMessagesData = state?.values?.recentMessagesData?.slice(-10);
-
-        const recentMessages = formatMessages({
-            messages: recentMessagesData,
-            entities: state?.entitiesData,
+    // Parallelize initial data fetching operations including recentInteractions
+        const recentMessages = await runtime.getMemoryManager("messages").getMemories({
+            roomId: message.roomId,
+            count: 10,
+            unique: false,
         });
 
-        const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, recentMessages);
+        // join the text of the last 5 messages
+        const last5Messages = recentMessages.slice(-5).map((message) => message.content.text).join("\n");
+
+        const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, last5Messages);
 
         const memoryManager = new MemoryManager({
             runtime,

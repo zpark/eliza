@@ -1,9 +1,9 @@
 import { addHeader } from "../prompts";
 import type { IAgentRuntime, Memory, Provider } from "../types";
 
-export const dynamicProvidersProvider: Provider = {
-  name: "DYNAMIC_PROVIDERS",
-  description: "List of all dynamic providers available in the runtime",
+export const providersProvider: Provider = {
+  name: "PROVIDERS",
+  description: "List of all data providers the agent can use to get additional information",
   get: async (runtime: IAgentRuntime, _message: Memory) => {
     // Filter providers with dynamic: true
     const dynamicProviders = runtime.providers.filter(

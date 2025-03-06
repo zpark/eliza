@@ -15,6 +15,7 @@ import { updateEntityAction } from "./actions/updateEntity.ts";
 import { createUniqueUuid } from "./entities.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import { reflectionEvaluator } from "./evaluators/reflection.ts";
+import { providersProvider } from "./providers/providers.ts";
 import { logger } from "./logger.ts";
 import {
   composePrompt,
@@ -129,7 +130,7 @@ const messageReceivedHandler = async ({
   }
 
   let state = await runtime.composeState(message, [
-    "DYNAMIC_PROVIDERS",
+    "PROVIDERS",
     "SHOULD_RESPOND",
     "CHARACTER",
     "RECENT_MESSAGES",
@@ -180,7 +181,6 @@ const messageReceivedHandler = async ({
     let retries = 0;
     const maxRetries = 3;
     while (retries < maxRetries && (!responseContent?.thought || !responseContent?.plan || !responseContent?.actions)) {
-      console.log("*** Missing required fields, retrying... ***");
       const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         prompt,
       });
@@ -188,6 +188,9 @@ const messageReceivedHandler = async ({
       responseContent = parseJSONObjectFromText(response) as Content;
       console.log("*** responseContent ****", responseContent);
       retries++;
+      if (!responseContent?.thought || !responseContent?.plan || !responseContent?.actions) {
+        console.log("*** Missing required fields, retrying... ***");
+      }
     }
 
 
@@ -482,8 +485,9 @@ export const bootstrapPlugin: Plugin = {
     settingsProvider,
     capabilitiesProvider,
     attachmentsProvider,
-    recentMessagesProvider,
+    providersProvider,
     actionsProvider,
+    recentMessagesProvider,
   ],
   services: [TaskService],
 };
