@@ -48,7 +48,7 @@ import {
   ModelTypes,
   type Plugin,
   type Room,
-  type World
+  type World,
 } from "./types.ts";
 
 type ServerJoinedParams = {
@@ -89,7 +89,7 @@ const messageReceivedHandler = async ({
   message,
   callback,
 }: MessageReceivedHandlerParams) => {
-  console.log('*** messageReceivedHandler ****');
+  console.log("*** messageReceivedHandler ****");
   // Generate a new response ID
   const responseId = v4();
   // Get or create the agent-specific map
@@ -100,7 +100,7 @@ const messageReceivedHandler = async ({
 
   // Set this as the latest response ID for this agent+room
   agentResponses.set(message.roomId, responseId);
-  
+
   if (message.entityId === runtime.agentId) {
     throw new Error("Message is from the agent itself");
   }
@@ -111,9 +111,7 @@ const messageReceivedHandler = async ({
     runtime.getMemoryManager("messages").createMemory(message),
   ]);
 
-  console.log('*** messageReceivedHandler 2 ****');
-
-
+  console.log("*** messageReceivedHandler 2 ****");
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
@@ -153,15 +151,14 @@ const messageReceivedHandler = async ({
 
   const responseObject = parseJSONObjectFromText(response);
 
-  console.log('*** responseObject ****', responseObject);
+  console.log("*** responseObject ****", responseObject);
 
   const providers = responseObject.providers;
 
   const shouldRespond =
-    responseObject?.action &&
-    responseObject.action === "RESPOND";
+    responseObject?.action && responseObject.action === "RESPOND";
 
-  console.log('*** shouldRespond? ', shouldRespond);
+  console.log("*** shouldRespond? ", shouldRespond);
 
   state = await runtime.composeState(message, {}, null, providers);
 
@@ -175,11 +172,17 @@ const messageReceivedHandler = async ({
         messageHandlerTemplate,
     });
 
+    console.log("*** prompt ****\n", prompt);
+
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       prompt,
     });
 
+    console.log("*** response ****\n", response);
+
     const responseContent = parseJSONObjectFromText(response) as Content;
+
+    console.log("*** responseContent ****\n", responseContent);
 
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);
@@ -210,13 +213,24 @@ const messageReceivedHandler = async ({
       latestResponseIds.delete(runtime.agentId);
     }
 
-    console.log('*** responseMessages ****', responseMessages);
+    console.log("*** responseMessages ****", responseMessages);
+
+    // print out the actions in each responseMessage
+    responseMessages.forEach((message) => {
+      console.log("*** actions ****", message.content.actions);
+    });
 
     await runtime.processActions(message, responseMessages, state, callback);
-    console.log('*** processedActions ****');
+    console.log("*** processedActions ****");
   }
 
-  await runtime.evaluate(message, state, shouldRespond, callback, responseMessages);
+  await runtime.evaluate(
+    message,
+    state,
+    shouldRespond,
+    callback,
+    responseMessages
+  );
 };
 
 const reactionReceivedHandler = async ({

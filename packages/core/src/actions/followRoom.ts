@@ -74,7 +74,7 @@ export const followRoomAction: Action = {
       const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
         runtime,
         prompt: shouldFollowPrompt,
-        stopSequences: ["\n"],
+        stopSequences: [],
       });
 
       const cleanedResponse = response.trim().toLowerCase();
@@ -140,9 +140,17 @@ export const followRoomAction: Action = {
       );
     }
 
-    for (const response of responses) {
-      await callback?.({ ...response.content, actions: ["FOLLOW_ROOM"] });
-    }
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+
+    await runtime.getMemoryManager("messages").createMemory({
+      entityId: message.entityId,
+      agentId: message.agentId,
+      roomId: message.roomId,
+      content: {
+        thought: "I followed the room " + room.name,
+        actions: ["FOLLOW_ROOM_START"],
+      },
+    });
   },
   examples: [
     [
