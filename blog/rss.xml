@@ -4,147 +4,17 @@
         <title>ElizaOS Updates</title>
         <link>https://elizaos.github.io/eliza/blog/</link>
         <description>Stay up to date with the latest from ElizaOS</description>
-        <lastBuildDate>Sat, 01 Mar 2025 20:43:14 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 05 Mar 2025 23:48:58 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
         <item>
-            <title><![CDATA[February 2025 Recap]]></title>
-            <link>https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/</link>
-            <guid>https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/</guid>
-            <pubDate>Sat, 01 Mar 2025 20:43:14 GMT</pubDate>
-            <description><![CDATA[February was a transformative month for ElizaOS, with significant architectural changes, multiple releases, and an exciting expansion into entertainment that took the project well beyond its technical foundations.]]></description>
-            <content:encoded><![CDATA[<p>February was a transformative month for ElizaOS, with significant architectural changes, multiple releases, and an exciting expansion into entertainment that took the project well beyond its technical foundations.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-major-releases--milestones">🚀 Major Releases &amp; Milestones<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-major-releases--milestones" class="hash-link" aria-label="Direct link to 🚀 Major Releases &amp; Milestones" title="Direct link to 🚀 Major Releases &amp; Milestones">​</a></h2>
-<ul>
-<li><strong>ElizaOS v0.1.9</strong> officially released after extensive preparation</li>
-<li><strong>Version bump to v0.25.6-alpha.1</strong> as development accelerated</li>
-<li><strong>ElizaOS v0.25.7</strong> released mid-month with significant improvements</li>
-<li><strong>ElizaOS v0.25.8</strong> released at month-end, completing an impressive four releases in February</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="️-architecture-transformation">🏗️ Architecture Transformation<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#%EF%B8%8F-architecture-transformation" class="hash-link" aria-label="Direct link to 🏗️ Architecture Transformation" title="Direct link to 🏗️ Architecture Transformation">​</a></h2>
-<ul>
-<li><strong>Major architectural shift</strong>: vendor code externalized from core, reducing size by 60%</li>
-<li><strong>Package manager transition</strong> from pnpm to bun for improved performance</li>
-<li><strong>Plugin registry migration</strong> initiated - moving from monolithic to modular architecture</li>
-<li><strong>RAG knowledge consolidation</strong> completed for unified information retrieval</li>
-<li><strong>Character templates</strong> significantly improved</li>
-<li><strong>Agent/character system</strong> completely refactored</li>
-<li><strong>Discord link</strong> updated for better community access</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-plugin-ecosystem-revolution">🧩 Plugin Ecosystem Revolution<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-plugin-ecosystem-revolution" class="hash-link" aria-label="Direct link to 🧩 Plugin Ecosystem Revolution" title="Direct link to 🧩 Plugin Ecosystem Revolution">​</a></h2>
-<ul>
-<li><strong>Plugin registry</strong> launched, moving toward distributed plugin system</li>
-<li><strong>Quick-Intel plugin</strong> optimized with suppressInitialMessage flag</li>
-<li><strong>DeFi Token Analysis plugin</strong> (plugin-expuzi) added</li>
-<li><strong>Messari Copilot plugin</strong> introduced for crypto market research</li>
-<li><strong>Secret AI LLM plugin</strong> added for confidential computing</li>
-<li><strong>Merkle Trade plugin</strong> for Aptos blockchain</li>
-<li><strong>Hyperlane GOAT Plugin</strong> added for cross-chain interoperability</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-ai-capabilities-expansion">🤖 AI Capabilities Expansion<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-ai-capabilities-expansion" class="hash-link" aria-label="Direct link to 🤖 AI Capabilities Expansion" title="Direct link to 🤖 AI Capabilities Expansion">​</a></h2>
-<ul>
-<li><strong>UserRapport feature</strong> added for personalized Twitter interactions</li>
-<li><strong>Default voice for ElevenLabs</strong> integrated</li>
-<li><strong>Middleware control</strong> added for agent servers</li>
-<li><strong>Fix for vector dimension mismatch</strong> in plugin-news</li>
-<li><strong>Local AI inference</strong> via DeepSeek R1 implemented</li>
-<li><strong>NEAR AI integration</strong> for structured objects</li>
-<li><strong>Confidential AI</strong> with Secret Network fully implemented</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-entertainment--community">📺 Entertainment &amp; Community<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-entertainment--community" class="hash-link" aria-label="Direct link to 📺 Entertainment &amp; Community" title="Direct link to 📺 Entertainment &amp; Community">​</a></h2>
-<ul>
-<li><strong>CLANK TANK AI game show</strong> concept revealed</li>
-<li><strong>AI-led VC DAO</strong> concept development began</li>
-<li><strong>Sui AI Agent Hackathon</strong> winners announced</li>
-<li><strong>Ukrainian README translation</strong> added</li>
-<li><strong>ElizaOS Builder's Chat</strong> launched on Telegram</li>
-<li><strong>GitHub stats</strong>: 14.4k stars (+6.5k from December), 4.5k forks (+2.4k), 508 contributors (+271)</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-performance-gains-with-bun">⚡ Performance Gains with Bun<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-performance-gains-with-bun" class="hash-link" aria-label="Direct link to ⚡ Performance Gains with Bun" title="Direct link to ⚡ Performance Gains with Bun">​</a></h2>
-<table><thead><tr><th>Metric</th><th>pnpm</th><th>bun</th><th>Improvement</th></tr></thead><tbody><tr><td>Install Time</td><td>95s</td><td>28s</td><td>70% faster</td></tr><tr><td>Cold Start</td><td>3.2s</td><td>0.8s</td><td>75% faster</td></tr><tr><td>Build Time</td><td>42s</td><td>14s</td><td>67% faster</td></tr><tr><td>Memory Usage</td><td>480MB</td><td>310MB</td><td>35% less</td></tr></tbody></table>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-technical-insight-confidential-ai-architecture">🔒 Technical Insight: Confidential AI Architecture<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-technical-insight-confidential-ai-architecture" class="hash-link" aria-label="Direct link to 🔒 Technical Insight: Confidential AI Architecture" title="Direct link to 🔒 Technical Insight: Confidential AI Architecture">​</a></h2>
-<!-- -->
-<p>The integration with Secret Network represents a significant milestone in privacy-preserving AI. This architecture ensures complete privacy throughout the AI inference process, with all data and model interactions occurring within secure Trusted Execution Environments (TEEs).</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-two-month-growth-statistics">📈 Two-Month Growth Statistics<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-two-month-growth-statistics" class="hash-link" aria-label="Direct link to 📈 Two-Month Growth Statistics" title="Direct link to 📈 Two-Month Growth Statistics">​</a></h2>
-<table><thead><tr><th>Metric</th><th>December 2024</th><th>February 2025</th><th>Growth</th></tr></thead><tbody><tr><td>GitHub Stars</td><td>7.9k</td><td>14.4k</td><td>+82%</td></tr><tr><td>Forks</td><td>2.1k</td><td>4.5k</td><td>+114%</td></tr><tr><td>Contributors</td><td>237</td><td>508</td><td>+114%</td></tr><tr><td>Plugins</td><td>45</td><td>100+</td><td>+122%</td></tr><tr><td>Languages Supported</td><td>3</td><td>8+</td><td>+167%</td></tr></tbody></table>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-looking-ahead-to-march">🔮 Looking Ahead to March<a href="https://elizaos.github.io/eliza/blog/eliza-february-2025-recap/#-looking-ahead-to-march" class="hash-link" aria-label="Direct link to 🔮 Looking Ahead to March" title="Direct link to 🔮 Looking Ahead to March">​</a></h2>
-<ul>
-<li><strong>ElizaOS v2</strong> development intensifies</li>
-<li><strong>Agent Marketplace/Launchpad</strong> nearing completion (95% done)</li>
-<li><strong>Multi-agent systems</strong> with role specialization</li>
-<li><strong>Confidential compute</strong> features expansion</li>
-</ul>]]></content:encoded>
-            <category>recap</category>
-            <category>release</category>
-            <category>architecture</category>
-            <category>entertainment</category>
-        </item>
-        <item>
-            <title><![CDATA[January 2025 Recap]]></title>
-            <link>https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/</link>
-            <guid>https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/</guid>
-            <pubDate>Sat, 01 Mar 2025 20:43:14 GMT</pubDate>
-            <description><![CDATA[January marked an explosive start to 2025 for ElizaOS, with major releases, infrastructure improvements, and community growth that set the stage for an ambitious year ahead.]]></description>
-            <content:encoded><![CDATA[<p>January marked an explosive start to 2025 for ElizaOS, with major releases, infrastructure improvements, and community growth that set the stage for an ambitious year ahead.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-major-releases--milestones">🚀 Major Releases &amp; Milestones<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-major-releases--milestones" class="hash-link" aria-label="Direct link to 🚀 Major Releases &amp; Milestones" title="Direct link to 🚀 Major Releases &amp; Milestones">​</a></h2>
-<ul>
-<li><strong>ElizaOS v1.7.0</strong> officially released, merging the 'develop' branch into 'main'</li>
-<li><strong>DeepSeek API</strong> fully integrated for enhanced AI capabilities</li>
-<li><strong>ElizaOS v0.1.9</strong> preparation underway for early February release</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="️-infrastructure-upgrades">🏗️ Infrastructure Upgrades<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#%EF%B8%8F-infrastructure-upgrades" class="hash-link" aria-label="Direct link to 🏗️ Infrastructure Upgrades" title="Direct link to 🏗️ Infrastructure Upgrades">​</a></h2>
-<ul>
-<li><strong>Persistent memory</strong> added for better agent recall and context management</li>
-<li><strong>Memory cache optimization</strong> – query time reduced from 40s to 0.02s for large datasets!</li>
-<li><strong>New database adapter</strong> for PGLite with significant performance improvements</li>
-<li><strong>Knowledge system</strong> separated from memories table for better organization</li>
-<li><strong>RAG knowledge system</strong> consolidated for unified approach to information retrieval</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-plugin-ecosystem-expansion">🧩 Plugin Ecosystem Expansion<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-plugin-ecosystem-expansion" class="hash-link" aria-label="Direct link to 🧩 Plugin Ecosystem Expansion" title="Direct link to 🧩 Plugin Ecosystem Expansion">​</a></h2>
-<ul>
-<li>Now supporting <strong>45+ plugins</strong> including 18+ blockchain integrations</li>
-<li><strong>New blockchain plugins</strong>: Zilliqa, OKX DEX, MINA, Orderly Network, HoldStation</li>
-<li><strong>Plugin-binance API</strong> timeout handling added for better reliability</li>
-<li><strong>Suno AI Music Generation plugin</strong> added for creating custom music with text prompts</li>
-<li><strong>Router Nitro Plugin</strong> launched for efficient request routing</li>
-<li><strong>BitMind API plugin</strong> for AI-generated image detection and analysis</li>
-<li><strong>CLI utility</strong> for plugin management introduced, dramatically simplifying developer experience</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-ai-capabilities-enhancement">🤖 AI Capabilities Enhancement<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-ai-capabilities-enhancement" class="hash-link" aria-label="Direct link to 🤖 AI Capabilities Enhancement" title="Direct link to 🤖 AI Capabilities Enhancement">​</a></h2>
-<ul>
-<li><strong>Text-to-Speech feature</strong> added supporting 15+ languages</li>
-<li><strong>Anthropic image provider</strong> integrated for enhanced vision tasks</li>
-<li><strong>Image upload path fix</strong> in DESCRIBE_IMAGE action</li>
-<li><strong>Google Gemini</strong> model configurations updated</li>
-<li><strong>NVIDIA inference</strong> integration for expanded AI capabilities</li>
-<li><strong>Elfa AI's Social Analytics API</strong> integrated for enhanced social insights</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-performance-improvements">📊 Performance Improvements<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-performance-improvements" class="hash-link" aria-label="Direct link to 📊 Performance Improvements" title="Direct link to 📊 Performance Improvements">​</a></h2>
-<table><thead><tr><th>Operation</th><th>Before</th><th>After</th><th>Improvement</th></tr></thead><tbody><tr><td>Query Large Dataset</td><td>40s</td><td>0.02s</td><td>2000x faster</td></tr><tr><td>Memory Usage</td><td>1.2GB</td><td>380MB</td><td>68% reduction</td></tr><tr><td>Cold Start Time</td><td>8.5s</td><td>2.2s</td><td>74% faster</td></tr></tbody></table>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-community--growth">📈 Community &amp; Growth<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-community--growth" class="hash-link" aria-label="Direct link to 📈 Community &amp; Growth" title="Direct link to 📈 Community &amp; Growth">​</a></h2>
-<ul>
-<li><strong>GitHub stats</strong>: 7.9k stars (+2.2k), 2.1k forks (+400), 237 contributors (+44)</li>
-<li><strong>$10M MAGIC FUND</strong> established with Jupiter Exchange for builders</li>
-<li><strong>Dynamic plugin loading</strong> feature merged – major step toward modular architecture</li>
-<li><strong>README translations</strong> added in Serbian, Ukrainian, and Brazilian Portuguese</li>
-<li><strong>Email Plugin</strong> added for AI-driven communication automation</li>
-<li><strong>Characters moved</strong> to separate repository for better management</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-technical-insight-knowledge-system-architecture">🧠 Technical Insight: Knowledge System Architecture<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-technical-insight-knowledge-system-architecture" class="hash-link" aria-label="Direct link to 🧠 Technical Insight: Knowledge System Architecture" title="Direct link to 🧠 Technical Insight: Knowledge System Architecture">​</a></h2>
-<!-- -->
-<p>The separation of the knowledge system from the memories table represents a significant architectural improvement, allowing for more specialized handling of different types of information and resulting in more accurate and contextually appropriate responses from ElizaOS agents.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-looking-ahead-to-february">🔮 Looking Ahead to February<a href="https://elizaos.github.io/eliza/blog/eliza-january-2025-recap/#-looking-ahead-to-february" class="hash-link" aria-label="Direct link to 🔮 Looking Ahead to February" title="Direct link to 🔮 Looking Ahead to February">​</a></h2>
-<ul>
-<li><strong>v0.1.9 release</strong> scheduled for early February</li>
-<li><strong>Plugin registry migration</strong> to improve modularity</li>
-<li><strong>Early work beginning</strong> on ElizaOS v2 architecture</li>
-<li><strong>Expansion of AI capabilities</strong> with new model providers</li>
-<li><strong>Further RAG knowledge system</strong> improvements</li>
-</ul>]]></content:encoded>
-            <category>recap</category>
-            <category>release</category>
-            <category>v1.7.0</category>
+            <title><![CDATA[Hello, world!]]></title>
+            <link>https://elizaos.github.io/eliza/blog/helloworld/</link>
+            <guid>https://elizaos.github.io/eliza/blog/helloworld/</guid>
+            <pubDate>Wed, 05 Mar 2025 23:48:58 GMT</pubDate>
+            <description><![CDATA[Test]]></description>
+            <content:encoded><![CDATA[<p>Test</p>]]></content:encoded>
         </item>
     </channel>
 </rss>
