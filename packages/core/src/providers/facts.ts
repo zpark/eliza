@@ -14,7 +14,7 @@ const factsProvider: Provider = {
     name: "FACTS",
     description: "Key facts that {{agentName}} knows",
     dynamic: true,
-    get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
+    get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
     // Parallelize initial data fetching operations including recentInteractions
         const recentMessages = await runtime.getMemoryManager("messages").getMemories({
             roomId: message.roomId,

@@ -1,7 +1,7 @@
 import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
 import type { IAgentRuntime, OnboardingConfig, Setting, World, WorldSettings } from "./types";
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 function createSettingFromConfig(
   configSetting: Omit<Setting, "value">
@@ -48,7 +48,7 @@ function saltSettingValue(setting: Setting, salt: string): Setting {
     encrypted += cipher.final('hex');
     
     // Store IV with the encrypted value so we can decrypt it later
-    settingCopy.value = iv.toString('hex') + ':' + encrypted;
+    settingCopy.value = `${iv.toString('hex')}:${encrypted}`;
   }
   
   return settingCopy;

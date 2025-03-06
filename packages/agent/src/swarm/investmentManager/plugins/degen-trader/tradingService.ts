@@ -2668,12 +2668,12 @@ export class DegenTradingService extends Service {
       const volatility = analysis.technical?.volatility || 0;
       
       // Extract price data
-      const currentPrice = analysis.price?.current || 0;
+      const _currentPrice = analysis.price?.current || 0;
       const priceChange = analysis.price?.change || 0;
       
       // Extract market data
       const marketCap = analysis.market?.marketCap || 0;
-      const volume = analysis.market?.volume || 0;
+      const _volume = analysis.market?.volume || 0;
       const liquidity = analysis.market?.liquidity || 0;
       
       // Check if this is a buy or sell decision
@@ -2861,7 +2861,7 @@ export class DegenTradingService extends Service {
       const marketData = await this.getTokenMarketData(tokenAddress);
       
       // If token has high volatility, adjust sell percentage
-      if (marketData && marketData.priceHistory && marketData.priceHistory.length > 0) {
+      if (marketData?.priceHistory && marketData.priceHistory.length > 0) {
         const volatility = this.calculateVolatility(marketData.priceHistory);
         if (volatility > 0.2) {
           // High volatility - sell more aggressively

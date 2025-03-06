@@ -62,8 +62,8 @@ export const followRoomAction: Action = {
     message: Memory,
     state?: State,
     _options?: { [key: string]: unknown },
-    callback?: HandlerCallback,
-    responses?: Memory[]
+    _callback?: HandlerCallback,
+    _responses?: Memory[]
   ) => {
     async function _shouldFollow(state: State): Promise<boolean> {
       const shouldFollowPrompt = composePrompt({
@@ -147,7 +147,7 @@ export const followRoomAction: Action = {
       agentId: message.agentId,
       roomId: message.roomId,
       content: {
-        thought: "I followed the room " + room.name,
+        thought: `I followed the room ${room.name}`,
         actions: ["FOLLOW_ROOM_START"],
       },
     });

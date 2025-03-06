@@ -184,7 +184,7 @@ export const executeSwap: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
-        state = await runtime.composeState(message, ["RECENT_MESSAGES"]);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
 
         try {
             const solanaService = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;

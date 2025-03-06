@@ -47,8 +47,8 @@ export const unmuteRoomAction: Action = {
     message: Memory,
     state?: State,
     _options?: { [key: string]: unknown },
-    callback?: HandlerCallback,
-    responses?: Memory[]
+    _callback?: HandlerCallback,
+    _responses?: Memory[]
   ) => {
     async function _shouldUnmute(state: State): Promise<boolean> {
       const shouldUnmutePrompt = composePrompt({
@@ -133,7 +133,7 @@ export const unmuteRoomAction: Action = {
       agentId: message.agentId,
       roomId: message.roomId,
       content: {
-        thought: "I unmuted the room " + room.name,
+        thought: `I unmuted the room ${room.name}`,
         actions: ["UNMUTE_ROOM_START"],
       },
     });

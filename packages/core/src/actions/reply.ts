@@ -1,5 +1,5 @@
 import { composePrompt, parseJSONObjectFromText } from "../prompts";
-import { Action, ActionExample, Content, HandlerCallback, IAgentRuntime, Memory, ModelTypes, State } from "../types";
+import { type Action, type ActionExample, type Content, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 const replyTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
 {{providers}}

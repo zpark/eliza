@@ -46,8 +46,8 @@ export const unfollowRoomAction: Action = {
     message: Memory,
     state?: State,
     _options?: { [key: string]: unknown },
-    callback?: HandlerCallback,
-    responses?: Memory[]
+    _callback?: HandlerCallback,
+    _responses?: Memory[]
   ) => {
     async function _shouldUnfollow(state: State): Promise<boolean> {
       const shouldUnfollowPrompt = composePrompt({
@@ -78,7 +78,7 @@ export const unfollowRoomAction: Action = {
         agentId: message.agentId,
         roomId: message.roomId,
         content: {
-          thought: "I unfollowed the room " + room.name,
+          thought: `I unfollowed the room ${room.name}`,
           actions: ["UNFOLLOW_ROOM_START"],
         },
       });

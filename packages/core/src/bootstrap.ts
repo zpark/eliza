@@ -40,7 +40,7 @@ import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
 import { TaskService } from "./services/taskService.ts";
 import {
-  ChannelType,
+  type ChannelType,
   type Content,
   type Entity,
   type HandlerCallback,

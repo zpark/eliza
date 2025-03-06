@@ -104,7 +104,7 @@ export default {
     description: 'Transfer SOL or SPL tokens to another address on Solana.',
     handler: async (
         runtime: IAgentRuntime,
-        message: Memory,
+        _message: Memory,
         state: State,
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,

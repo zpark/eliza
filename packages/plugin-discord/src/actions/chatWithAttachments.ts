@@ -35,7 +35,7 @@ Your response must be formatted as a JSON block with this structure:
 
 const getAttachmentIds = async (
     runtime: IAgentRuntime,
-    message: Memory,
+    _message: Memory,
     state: State
 ): Promise<{ objective: string; attachmentIds: string[] } | null> => {
     const prompt = composePrompt({

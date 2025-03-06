@@ -2,12 +2,12 @@
 
 // Polyfill global EventEmitter for server-side if it's not defined.
 if (typeof global.EventEmitter === 'undefined') {
-  global.EventEmitter = require('events').EventEmitter;
+  global.EventEmitter = require('node:events').EventEmitter;
 }
 
 module.exports = () => ({
     name: "event-emitter-polyfill",
-    configureWebpack(config, isServer) {
+    configureWebpack(_config, isServer) {
       if (!isServer) {
         return {
           resolve: {

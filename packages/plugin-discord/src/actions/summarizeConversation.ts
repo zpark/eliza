@@ -38,7 +38,7 @@ Your response must be formatted as a JSON block with this structure:
 
 const getDateRange = async (
     runtime: IAgentRuntime,
-    message: Memory,
+    _message: Memory,
     state: State
 ) => {
     const prompt = composePrompt({

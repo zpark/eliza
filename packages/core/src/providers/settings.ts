@@ -142,7 +142,9 @@ export const settingsProvider: Provider = {
       const type = room.type;
       const isOnboarding = type === ChannelType.DM;
 
-      let world, serverId, worldSettings;
+      let world;
+      let serverId;
+      let worldSettings;
 
       if (isOnboarding) {
         // In onboarding mode, use the user's world directly

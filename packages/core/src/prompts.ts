@@ -194,7 +194,7 @@ export const formatMessages = ({
     .reverse()
     .filter((message: Memory) => message.entityId)
     .map((message: Memory) => {
-      let messageText = (message.content as Content).text;
+      const messageText = (message.content as Content).text;
 
       const messageActions = (message.content as Content).actions;
       const messageThought = (message.content as Content).thought;

@@ -2,7 +2,7 @@ import {
   ChannelType,
   type Character,
   createUniqueUuid,
-  Entity,
+  type Entity,
   type HandlerCallback,
   type IAgentRuntime,
   logger,

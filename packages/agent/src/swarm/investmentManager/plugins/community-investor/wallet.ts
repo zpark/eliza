@@ -2,7 +2,7 @@ import {
     type IAgentRuntime,
     type Memory,
     type Provider,
-    ProviderResult,
+    type ProviderResult,
     logger
 } from "@elizaos/core";
 import { Connection, Keypair, PublicKey, type VersionedTransaction } from "@solana/web3.js";

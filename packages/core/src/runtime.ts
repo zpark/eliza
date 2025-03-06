@@ -976,7 +976,7 @@ export class AgentRuntime implements IAgentRuntime {
 
     // For providers that are in the cache but weren't fetched this time, keep their data
     // Only relevant when we have a filterList or when selectively updating missing providers
-    const fetchedProviderNames = providerData.map(result => result.providerName);
+    const _fetchedProviderNames = providerData.map(result => result.providerName);
     
     // Collect provider text for both new and cached providers
     const providersTextMap = new Map<string, string>();
@@ -1119,7 +1119,7 @@ export class AgentRuntime implements IAgentRuntime {
         params: params ? Object.keys(params) : [],
         response: Array.isArray(response) && response.every(x => typeof x === 'number') ? '[array]' : response,
       },
-      type: "useModel:" + modelType,
+      type: `useModel:${modelType}`,
     });
 
     return response;

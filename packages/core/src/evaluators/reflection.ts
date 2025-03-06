@@ -3,12 +3,12 @@ import logger from "../logger";
 import { MemoryManager } from "../memory";
 import { composePrompt } from "../prompts";
 import {
-  Entity,
+  type Entity,
   type Evaluator,
   type IAgentRuntime,
   type Memory,
   ModelTypes,
-  State,
+  type State,
   type UUID,
 } from "../types";
 import { getEntityDetails } from "../entities";

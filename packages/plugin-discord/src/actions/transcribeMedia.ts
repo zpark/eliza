@@ -29,7 +29,7 @@ Your response must be formatted as a JSON block with this structure:
 
 const getMediaAttachmentId = async (
     runtime: IAgentRuntime,
-    message: Memory,
+    _message: Memory,
     state: State
 ): Promise<string | null> => {
     const prompt = composePrompt({

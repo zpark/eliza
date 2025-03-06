@@ -49,8 +49,8 @@ export const muteRoomAction: Action = {
     message: Memory,
     state?: State,
     _options?: { [key: string]: unknown },
-    callback?: HandlerCallback,
-    responses?: Memory[]
+    _callback?: HandlerCallback,
+    _responses?: Memory[]
   ) => {
     async function _shouldMute(state: State): Promise<boolean> {
       const shouldMutePrompt = composePrompt({
@@ -133,7 +133,7 @@ export const muteRoomAction: Action = {
       agentId: message.agentId,
       roomId: message.roomId,
       content: {
-        thought: "I muted the room " + room.name,
+        thought: `I muted the room ${room.name}`,
         actions: ["MUTE_ROOM_START"],
       },
     });
