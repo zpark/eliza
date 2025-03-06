@@ -17,27 +17,45 @@ interface AgentBasic {
   [key: string]: unknown;
 }
 
-// Utility function to resolve agent ID from name, index, or direct ID
-async function resolveAgentId(nameOrIndex: string): Promise<string> {
-  // First try to get all agents to find by name
-  const listResponse = await fetch(`${AGENTS_BASE_URL}`);
-  if (!listResponse.ok) {
-    throw new Error(`Failed to fetch agents list: ${listResponse.statusText}`);
+async function getAgents(): Promise<AgentBasic[]> {
+  const response = await fetch(`${AGENTS_BASE_URL}`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch agents list: ${response.statusText}`);
   }
-  
-  const data = await listResponse.json();
-  const agents = (data.data?.agents || []) as AgentBasic[];
-      
-  // Try to find agent by name (case insensitive)
+  return (await response.json() as ApiResponse<{ agents: AgentBasic[] }>).data?.agents || [];
+}
+
+// Utility function to resolve agent ID from name, index, or direct ID
+async function resolveAgentId(idOrNameOrIndex: string): Promise<string> {
+  // First try to get all agents to find by name
+  const agents = await getAgents();
+
+  // Try to find agent by name
   const agentByName = agents.find(
-    agent => agent.name.toLowerCase() === nameOrIndex.toLowerCase()
+    agent => agent.name.toLowerCase() === idOrNameOrIndex.toLowerCase()
   );
 
-  // Use agent ID from name match, or try direct ID/index
-  return agentByName ? agentByName.id 
-    : !Number.isNaN(Number(nameOrIndex))
-      ? await getAgentIdFromIndex(Number.parseInt(nameOrIndex))
-      : nameOrIndex;
+  if (agentByName) {
+    return agentByName.id;
+  }
+
+  // Try to find agent by ID
+  const agentById = agents.find(
+    agent => agent.id === idOrNameOrIndex
+  );
+
+  if (agentById) {
+    return agentById.id;
+  }
+
+  // Try to find agent by index
+  if (!Number.isNaN(Number(idOrNameOrIndex))) {
+    return agents[Number(idOrNameOrIndex)].id;
+  } 
+
+  // If no agent is found, throw an error
+
+  throw new Error(`Agent not found: ${idOrNameOrIndex}`);
 }
 
 export const agent = new Command()
@@ -59,34 +77,10 @@ interface ApiResponse<T> {
   };
 }
 
-interface AgentData {
-  id: string;
-  name: string;
-  status?: string;
-  character: Partial<Agent>;
-}
 
 interface AgentStartResponse {
   id: string;
   character: Partial<Agent>;
-}
-
-async function getAgentIdFromIndex(index: number): Promise<string> {
-  const listResponse = await fetch(`${AGENTS_BASE_URL}`)
-  if (!listResponse.ok) {
-    throw new Error(`Failed to fetch agents list: ${listResponse.statusText}`);
-  }
-  
-  const data = await listResponse.json();
-  const agents = (data.data?.agents || []) as AgentBasic[];
-  
-  const sortedAgents = agents.sort((a, b) => a.name.localeCompare(b.name))
-  
-  if (index < 0 || index >= sortedAgents.length) {
-    throw new Error(`Invalid index: ${index}. Must be between 0 and ${sortedAgents.length - 1}`)
-  }
-  
-  return sortedAgents[index].id
 }
 
 agent
@@ -97,21 +91,10 @@ agent
   .action(async (opts) => {
     try {
       // API Endpoint: GET /agents
-      const response = await fetch(`${AGENTS_BASE_URL}`)
-      if (!response.ok) {
-        const errorData = await response.json() as ApiResponse<unknown>;
-        throw new Error(errorData.error?.message || `Failed to list agents: ${response.statusText}`);
-      }
-      
-      const data = await response.json() as ApiResponse<{ agents: AgentBasic[] }>;
-      const agents = data.data?.agents || [];
-
-      // Sort agents by name
-      const sortedAgents = agents.sort((a, b) => a.name.localeCompare(b.name))
-      
+      const agents = await getAgents();
+  
       // Format data for table
-      const agentData = sortedAgents.map((agent, index) => ({
-        Index: index,
+      const agentData = agents.map((agent) => ({
         Name: agent.name,
         ID: agent.id,
         Status: agent.status || "unknown"
@@ -154,22 +137,17 @@ agent
         throw new Error(errorData.error?.message || `Failed to get agent: ${response.statusText}`);
       }
       
-      const data = await response.json() as ApiResponse<AgentData>;
-      const agentData = data.data || { 
-        id: '', 
-        name: '', 
-        character: {} 
-      };
+      const {data: agent} = await response.json() as ApiResponse<Agent>;
 
       // The displayAgent function expects a character object
-      displayAgent(agentData.character, "Agent Details")
+      displayAgent(agent, "Agent Details")
 
       // check if json argument is provided
       if (opts.json) {
-        const jsonPath = opts.output || path.join(process.cwd(), `${agentData.character.name || 'agent'}.json`)
-        // exclude .id field from the json
-        const { id, ...character } = agentData.character
-        fs.writeFileSync(jsonPath, JSON.stringify(character, null, 2))
+        const jsonPath = opts.output || path.join(process.cwd(), `${agent.name || 'agent'}.json`)
+        // exclude id and status fields from the json
+        const { id, createdAt, updatedAt, enabled, ...agentConfig } = agent
+        fs.writeFileSync(jsonPath, JSON.stringify(agentConfig, null, 2))
         logger.success(`Saved agent configuration to ${jsonPath}`)
       }
 
@@ -240,24 +218,17 @@ agent
             }
 
           case 'name':
-            // For starting by name, we need to handle this differently
-            // First check if there's a built-in character with this name
-            try {
-              // This is a custom implementation as there's no direct API endpoint
-              // We'll try to load a character by name from a predefined location
-              const characterPath = path.join(process.cwd(), 'characters', `${opts.name}.json`);
-              if (fs.existsSync(characterPath)) {
-                const fileContent = fs.readFileSync(characterPath, 'utf8');
-                payload.characterJson = JSON.parse(fileContent);
-                return await fetch(`${AGENTS_BASE_URL}`, {
+            {
+              const agentId = await resolveAgentId(opts.name);
+              try {
+                return await fetch(`${AGENTS_BASE_URL}/${agentId}`, {
                   method: 'POST',
                   headers,
                   body: JSON.stringify(payload)
                 });
+              } catch (error) {
+                throw new Error(`Failed to start agent by name: ${error.message}`);
               }
-              throw new Error(`Character '${opts.name}' not found. Please provide a valid character name or use another start option.`);
-            } catch (error) {
-              throw new Error(`Failed to start agent by name: ${error.message}`);
             }
 
           default:
@@ -331,6 +302,7 @@ agent
         throw new Error(errorData.error?.message || `Failed to remove agent: ${response.statusText}`);
       }
 
+      // Server returns 204 No Content for successful deletion, no need to parse response
       logger.success(`Successfully removed agent ${opts.name}`);
     } catch (error) {
       handleError(error);
