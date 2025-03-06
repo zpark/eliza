@@ -126,7 +126,7 @@ export const muteRoomAction: Action = {
       );
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
 
     await runtime.getMemoryManager("messages").createMemory({
       entityId: message.entityId,

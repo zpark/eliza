@@ -71,7 +71,7 @@ export const unfollowRoomAction: Action = {
         null
       );
 
-      const room = await runtime.databaseAdapter.getRoom(message.roomId);
+      const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
 
       await runtime.getMemoryManager("messages").createMemory({
         entityId: message.entityId,

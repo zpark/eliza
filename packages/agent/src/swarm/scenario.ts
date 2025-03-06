@@ -86,6 +86,7 @@ export class ScenarioService extends Service {
           source: "scenario",
           name: sender.character.name,
           userName: sender.character.name,
+          channelType: ChannelType.GROUP,
         },
       };
 
@@ -136,6 +137,7 @@ export class ScenarioService extends Service {
           source: "scenario",
           name: sender.character.name,
           userName: sender.character.name,
+          channelType: ChannelType.GROUP,
         },
       };
 

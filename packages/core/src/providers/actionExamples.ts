@@ -8,17 +8,18 @@ import type {
   Action,
   IAgentRuntime,
   Memory,
-  Provider
+  Provider,
+  State
 } from "../types";
 
 export const actionsProvider: Provider = {
   name: "ACTIONS",
   description: "Possible response actions",
   position: -1,
-  get: async (runtime: IAgentRuntime, message: Memory) => {
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     // Get actions that validate for this message
     const actionPromises = runtime.actions.map(async (action: Action) => {
-      const result = await action.validate(runtime, message);
+      const result = await action.validate(runtime, message, state);
       if (result) {
         return action;
       }

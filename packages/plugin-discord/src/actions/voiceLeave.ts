@@ -26,7 +26,7 @@ export default {
     "LEAVE_MEETING",
     "LEAVE_CALL",
   ],
-  validate: async (runtime: IAgentRuntime, message: Memory, _state: State) => {
+  validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     if (message.content.source !== "discord") {
       // not a discord message
       return false;
@@ -39,7 +39,7 @@ export default {
       return false;
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
 
     if (room?.type !== ChannelType.GROUP) {
       return false;

@@ -495,6 +495,7 @@ export function agentRouter(
         attachments,
         source: "direct",
         inReplyTo: undefined,
+        channelType: ChannelType.API,
       };
 
       const userMessage = {
@@ -873,6 +874,7 @@ export function agentRouter(
         attachments: [],
         source: "direct",
         inReplyTo: undefined,
+        channelType: ChannelType.API,
       };
 
       const userMessage = {

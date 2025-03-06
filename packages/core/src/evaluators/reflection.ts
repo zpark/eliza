@@ -231,7 +231,7 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
     });
 
   // Run all queries in parallel
-  const [existingRelationships, entities, knownFacts, room] = await Promise.all([
+  const [existingRelationships, entities, knownFacts] = await Promise.all([
     runtime.databaseAdapter.getRelationships({
       entityId: message.entityId,
     }),
@@ -241,8 +241,7 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
       agentId, 
       count: 30,
       unique: true,
-    }),
-    runtime.databaseAdapter.getRoom(roomId)
+    })
   ]);
 
   console.log("***** entities")
@@ -252,7 +251,7 @@ async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
     state: {
       ...state,
       knownFacts: formatFacts(knownFacts),
-      roomType: room.type || "group", // Can be "group", "voice", or "dm"
+      roomType: message.content.channelType,
       entitiesInRoom: JSON.stringify(entities),
       existingRelationships: JSON.stringify(existingRelationships),
       senderId: message.entityId,

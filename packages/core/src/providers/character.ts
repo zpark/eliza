@@ -1,10 +1,10 @@
 import { addHeader } from "../prompts";
-import { ChannelType, type IAgentRuntime, type Memory, type Provider } from "../types";
+import { ChannelType, type IAgentRuntime, type Memory, type Provider, type State } from "../types";
 
 export const characterProvider: Provider = {
   name: "CHARACTER",
   description: "Character information",
-  get: async (runtime: IAgentRuntime, message: Memory) => {
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     const character = runtime.character;
 
     // Character name
@@ -112,7 +112,7 @@ export const characterProvider: Provider = {
           )
         : "";
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
 
     const isPostFormat = room?.type === ChannelType.FEED || room?.type === ChannelType.THREAD;
 

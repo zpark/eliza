@@ -202,7 +202,7 @@ const updateRoleAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    _state: State
+    state: State
   ): Promise<boolean> => {
     logger.info("Starting role update validation");
 
@@ -212,7 +212,7 @@ const updateRoleAction: Action = {
       return false;
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -278,7 +278,7 @@ const updateRoleAction: Action = {
       await callback(response.content);
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     const world = await runtime.databaseAdapter.getWorld(room.worldId);
 
     if (!room) {

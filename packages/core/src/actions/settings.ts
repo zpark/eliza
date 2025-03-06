@@ -720,15 +720,8 @@ const updateSettingsAction: Action = {
     _state: State
   ): Promise<boolean> => {
     try {
-      // Validate that we're in a DM channel
-      const room = await runtime.databaseAdapter.getRoom(message.roomId);
-      if (!room) {
-        logger.error(`No room found for ID ${message.roomId}`);
-        return false;
-      }
-
-      if (room.type !== ChannelType.DM) {
-        logger.info(`Skipping settings in non-DM channel (type: ${room.type})`);
+      if (message.content.channelType !== ChannelType.DM) {
+        logger.info(`Skipping settings in non-DM channel (type: ${message.content.channelType})`);
         return false;
       }
 

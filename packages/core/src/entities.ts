@@ -104,7 +104,7 @@ export async function findEntityByName(
   state: State,
 ): Promise<Entity | null> {
   try {
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       logger.warn("Room not found for entity search");
       return null;

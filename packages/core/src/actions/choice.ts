@@ -52,7 +52,7 @@ export const choiceAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    _state: State
+    state: State
   ): Promise<boolean> => {
     // Get all tasks with options metadata
     const pendingTasks = await runtime.databaseAdapter.getTasks({
@@ -60,7 +60,7 @@ export const choiceAction: Action = {
       tags: ["AWAITING_CHOICE"],
     });
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
 
     const userRole = await getUserServerRole(
       runtime,

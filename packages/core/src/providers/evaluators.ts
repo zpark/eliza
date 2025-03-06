@@ -1,6 +1,6 @@
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { addHeader } from "../prompts";
-import type { ActionExample } from "../types";
+import type { ActionExample, State } from "../types";
 import type { Evaluator, IAgentRuntime, Memory, Provider } from "../types";
 
 /**
@@ -87,11 +87,11 @@ export const evaluatorsProvider: Provider = {
   name: "EVALUATORS",
   description: "Evaluators that can be used to evaluate the conversation after responding",
   private: true,
-  get: async (runtime: IAgentRuntime, message: Memory) => {
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     // Get evaluators that validate for this message
     const evaluatorPromises = runtime.evaluators.map(
       async (evaluator: Evaluator) => {
-        const result = await evaluator.validate(runtime, message);
+        const result = await evaluator.validate(runtime, message, state);
         if (result) {
           return evaluator;
         }

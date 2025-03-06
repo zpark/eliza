@@ -2,24 +2,24 @@
 import {
   type Action,
   type ActionExample,
-  type IAgentRuntime,
-  type Memory,
-  type State,
   ChannelType,
   composePrompt,
   createUniqueUuid,
   type HandlerCallback,
+  type IAgentRuntime,
   logger,
+  type Memory,
   ModelTypes,
+  type State,
 } from "@elizaos/core";
 import {
-  type Channel,
-  type Guild,
   type BaseGuildVoiceChannel,
+  type Channel,
   ChannelType as DiscordChannelType,
+  type Guild,
 } from "discord.js";
-import { ServiceTypes } from "../types.ts";
 import type { DiscordService } from "../index.ts";
+import { ServiceTypes } from "../types.ts";
 import type { VoiceManager } from "../voice.ts";
 
 export default {
@@ -32,15 +32,13 @@ export default {
     "JOIN_MEETING",
     "JOIN_CALL",
   ],
-  validate: async (runtime: IAgentRuntime, message: Memory, _state: State) => {
+  validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     if (message.content.source !== "discord") {
       // not a discord message
       return false;
     }
 
-    const roomId = message.roomId;
-
-    const room = await runtime.databaseAdapter.getRoom(roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
 
     if (room?.type !== ChannelType.GROUP) {
       return false;
@@ -59,11 +57,11 @@ export default {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    _state: State,
+    state: State,
     _options: any,
     callback: HandlerCallback
   ): Promise<boolean> => {
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }

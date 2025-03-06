@@ -26,9 +26,9 @@ export const greetAction: Action = {
     validate: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state: State
+        state: State
     ): Promise<boolean> => {
-        const room = await runtime.databaseAdapter.getRoom(message.roomId);
+        const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -62,11 +62,11 @@ export const greetAction: Action = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state: State,
+        state: State,
         _options: any,
         callback: HandlerCallback,
     ): Promise<void> => {
-        const room = await runtime.databaseAdapter.getRoom(message.roomId);
+        const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }

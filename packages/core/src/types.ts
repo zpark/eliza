@@ -380,7 +380,7 @@ export interface Provider {
   private?: boolean;
 
   /** Data retrieval function */
-  get: (runtime: IAgentRuntime, message: Memory) => Promise<ProviderResult>;
+  get: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<ProviderResult>;
 }
 
 /**

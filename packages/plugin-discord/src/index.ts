@@ -14,6 +14,7 @@ import {
   type World
 } from "@elizaos/core";
 import {
+  type Channel,
   ChannelType as DiscordChannelType,
   Client as DiscordJsClient,
   Events,
@@ -288,8 +289,7 @@ export class DiscordService extends Service implements IDiscordService {
     await this.onReady();
   }
 
-  async getChannelType(channelId: string): Promise<ChannelType> {
-    const channel = await this.client.channels.fetch(channelId);
+  async getChannelType(channel: Channel): Promise<ChannelType> {
     switch (channel.type) {
       case DiscordChannelType.DM:
         return ChannelType.DM;
@@ -363,7 +363,7 @@ export class DiscordService extends Service implements IDiscordService {
         source: "discord",
         channelId: reaction.message.channel.id,
         serverId: reaction.message.guild?.id,
-        type: await this.getChannelType(reaction.message.channel.id),
+        type: await this.getChannelType(reaction.message.channel as Channel),
       });
 
       const inReplyTo = createUniqueUuid(this.runtime, reaction.message.id);
@@ -378,6 +378,7 @@ export class DiscordService extends Service implements IDiscordService {
           text: reactionMessage,
           source: "discord",
           inReplyTo,
+          channelType: await this.getChannelType(reaction.message.channel as Channel),
         },
         roomId,
         createdAt: timestamp,
@@ -452,7 +453,7 @@ export class DiscordService extends Service implements IDiscordService {
         source: "discord",
         channelId: reaction.message.channel.id,
         serverId: reaction.message.guild?.id,
-        type: await this.getChannelType(reaction.message.channel.id),
+        type: await this.getChannelType(reaction.message.channel as Channel),
       });
 
       const memory: Memory = {
@@ -465,6 +466,7 @@ export class DiscordService extends Service implements IDiscordService {
           text: reactionMessage,
           source: "discord",
           inReplyTo: createUniqueUuid(this.runtime, reaction.message.id),
+          channelType: await this.getChannelType(reaction.message.channel as Channel),
         },
         roomId,
         createdAt: Date.now(),

@@ -47,7 +47,14 @@ export class AgentRuntime implements IAgentRuntime {
   readonly providers: Provider[] = [];
   readonly plugins: Plugin[] = [];
   events: Map<string, ((params: any) => void)[]> = new Map();
-  stateCache = new Map<UUID, { values: { [key: string]: any }; data: { [key: string]: any }; text: string }>();
+  stateCache = new Map<
+    UUID,
+    {
+      values: { [key: string]: any };
+      data: { [key: string]: any };
+      text: string;
+    }
+  >();
 
   readonly fetch = fetch;
   services: Map<ServiceType, Service> = new Map();
@@ -669,7 +676,7 @@ export class AgentRuntime implements IAgentRuntime {
 
     // get the evaluators that were chosen by the response handler
 
-    if(evaluators.length === 0) {
+    if (evaluators.length === 0) {
       return [];
     }
 
@@ -680,7 +687,14 @@ export class AgentRuntime implements IAgentRuntime {
     await Promise.all(
       evaluators.map(async (evaluator) => {
         if (evaluator.handler) {
-          await evaluator.handler(this, message, state, {}, callback, responses);
+          await evaluator.handler(
+            this,
+            message,
+            state,
+            {},
+            callback,
+            responses
+          );
           // log to database
           await this.databaseAdapter.log({
             entityId: message.entityId,
@@ -890,148 +904,118 @@ export class AgentRuntime implements IAgentRuntime {
    */
   async composeState(
     message: Memory,
-    filterList: string[] | null = null, // only get providers that are in the filterList (this will not erase previously added providers)
+    filterList: string[] | null = null, // only get providers that are in the filterList
     includeList: string[] | null = null // include providers that are private, dynamic or otherwise not included by default
   ): Promise<State> {
-    // get cached state for this message ID first
-    const cachedState = await this.stateCache.get(message.id);
+    // Get cached state for this message ID first
+    const cachedState = (await this.stateCache.get(message.id)) || {
+      values: {},
+      data: {},
+      text: "",
+    };
 
-    // Get the existing providers from cache (if any)
-    const existingProviderNames = 
-      cachedState?.data?.providers 
-        ? Object.keys(cachedState.data.providers)
-        : [];
+    console.log("**** cachedState ****", cachedState);
 
-    // Determine which providers to get
-    let providersToGet;
-    
-    if (filterList && filterList.length > 0) {
-      // If we have a non-empty filter list, use the explicitly requested providers
-      providersToGet = this.providers.filter((provider) =>
-        filterList.includes(provider.name)
-      );
-    } else if (cachedState) {
-      // With a cache but no specific filter list (or empty filter list),
-      // only fetch providers not already in the cache
-      providersToGet = this.providers.filter(
-        (provider) => 
-          !provider.private && 
-          !provider.dynamic &&
-          !existingProviderNames.includes(provider.name)
-      );
-    } else {
-      // No cache or first time: get all eligible providers
-      providersToGet = this.providers;
-    }
-    
-    // Filter out private and dynamic providers unless they're explicitly requested
-    providersToGet = providersToGet
-      .filter((provider) => !provider.private && !provider.dynamic)
-      .concat(
-        includeList
-          ? this.providers.filter(
-              (provider) =>
-                includeList.includes(provider.name) &&
-                !providersToGet.includes(provider)
-            )
-          : []
-      )
-
-    const privateProvidersToGet = includeList
-      ? this.providers.filter(
-          (provider) =>
-            includeList.includes(provider.name) ||
-            filterList?.includes(provider.name)
-        )
+    // Get existing provider names from cache (if any)
+    const existingProviderNames = cachedState.data.providers
+      ? Object.keys(cachedState.data.providers)
       : [];
 
-    const allProviders = Array.from(
-      new Set([...providersToGet, ...privateProvidersToGet])
-    ).sort((a, b) => (a.position || 0) - (b.position || 0)) as Provider[];
+    // Step 1: Determine base set of providers to fetch
+    const providerNames = new Set<string>();
 
+    if (filterList && filterList.length > 0) {
+      // If filter list provided, start with just those providers
+      filterList.forEach((name) => providerNames.add(name));
+    } else {
+      // Otherwise, start with all non-private, non-dynamic providers that aren't cached
+      this.providers
+        .filter(
+          (p) =>
+            !p.private && !p.dynamic && !existingProviderNames.includes(p.name)
+        )
+        .forEach((p) => providerNames.add(p.name));
+    }
+
+    // Step 2: Always add providers from include list
+    if (includeList && includeList.length > 0) {
+      includeList.forEach((name) => providerNames.add(name));
+    }
+
+    // Get the actual provider objects and sort by position
+    const providersToGet = Array.from(
+      new Set(this.providers.filter((p) => providerNames.has(p.name)))
+    ).sort((a, b) => (a.position || 0) - (b.position || 0));
+
+    // Fetch data from selected providers
     const providerData = await Promise.all(
-      allProviders.map(async (provider) => {
+      providersToGet.map(async (provider) => {
         const start = Date.now();
-        const result = await provider.get(this, message);
+        const result = await provider.get(this, message, cachedState);
         const duration = Date.now() - start;
         logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
         return {
           ...result,
-          providerName: provider.name
+          providerName: provider.name,
         };
       })
     );
 
-    // Extract existing provider data from cache if available
-    const existingProviderData = cachedState?.data?.providers || {};
-    
+    // Extract existing provider data from cache
+    const existingProviderData = cachedState.data.providers || {};
+
     // Create a combined provider values structure that preserves all cached data
     // but updates with any newly fetched provider data
-    const combinedValues = {...existingProviderData};
-    
+    const combinedValues = { ...existingProviderData };
+
     // Update with newly fetched provider data
     for (const result of providerData) {
       combinedValues[result.providerName] = result.values || {};
     }
 
-    // For providers that are in the cache but weren't fetched this time, keep their data
-    // Only relevant when we have a filterList or when selectively updating missing providers
-    const _fetchedProviderNames = providerData.map(result => result.providerName);
-    
-    // Collect provider text for both new and cached providers
-    const providersTextMap = new Map<string, string>();
-    
-    // Add text from newly fetched providers
-    for (const result of providerData) {
-      if (result.text) {
-        providersTextMap.set(result.providerName, result.text);
-      }
-    }
-    
-    // Handle the provider text output
-    let providersText = "";
-    
-    // Get text from newly fetched providers
+    // Collect provider text from newly fetched providers
     const newProvidersText = providerData
-      .map(result => result.text)
-      .filter(text => text !== "")
+      .map((result) => result.text)
+      .filter((text) => text !== "")
       .join("\n");
-      
-    if (cachedState?.text && newProvidersText) {
-      // We have both cached text and new text - combine them
+
+    // Combine with existing text if available
+    let providersText = "";
+    if (cachedState.text && newProvidersText) {
       providersText = `${cachedState.text}\n${newProvidersText}`;
     } else if (newProvidersText) {
-      // Only new text
       providersText = newProvidersText;
-    } else if (cachedState?.text) {
-      // Only cached text
+    } else if (cachedState.text) {
       providersText = cachedState.text;
     }
 
+    // Prepare final values
     const values = {
-      ...(cachedState?.values || {}),
+      ...(cachedState.values || {}),
     };
-    
+
     // Safely merge all provider values
     for (const providerName in combinedValues) {
       const providerValues = combinedValues[providerName];
-      if (providerValues && typeof providerValues === 'object') {
+      if (providerValues && typeof providerValues === "object") {
         Object.assign(values, providerValues);
       }
     }
-    
+
+    // Assemble and cache the new state
     const newState = {
       values: {
-        ...(cachedState?.values || {}),
         ...values,
         providers: providersText,
       },
       data: {
-        ...(cachedState?.data || {}),
-        providers: combinedValues
+        ...(cachedState.data || {}),
+        providers: combinedValues,
       },
       text: providersText,
     } as State;
+
+    // Cache the result for future use
     this.stateCache.set(message.id, newState);
     return newState;
   }
@@ -1117,7 +1101,11 @@ export class AgentRuntime implements IAgentRuntime {
         modelType,
         modelKey,
         params: params ? Object.keys(params) : [],
-        response: Array.isArray(response) && response.every(x => typeof x === 'number') ? '[array]' : response,
+        response:
+          Array.isArray(response) &&
+          response.every((x) => typeof x === "number")
+            ? "[array]"
+            : response,
       },
       type: `useModel:${modelType}`,
     });

@@ -27,6 +27,13 @@ export enum MediaType {
 
 const MAX_MESSAGE_LENGTH = 4096; // Telegram's max message length
 
+const getChannelType = (chat: Chat): ChannelType => {
+    if (chat.type === 'private') return ChannelType.DM;
+    if (chat.type === 'supergroup') return ChannelType.GROUP;
+    if (chat.type === 'channel') return ChannelType.GROUP;
+    if (chat.type === 'group') return ChannelType.GROUP;
+}
+
 export class MessageManager {
     public bot: Telegraf<Context>;
     protected runtime: IAgentRuntime;
@@ -258,6 +265,7 @@ export class MessageManager {
                 content: {
                     text: fullText,
                     source: "telegram",
+                    channelType: getChannelType(message.chat as Chat),
                     // name: userName,
                     // userName: userName,
                     // Safely access reply_to_message with type guard
@@ -289,13 +297,6 @@ export class MessageManager {
                         chat.type === 'group' ?
                             (chat as Chat.GroupChat).title :
                             "Unknown Group";
-
-            const getChannelType = (chat: Chat): ChannelType => {
-                if (chat.type === 'private') return ChannelType.DM;
-                if (chat.type === 'supergroup') return ChannelType.GROUP;
-                if (chat.type === 'channel') return ChannelType.GROUP;
-                if (chat.type === 'group') return ChannelType.GROUP;
-            }
 
             await this.runtime.ensureConnection({
                 entityId,
@@ -355,6 +356,7 @@ export class MessageManager {
                                 ...content,
                                 text: sentMessage.text,
                                 inReplyTo: messageId,
+                                channelType: getChannelType(message.chat as Chat),
                             },
                             createdAt: sentMessage.date * 1000
                         };
@@ -405,6 +407,7 @@ export class MessageManager {
                 agentId: this.runtime.agentId,
                 roomId,
                 content: {
+                    channelType: getChannelType(reaction.chat as Chat),
                     text: `Reacted with: ${reactionType === 'emoji' ? reactionEmoji : reactionType}`,
                     source: "telegram",
                     // name: ctx.from.first_name,

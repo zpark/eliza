@@ -24,6 +24,7 @@ import {
 } from "@elizaos/core";
 import {
     type BaseGuildVoiceChannel,
+    type Channel,
     type Client,
     ChannelType as DiscordChannelType,
     type Guild,
@@ -159,14 +160,10 @@ export class VoiceManager extends EventEmitter {
         });
     }
 
-    async getChannelType(channelId: string): Promise<ChannelType> {
-        const channel = await this.client.channels.fetch(channelId);
+    async getChannelType(channel: Channel): Promise<ChannelType> {
         switch (channel.type) {
-          case DiscordChannelType.DM:
-            return ChannelType.DM;
-          case DiscordChannelType.GuildText:
-            return ChannelType.GROUP;
           case DiscordChannelType.GuildVoice:
+          case DiscordChannelType.GuildStageVoice:
             return ChannelType.VOICE_GROUP;
         }
       }
@@ -647,8 +644,7 @@ export class VoiceManager extends EventEmitter {
             }
 
             const roomId = createUniqueUuid(this.runtime, channelId);
-            const guild = await channel.guild.fetch();
-            const type = await this.getChannelType(guild.id);
+            const type = await this.getChannelType(channel as Channel);
 
             await this.runtime.ensureConnection({
                 entityId,
@@ -672,7 +668,8 @@ export class VoiceManager extends EventEmitter {
                     url: channel.url,
                     name: name,
                     userName: userName,
-                    isVoiceMessage: true
+                    isVoiceMessage: true,
+                    channelType: type,
                 },
                 createdAt: Date.now(),
             };
@@ -687,7 +684,8 @@ export class VoiceManager extends EventEmitter {
                             ...content,
                             name: this.runtime.character.name,
                             inReplyTo: memory.id,
-                            isVoiceMessage: true
+                            isVoiceMessage: true,
+                            channelType: type,
                         },
                         roomId,
                         createdAt: Date.now(),

@@ -1,9 +1,7 @@
 import {
     type Action,
     type ActionExample,
-    type Service,
     composePrompt,
-    composeContext,
     type HandlerCallback,
     type IAgentRuntime,
     logger,

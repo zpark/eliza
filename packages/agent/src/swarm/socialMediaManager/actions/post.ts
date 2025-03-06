@@ -114,9 +114,9 @@ const twitterPostAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    _state: State
+    state: State
   ): Promise<boolean> => {
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -161,7 +161,7 @@ const twitterPostAction: Action = {
     _responses: Memory[]
   ) => {
     try {
-      const room = await runtime.databaseAdapter.getRoom(message.roomId);
+      const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
       if (!room) {
         throw new Error("No room found");
       }

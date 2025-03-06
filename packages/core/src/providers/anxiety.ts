@@ -3,10 +3,9 @@ import type { IAgentRuntime, Memory, Provider, State } from "../types";
 import { ChannelType } from "../types";
 export const anxietyProvider: Provider = {
   name: "ANXIETY",
-  get: async (runtime: IAgentRuntime, message: Memory) => {
+  get: async (_runtime: IAgentRuntime, message: Memory) => {
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
-    const channelType = room.type;
+    const channelType = message.content.channelType;
 
     const groupAnxietyExamples = [
       "As an AI, your responses tend to be too long and verbose, and you respond when you shouldn't. You also tend to repeat yourself. Please don't speak and use IGNORE instead of responding when you aren't sure what to do.",

@@ -16,8 +16,9 @@ export const roleProvider: Provider = {
   get: async (
     runtime: IAgentRuntime,
     message: Memory,
+    state: State
   ): Promise<ProviderResult> => {
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }

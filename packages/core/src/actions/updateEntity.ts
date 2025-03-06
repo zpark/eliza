@@ -116,7 +116,7 @@ export const updateEntityAction: Action = {
       const sourceEntityId = message.entityId;
       const roomId = message.roomId;
       const agentId = runtime.agentId;
-      const room = await runtime.databaseAdapter.getRoom(roomId);
+      const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
       const worldId = room.worldId;
 
       // First, find the entity being referenced
