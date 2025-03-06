@@ -19,6 +19,7 @@
         "dist"
     ],
     "dependencies": {
+        "@elizaos/core": "workspace:*",
         "glob": "11.0.0",
         "@roamhq/wrtc": "^0.8.0",
         "@sinclair/typebox": "^0.32.20",
