@@ -35,6 +35,9 @@
     },
     "migrate:generate": {
       "dependsOn": ["@elizaos/core#build"]
+    },
+    "clean": {
+      "cache": false
     }
   }
 }
