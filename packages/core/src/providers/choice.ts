@@ -7,8 +7,8 @@ interface OptionObject {
   description?: string;
 }
 
-export const optionsProvider: Provider = {
-    name: "OPTIONS",
+export const choiceProvider: Provider = {
+    name: "CHOICE",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -103,4 +103,4 @@ export const optionsProvider: Provider = {
     }
 };
 
-export default optionsProvider;
+export default choiceProvider;

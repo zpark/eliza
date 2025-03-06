@@ -27,6 +27,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@types/bun": "latest",
+    "@types/node": "^22.13.9",
     "@vitest/eslint-plugin": "1.0.1",
     "bun": "1.2.2",
     "concurrently": "9.1.0",
@@ -38,8 +40,7 @@
     "typedoc": "0.26.11",
     "typescript": "5.8.2",
     "vite": "5.4.12",
-    "vitest": "3.0.5",
-    "@types/bun": "latest"
+    "vitest": "3.0.5"
   },
   "bun": {
     "overrides": {

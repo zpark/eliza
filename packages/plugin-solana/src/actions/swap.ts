@@ -3,6 +3,7 @@ import {
     type ActionExample,
     type Service,
     composePrompt,
+    composeContext,
     type HandlerCallback,
     type IAgentRuntime,
     logger,
@@ -16,9 +17,9 @@ import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { SOLANA_SERVICE_NAME } from '../constants';
 import { getWalletKey } from '../keypairUtils';
-import type { Item } from '../types';
 import type { SolanaService } from '../service';
 
+import type { Item } from '../types';
 async function getTokenDecimals(connection: Connection, mintAddress: string): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
     const tokenAccountInfo = await connection.getParsedAccountInfo(mintPublicKey);
@@ -43,7 +44,7 @@ async function swapToken(
     inputTokenCA: string,
     outputTokenCA: string,
     amount: number,
-): Promise<any> {
+): Promise<unknown> {
     try {
         const decimals =
             inputTokenCA === settings.SOL_ADDRESS
@@ -112,12 +113,12 @@ async function getTokenFromWallet(
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
-        if (!solanaClient) {
+        const solanaService = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
+        if (!solanaService) {
             throw new Error('SolanaService not initialized');
         }
 
-        const walletData = await solanaClient.getCachedData();
+        const walletData = await solanaService.getCachedData();
         if (!walletData) {
             return null;
         }
@@ -171,8 +172,8 @@ export const executeSwap: Action = {
         'EXCHANGE_TOKENS_SOLANA',
     ],
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
-        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME);
-        return !!solanaClient;
+        const solanaService = runtime.getService(SOLANA_SERVICE_NAME);
+        return !!solanaService;
     },
     description:
         'Perform a token swap from one token to another on Solana. Works with SOL and SPL tokens.',
@@ -183,13 +184,21 @@ export const executeSwap: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
+        let currentState = state;
+
         try {
-            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
-            if (!solanaClient) {
+            if (!currentState) {
+                currentState = await runtime.composeState(message);
+            } else {
+                currentState = await runtime.updateRecentMessageState(currentState);
+            }
+
+            const solanaService = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
+            if (!solanaService) {
                 throw new Error('SolanaService not initialized');
             }
 
-            const walletData = await solanaClient.getCachedData();
+            const walletData = await solanaService.getCachedData();
             state.values.walletInfo = walletData;
 
             const swapPrompt = composePrompt({
@@ -244,13 +253,13 @@ export const executeSwap: Action = {
             );
             const { publicKey: walletPublicKey } = await getWalletKey(runtime, false);
 
-            const swapResult = await swapToken(
+            const swapResult = (await swapToken(
                 connection,
                 walletPublicKey,
                 response.inputTokenCA as string,
                 response.outputTokenCA as string,
                 response.amount as number,
-            );
+            )) as { swapTransaction: string };
 
             const transactionBuf = Buffer.from(swapResult.swapTransaction, 'base64');
             const transaction = VersionedTransaction.deserialize(transactionBuf);

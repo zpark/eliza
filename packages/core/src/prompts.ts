@@ -259,15 +259,14 @@ First, think about what you want to do next and plan your actions. Then, write t
 "actions" should be an array of the actions {{agentName}} plans to take based on the thought (if none, use IGNORE, if simply responding with text, use REPLY)
 "providers" should be an optional array of the providers that {{agentName}} will use to have the right context for responding and acting
 "evaluators" should be an optional array of the evaluators that {{agentName}} will use to evaluate the conversation after responding
-"text" should be the next message you want to send, if any (don't send a message if using the IGNORE action).
+"plan" should be explanation of the message you plan to send, the actions you plan to take, and the data providers you plan to use.
 These are the available valid actions: {{actionNames}}
 
 Response format should be formatted in a valid JSON block like this:
 \`\`\`json
 {
     "thought": "<string>",
-    "name": "{{agentName}}",
-    "text": "<string>",
+    "plan": "<string>",
     "actions": ["<string>", "<string>", ...],
     "providers": ["<string>", "<string>", ...]
 }

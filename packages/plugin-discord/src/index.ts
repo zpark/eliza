@@ -27,10 +27,8 @@ import {
   type TextChannel,
   type User,
 } from "discord.js";
-import { EventEmitter } from "node:events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
 import downloadMedia from "./actions/downloadMedia.ts";
-import reply from "./actions/reply.ts";
 import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
 import joinVoice from "./actions/voiceJoin.ts";
@@ -811,7 +809,6 @@ const discordPlugin: Plugin = {
   description: "Discord client plugin",
   services: [DiscordService],
   actions: [
-    reply,
     chatWithAttachments,
     downloadMedia,
     joinVoice,

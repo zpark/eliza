@@ -42,22 +42,22 @@ export class SolanaService extends Service {
     static async start(runtime: IAgentRuntime): Promise<SolanaService> {
         logger.log('initSolanaService');
 
-        const solanaClient = new SolanaService(runtime);
+        const solanaService = new SolanaService(runtime);
 
         logger.log('SolanaService start');
-        if (solanaClient.updateInterval) {
-            clearInterval(solanaClient.updateInterval);
+        if (solanaService.updateInterval) {
+            clearInterval(solanaService.updateInterval);
         }
 
-        solanaClient.updateInterval = setInterval(async () => {
+        solanaService.updateInterval = setInterval(async () => {
             logger.log('Updating wallet data');
-            await solanaClient.updateWalletData();
-        }, solanaClient.UPDATE_INTERVAL);
+            await solanaService.updateWalletData();
+        }, solanaService.UPDATE_INTERVAL);
 
         // Initial update
-        solanaClient.updateWalletData().catch(console.error);
+        solanaService.updateWalletData().catch(console.error);
 
-        return solanaClient;
+        return solanaService;
     }
 
     static async stop(runtime: IAgentRuntime) {
@@ -76,7 +76,7 @@ export class SolanaService extends Service {
         }
     }
 
-    private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<any> {
+    private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<unknown> {
         let lastError: Error;
 
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
@@ -190,7 +190,7 @@ export class SolanaService extends Service {
                         totalSol: totalUsd.div(solPriceInUSD).toFixed(6),
                         prices,
                         lastUpdated: now,
-                        items: data.items.map((item: any) => ({
+                        items: data.items.map((item: Item) => ({
                             ...item,
                             valueSol: new BigNumber(item.valueUsd || 0)
                                 .div(solPriceInUSD)

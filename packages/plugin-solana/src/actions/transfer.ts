@@ -31,7 +31,7 @@ interface TransferContent extends Content {
     amount: string | number;
 }
 
-function isTransferContent(content: any): content is TransferContent {
+function isTransferContent(content: TransferContent): boolean {
     logger.log('Content for transfer', content);
 
     // Base validation
@@ -180,7 +180,9 @@ export default {
             else {
                 const mintPubkey = new PublicKey(content.tokenAddress);
                 const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
-                const decimals = (mintInfo.value?.data as any)?.parsed?.info?.decimals ?? 9;
+                const decimals =
+                    (mintInfo.value?.data as { parsed: { info: { decimals: number } } })?.parsed
+                        ?.info?.decimals ?? 9;
                 const adjustedAmount = BigInt(Number(content.amount) * 10 ** decimals);
 
                 const senderATA = getAssociatedTokenAddressSync(

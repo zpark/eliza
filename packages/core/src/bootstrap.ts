@@ -5,6 +5,7 @@ import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
+import { replyAction } from "./actions/reply.ts";
 import updateRoleAction from "./actions/roles.ts";
 import { sendMessageAction } from "./actions/sendMessage.ts";
 import updateSettingsAction from "./actions/settings.ts";
@@ -31,7 +32,7 @@ import { entitiesProvider } from "./providers/entities.ts";
 import { evaluatorsProvider } from "./providers/evaluators.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { knowledgeProvider } from "./providers/knowledge.ts";
-import { optionsProvider } from "./providers/options.ts";
+import { choiceProvider } from "./providers/choice.ts";
 import { recentMessagesProvider } from "./providers/recentMessages.ts";
 import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
@@ -172,17 +173,15 @@ const messageReceivedHandler = async ({
         messageHandlerTemplate,
     });
 
-    console.log("*** prompt ****\n", prompt);
+    console.log("*** prompt ****", prompt);
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       prompt,
     });
 
-    console.log("*** response ****\n", response);
+    console.log("*** response ****", response);
 
     const responseContent = parseJSONObjectFromText(response) as Content;
-
-    console.log("*** responseContent ****\n", responseContent);
 
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);
@@ -193,7 +192,7 @@ const messageReceivedHandler = async ({
       return;
     }
 
-    responseContent.text = responseContent.text?.trim();
+    responseContent.plan = responseContent.plan?.trim();
     responseContent.inReplyTo = createUniqueUuid(runtime, message.id);
 
     responseMessages = [
@@ -207,18 +206,25 @@ const messageReceivedHandler = async ({
       },
     ];
 
+    // save the plan to a new reply memory
+    await runtime.getMemoryManager("messages").createMemory({
+      entityId: runtime.agentId,
+      agentId: runtime.agentId,
+      content: {
+        thought: responseContent.thought,
+        plan: responseContent.plan,
+        actions: responseContent.actions,
+        providers: responseContent.providers,
+      },
+      roomId: message.roomId,
+      createdAt: Date.now(),
+    });
+
     // Clean up the response ID
     agentResponses.delete(message.roomId);
     if (agentResponses.size === 0) {
       latestResponseIds.delete(runtime.agentId);
     }
-
-    console.log("*** responseMessages ****", responseMessages);
-
-    // print out the actions in each responseMessage
-    responseMessages.forEach((message) => {
-      console.log("*** actions ****", message.content.actions);
-    });
 
     await runtime.processActions(message, responseMessages, state, callback);
     console.log("*** processedActions ****");
@@ -450,13 +456,14 @@ export const bootstrapPlugin: Plugin = {
     choiceAction,
     updateRoleAction,
     updateSettingsAction,
+    replyAction,
   ],
   events,
   evaluators: [reflectionEvaluator, goalEvaluator],
   providers: [
     timeProvider,
     factsProvider,
-    optionsProvider,
+    choiceProvider,
     roleProvider,
     settingsProvider,
     relationshipsProvider,

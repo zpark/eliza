@@ -13,7 +13,7 @@ import {
 } from "../types";
 
 export class TaskService extends Service {
-  private timer: NodeJS.Timer | null = null;
+  private timer: NodeJS.Timeout | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
   static serviceType: ServiceType = ServiceTypes.TASK;
   capabilityDescription = "The agent is able to schedule and execute tasks";

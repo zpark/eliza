@@ -9,6 +9,9 @@ export type UUID = `${string}-${string}-${string}-${string}-${string}`;
 export interface Content {
   thought?: string;
 
+  /** The agent's plan for the next message */
+  plan?: string;
+
   /** The main text content */
   text?: string;
 

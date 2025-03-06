@@ -8,7 +8,7 @@ import {
 } from '../types.ts';
 import { sqliteTables } from './sqliteTables.ts';
 
-export class SqliteTeeLogDAO extends TeeLogDAO {
+export class SqliteTeeLogDAO extends TeeLogDAO<Database> {
     constructor(db: Database) {
         super();
         this.db = db;

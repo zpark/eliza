@@ -1,6 +1,51 @@
-import pino, { type LogFn } from "pino";
+import pino, { type LogFn, type DestinationStream } from "pino";
 import pretty from "pino-pretty";
 import { parseBooleanFromText } from "./prompts";
+
+interface LogEntry {
+    time?: number;
+    [key: string]: unknown;
+}
+
+// Custom destination that maintains recent logs in memory
+class InMemoryDestination implements DestinationStream {
+    private logs: LogEntry[] = [];
+    private maxLogs = 1000; // Keep last 1000 logs
+    private stream: DestinationStream | null;
+
+    constructor(stream: DestinationStream | null) {
+        this.stream = stream;
+    }
+
+    write(data: string | LogEntry): void {
+        // Parse the log entry if it's a string
+        const logEntry: LogEntry = typeof data === 'string' ? JSON.parse(data) : data;
+        
+        // Add timestamp if not present
+        if (!logEntry.time) {
+            logEntry.time = Date.now();
+        }
+
+        // Add to memory buffer
+        this.logs.push(logEntry);
+        
+        // Maintain buffer size
+        if (this.logs.length > this.maxLogs) {
+            this.logs.shift();
+        }
+
+        // Forward to pretty print stream if available
+        if (this.stream) {
+            // Ensure we pass a string to the stream
+            const stringData = typeof data === 'string' ? data : JSON.stringify(data);
+            this.stream.write(stringData);
+        }
+    }
+
+    recentLogs(): LogEntry[] {
+        return this.logs;
+    }
+}
 
 const customLevels: Record<string, number> = {
     fatal: 60,
@@ -65,7 +110,15 @@ const options = {
     },
 };
 
-export const logger = pino(options, createStream());
+// Create the destination with in-memory logging
+const stream = createStream();
+const destination = new InMemoryDestination(stream);
+
+// Create logger with custom destination
+export const logger = pino(options, destination);
+
+// Expose the destination for accessing recent logs
+(logger as unknown)[Symbol.for('pino-destination')] = destination;
 
 // for backward compatibility
 export const elizaLogger = logger;

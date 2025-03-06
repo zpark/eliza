@@ -38,14 +38,14 @@ export interface TeeAgent {
     attestation: string;
 }
 
-export interface TeePageQuery<Result = any> {
+export interface TeePageQuery<Result> {
     page: number;
     pageSize: number;
     total?: number;
     data?: Result;
 }
 
-export abstract class TeeLogDAO<DB = any> {
+export abstract class TeeLogDAO<DB> {
     db: DB;
 
     abstract initialize(): Promise<void>;

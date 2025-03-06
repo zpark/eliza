@@ -51,7 +51,7 @@ export async function getAvailableDatabases(): Promise<string[]> {
     // const adapters = await listPluginsByType("adapter")
     // console.log(adapters)
     // return adapters.map(name => name.replace("@elizaos/adapter-", ""))
-    return ["sqlite", "drizzle"]
+    return ["postgres", "pglite"]
   } catch (error) {
     throw new Error(`Failed to get available databases: ${error.message}`)
   }

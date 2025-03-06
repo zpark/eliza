@@ -7,17 +7,17 @@ const explorer = cosmiconfig("eliza", {
 })
 
 // Database config schemas
-const sqliteConfigSchema = z.object({
-  type: z.literal("sqlite"),
-  config: z.object({
-    path: z.string(),
-  }),
-})
-
 const postgresConfigSchema = z.object({
   type: z.literal("postgres"),
   config: z.object({
     url: z.string(),
+  }),
+})
+
+const pgliteConfigSchema = z.object({
+  type: z.literal("pglite"),
+  config: z.object({
+    dataDir: z.string(),
   }),
 })
 
@@ -26,8 +26,8 @@ export const rawConfigSchema = z
   .object({
     $schema: z.string().optional(),
     database: z.discriminatedUnion("type", [
-      sqliteConfigSchema,
       postgresConfigSchema,
+      pgliteConfigSchema,
     ]),
     plugins: z.object({
       registry: z.string().url(),

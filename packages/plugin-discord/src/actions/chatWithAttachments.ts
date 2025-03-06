@@ -239,7 +239,7 @@ ${currentSummary.trim()}
 `;
             await callback(callbackData);
         } else if (currentSummary.trim()) {
-            const summaryDir = "content";
+            const summaryDir = "cache";
             const summaryFilename = `${summaryDir}/summary_${Date.now()}.md`;
             try {
                 await fs.promises.mkdir(summaryDir, { recursive: true });

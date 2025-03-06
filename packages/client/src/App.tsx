@@ -14,6 +14,7 @@ import { apiClient } from "./lib/api";
 import { STALE_TIMES } from "./hooks/use-query-hooks";
 import AgentCreatorRoute from "./routes/createAgent";
 import AgentCreator from './components/agent-creator';
+import { LogViewer } from "./components/log-viewer";
 
 // Create a query client with optimized settings
 const queryClient = new QueryClient({
@@ -94,6 +95,7 @@ function App() {
                                             element={<AgentCreatorRoute />}
                                         />
                                         <Route path="/create" element={<AgentCreator />} />
+                                        <Route path="/logs" element={<LogViewer />} />
                                     </Routes>
                                 </div>
                             </SidebarInset>
