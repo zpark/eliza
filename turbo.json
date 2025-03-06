@@ -8,31 +8,33 @@
       "cache": false
     },
     "start": {
-      "dependsOn": ["^start"],
+      "dependsOn": ["@elizaos/core#build"],
       "env": ["LOG_LEVEL"],
       "persistent": true,
       "cache": false
     },
     "dev": {
+      "dependsOn": ["@elizaos/core#build"],
       "persistent": true,
-      "dependsOn": ["^dev"],
       "cache": false
     },
     "test": {
+      "dependsOn": ["@elizaos/core#build"],
       "persistent": true,
-      "dependsOn": ["^test"]
+      "cache": false
     },
     "lint:fix": {
-      "dependsOn": ["^lint:fix"]
+      "dependsOn": ["@elizaos/core#build"],
+      "cache": false
     },
     "swarm": {
-      "dependsOn": ["^swarm"]
+      "dependsOn": ["@elizaos/core#build"]
     },
     "migrate": {
-      "dependsOn": ["^migrate"]
+      "dependsOn": ["@elizaos/core#build"]
     },
     "migrate:generate": {
-      "dependsOn": ["^migrate:generate"]
+      "dependsOn": ["@elizaos/core#build"]
     }
   }
 }
