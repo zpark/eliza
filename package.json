@@ -4,6 +4,7 @@
     "clean": "rm -rf dist .turbo node_modules .turbo-tsconfig.json tsconfig.tsbuildinfo",
     "format": "biome format .",
     "cli": "bun --filter=@elizaos/cli cli",
+    "install": "bun install --filter=./packages/*",
     "lint": "turbo run lint:fix --filter=./packages/*",
     "check": "biome check . --fix --unsafe --verbose",
     "preinstall": "npx only-allow bun",
