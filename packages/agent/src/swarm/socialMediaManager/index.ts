@@ -244,7 +244,7 @@ export const config: OnboardingConfig = {
           public: false,
           secret: true,
           usageDescription: "The 2FA secret associated with the Twitter account to post from.",
-          required: false,
+          required: true,
           dependsOn: []
       }
   }
