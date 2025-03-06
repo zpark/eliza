@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "env": ["LOG_LEVEL"],
-      "outputs": ["dist/**", "build/**"],
+      "outputs": ["dist/**"],
       "cache": false
     },
     "start": {
