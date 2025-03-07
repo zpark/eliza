@@ -4,33 +4,40 @@
     "build": {
       "dependsOn": ["^build"],
       "env": ["LOG_LEVEL"],
-      "outputs": ["dist/**", "build/**"]
+      "outputs": ["dist/**"],
+      "cache": false
     },
     "start": {
-      "dependsOn": ["build"],
+      "dependsOn": ["@elizaos/core#build"],
       "env": ["LOG_LEVEL"],
-      "persistent": true
+      "persistent": true,
+      "cache": false
     },
     "dev": {
+      "dependsOn": ["@elizaos/core#build"],
       "persistent": true,
-      "dependsOn": ["^build"],
       "cache": false
     },
     "test": {
+      "dependsOn": ["@elizaos/core#build"],
       "persistent": true,
-      "dependsOn": ["build"]
+      "cache": false
     },
     "lint:fix": {
-      "dependsOn": ["build"]
+      "dependsOn": ["@elizaos/core#build"],
+      "cache": false
     },
     "swarm": {
-      "dependsOn": ["build"]
+      "dependsOn": ["@elizaos/core#build"]
     },
     "migrate": {
-      "dependsOn": ["build"]
+      "dependsOn": ["@elizaos/core#build"]
     },
     "migrate:generate": {
-      "dependsOn": ["build"]
+      "dependsOn": ["@elizaos/core#build"]
+    },
+    "clean": {
+      "cache": false
     }
   }
 }
