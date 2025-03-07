@@ -120,7 +120,7 @@ export default function GroupPanel({ onClose, agent, agents }: GroupPanel) {
                                     console.error("Failed to create room", error);
                                 } finally {
                                     setCreating(false);
-                                    navigate(`/chat/${roomId}`)
+                                    navigate(`/room/${roomId}`)
                                 }
                             }}
                             size={"default"}
