@@ -98,10 +98,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     logger.warn(
                         `Database operation failed (attempt ${attempt}/${this.maxRetries}):`,
                         {
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error),
+                            error: error instanceof Error ? error.message : String(error),
                             nextRetryIn: `${(delay / 1000).toFixed(1)}s`,
                         }
                     );
@@ -111,15 +108,10 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     await new Promise((resolve) => setTimeout(resolve, delay));
                 } else {
                     logger.error("Max retry attempts reached:", {
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
+                        error: error instanceof Error ? error.message : String(error),
                         totalAttempts: attempt,
                     });
-                    throw error instanceof Error
-                        ? error
-                        : new Error(String(error));
+                    throw error instanceof Error ? error : new Error(String(error));
                 }
             }
         }
@@ -141,9 +133,10 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
     
     async ensureEmbeddingDimension(dimension: number) {
-        const existingMemory = await this.db
-            .select({
-                embedding: embeddingTable,
+        return this.withDatabase(async () => {
+            const existingMemory = await this.db
+                .select({
+                    embedding: embeddingTable,
             })
             .from(memoryTable)
             .innerJoin(
@@ -162,11 +155,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 usedDimension &&
                 usedDimension[1] !== DIMENSION_MAP[dimension]
             ) {
-                throw new Error("Cannot change embedding dimension for agent");
+                    throw new Error("Cannot change embedding dimension for agent");
+                }
             }
-        }
 
-        this.embeddingDimension = DIMENSION_MAP[dimension];
+            this.embeddingDimension = DIMENSION_MAP[dimension];
+        });
     }
 
     async getAgent(agentId: UUID): Promise<Agent | null> {
@@ -935,10 +929,11 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async createMemory(memory: Memory & { metadata?: MemoryMetadata }, tableName: string): Promise<UUID> {
-        logger.debug("DrizzleAdapter createMemory:", {
-            memoryId: memory.id,
-            embeddingLength: memory.embedding?.length,
-            contentLength: memory.content?.text?.length,
+        return this.withDatabase(async () => {
+            logger.debug("DrizzleAdapter createMemory:", {
+                memoryId: memory.id,
+                embeddingLength: memory.embedding?.length,
+                contentLength: memory.content?.text?.length,
         });
 
         let isUnique = true;
@@ -992,7 +987,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             }
         });
 
-        return memoryId;
+            return memoryId;
+        });
     }
 
     async removeMemory(memoryId: UUID, tableName: string): Promise<void> {

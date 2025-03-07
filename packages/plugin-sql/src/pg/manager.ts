@@ -31,7 +31,7 @@ export class PostgresConnectionManager implements IDatabaseClientManager<PgPool>
         });
 
         this.pool.on("error", (err) => {
-            logger.error("Unexpected pool error", err);
+            logger.error("Unexpected pool error", err.message);
             this.handlePoolError(err);
         });
 
@@ -40,9 +40,7 @@ export class PostgresConnectionManager implements IDatabaseClientManager<PgPool>
     }
 
     private async handlePoolError(error: Error) {
-        logger.error("Pool error occurred, attempting to reconnect", {
-            error: error.message,
-        });
+        logger.error("Pool error occurred, attempting to reconnect", error.message);
 
         try {
             await this.pool.end();
