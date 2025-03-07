@@ -282,4 +282,13 @@ export const apiClient = {
             url: `/logs?level=${level}`,
             method: "GET"
         }),
+    createParticipants: (roomId: UUID, agentIds: UUID[]) => {
+        return fetcher({
+            url: `/agents/rooms/${roomId}/participants`,
+            method: "POST",
+            body: {
+                agentIds
+            }
+        });
+    }
 };

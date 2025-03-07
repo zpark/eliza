@@ -358,7 +358,7 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
      * @param roomId The UUID of the room to which the user will be added.
      * @returns A Promise that resolves to a boolean indicating success or failure.
      */
-    abstract addParticipant(entityId: UUID, roomId: UUID): Promise<boolean>;
+    abstract addParticipant(entityId: UUID, roomId: UUID, agentId?: UUID): Promise<boolean>;
 
     /**
      * Removes a user as a participant from a specific room.
@@ -390,7 +390,8 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
     abstract setParticipantUserState(
         roomId: UUID,
         entityId: UUID,
-        state: "FOLLOWED" | "MUTED" | null
+        state: "FOLLOWED" | "MUTED" | null,
+        agentId?: UUID
     ): Promise<void>;
 
     /**

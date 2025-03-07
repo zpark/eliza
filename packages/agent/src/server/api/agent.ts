@@ -1121,7 +1121,75 @@ export function agentRouter(
             }
         });
     }
-});
+  });
+
+  router.post('/rooms/:roomId/participants', async (req, res) => {
+    const roomId = validateUuid(req.params.roomId);
+
+    const { agentIds } = req.body;
+    const room = await db.getRoom(roomId);
+
+    if (!room) {
+        res.status(404).json({
+            success: false,
+            error: {
+                code: 'INVALID_ID',
+                message: 'Room ID not found'
+            }
+        });
+        return;
+    }
+
+    const participants = await db.getParticipantsForRoom(roomId);
+
+    const alreadyInRoom = agentIds.some(agentId => participants.includes(agentId));
+
+    if (alreadyInRoom) {
+        res.status(404).json({
+            success: false,
+            error: {
+                code: 'INVALID_ID',
+                message: 'Agent is already in the room'
+            }
+        });
+        return;
+    }
+
+    try {
+        await Promise.all(agentIds.map(async (agentId: UUID) => {
+            try {
+                await db.addParticipant(agentId, roomId, agentId);
+                await db.setParticipantUserState(
+                  roomId, 
+                  agentId,
+                  "FOLLOWED",
+                  agentId
+                );
+            } catch (error) {
+                console.error(`Failed to add agent ${agentId}:`, error);
+            }
+        }));
+    } catch (error) {
+        console.error("Error adding participants:", error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: "INTERNAL_ERROR",
+                message: "Failed to add participants",
+            },
+        });
+        return;
+    }
+
+    res.status(201).json({
+        success: true,
+        data: {
+            id: roomId,
+            createdAt: Date.now(),
+            source: "client",
+        }
+    });
+  })
 
   router.post("/:agentId/rooms", async (req, res) => {
     const agentId = validateUuid(req.params.agentId);

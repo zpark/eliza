@@ -1220,7 +1220,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     source: roomTable.source,
                 })
                 .from(roomTable)
-                .where(and(eq(roomTable.id, roomId), eq(roomTable.agentId, this.agentId)))
+                .where(eq(roomTable.id, roomId))
                 .limit(1);
             if (result.length === 0) return null;
             return result[0]
@@ -1304,13 +1304,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async addParticipant(entityId: UUID, roomId: UUID): Promise<boolean> {
+    async addParticipant(entityId: UUID, roomId: UUID, agentId?: UUID): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
                 await this.db.insert(participantTable).values({
                     entityId,
                     roomId,
-                    agentId: this.agentId,
+                    agentId: agentId ?? this.agentId,
                 })
                 .onConflictDoNothing();
                 return true;
@@ -1320,7 +1320,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         error instanceof Error ? error.message : String(error),
                         entityId,
                     roomId,
-                    agentId: this.agentId,
+                    agentId: agentId ?? this.agentId,
                 });
                 return false;
             }
@@ -1427,7 +1427,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async setParticipantUserState(
         roomId: UUID,
         entityId: UUID,
-        state: "FOLLOWED" | "MUTED" | null
+        state: "FOLLOWED" | "MUTED" | null,
+        agentId: UUID
     ): Promise<void> {
         return this.withDatabase(async () => {
             try {
@@ -1439,7 +1440,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                             and(
                                 eq(participantTable.roomId, roomId),
                                 eq(participantTable.entityId, entityId),
-                                eq(participantTable.agentId, this.agentId)
+                                eq(participantTable.agentId, agentId || this.agentId)
                             )
                         );
                 });

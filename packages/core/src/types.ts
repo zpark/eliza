@@ -857,7 +857,8 @@ export interface IDatabaseAdapter {
   setParticipantUserState(
     roomId: UUID,
     entityId: UUID,
-    state: "FOLLOWED" | "MUTED" | null
+    state: "FOLLOWED" | "MUTED" | null,
+    agentId?: UUID,
   ): Promise<void>;
 
   /**

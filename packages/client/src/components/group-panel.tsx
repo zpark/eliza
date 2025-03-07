@@ -9,6 +9,7 @@ import { Switch } from "./ui/switch-button";
 import { apiClient } from "@/lib/api";
 import { v4 as uuidv4 } from "uuid";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
 interface GroupPanel {
     agent: Agent;
@@ -22,6 +23,7 @@ export default function GroupPanel({ onClose, agent, agents }: GroupPanel) {
     const [creating, setCreating] = useState(false);
 
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     
     const toggleAgentSelection = (agentId: string) => {
         setSelectedAgents((prev) => ({
@@ -101,17 +103,24 @@ export default function GroupPanel({ onClose, agent, agents }: GroupPanel) {
                             className={`w-[90%]`}
                             onClick={async () => {
                                 setCreating(true);
+                                const roomId = uuidv4() as UUID;
                                 try {
                                     await apiClient.createRoom(
                                         agent.id,
                                         chatName,
-                                        uuidv4() as UUID
+                                        roomId
                                     );
+                                    const selectedAgentIds = Object.keys(selectedAgents).filter(agentId => selectedAgents[agentId]);
+                                    
+                                    if (selectedAgentIds.length > 0) {
+                                        await apiClient.createParticipants(roomId, selectedAgentIds);
+                                    }
                                     queryClient.invalidateQueries({ queryKey: ["rooms"] });
                                 } catch(error) {
                                     console.error("Failed to create room", error);
                                 } finally {
                                     setCreating(false);
+                                    navigate(`/chat/${roomId}`)
                                 }
                             }}
                             size={"default"}
