@@ -237,14 +237,19 @@ export const apiClient = {
         });
     },
     
-    createRoom: (agentId: string, roomName: string) => {
+    createRoom: (agentId: string, roomName: string, roomId: UUID) => {
         const worldId = WorldManager.getWorldId();
         return fetcher({
             url: `/agents/${agentId}/rooms`,
             method: "POST",
             body: {
-                name: roomName,
-                worldId
+                worldName: "client", 
+                roomName,
+                worldId,
+                roomId,
+                entityId: agentId,
+                source: "client",
+                serverId: "client"
             }
         });
     },

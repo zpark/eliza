@@ -1185,19 +1185,29 @@ export function agentRouter(
       return;
     }
 
-    try {
-      const { name, worldId, roomId, entityId } = req.body;
-      const roomName = name || `Chat ${new Date().toLocaleString()}`;
+    const { worldName, roomName, worldId, roomId, entityId, source, serverId } = req.body;
 
+    const world = await db.getWorld(worldId);
+
+    if (!world) {
+        await db.createWorld({
+            id: worldId,
+            name: worldName,
+            agentId,
+            serverId,
+        });
+    }
+
+    try {
       await runtime.ensureRoomExists({
         id: roomId,
-        name: roomName,
-        source: "client",
+        name: roomName || `Chat ${new Date().toLocaleString()}`,
+        source,
         type: ChannelType.API,
         worldId,
       });
 
-      await runtime.databaseAdapter.addParticipant(runtime.agentId, roomName);
+      await runtime.databaseAdapter.addParticipant(runtime.agentId, roomId);
       await runtime.ensureParticipantInRoom(entityId, roomId);
       await runtime.databaseAdapter.setParticipantUserState(
         roomId,
@@ -1211,7 +1221,7 @@ export function agentRouter(
           id: roomId,
           name: roomName,
           createdAt: Date.now(),
-          source: "client",
+          source,
           worldId,
         },
       });
