@@ -52,6 +52,15 @@
 
 > **Note for Windows Users:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) is required.
 
+### Browser Dependencies
+
+Eliza uses Playwright and Patchright for browser automation features. The necessary browser binaries are automatically installed during the `bun install` process. If you encounter any browser-related issues, you can manually install them with:
+
+```bash
+npx playwright@1.48.2 install chromium
+npx patchright install
+```
+
 ### Use the Starter (Recommended)
 
 ```bash

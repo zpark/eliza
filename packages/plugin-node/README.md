@@ -81,6 +81,16 @@ Handles file uploads and management with AWS S3.
 
 Provides web scraping and content extraction capabilities using Playwright.
 
+#### Browser Dependencies
+
+This service uses Patchright (a patched version of Playwright) for browser automation. The necessary browser binaries are automatically installed during the project's postinstall process. If you encounter any browser-related issues, you can manually install them with:
+
+```bash
+npx patchright install
+```
+
+Note: The browser service will gracefully handle missing browser binaries by disabling browser functionality rather than crashing.
+
 ### ImageDescriptionService
 
 Processes and analyzes images to generate descriptions. Supports multiple providers:

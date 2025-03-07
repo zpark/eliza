@@ -58,6 +58,7 @@ export class BrowserService extends Service implements IBrowserService {
     private context: BrowserContext | undefined;
     private captchaSolver: CaptchaSolver;
     private cacheKey = "content/browser";
+    private browserInitialized = false;
 
     static serviceType: ServiceType = ServiceTypes.BROWSER;
     capabilityDescription = "The agent is able to browse the web and fetch content";
@@ -70,11 +71,17 @@ export class BrowserService extends Service implements IBrowserService {
         this.captchaSolver = new CaptchaSolver(
             settings.CAPSOLVER_API_KEY || ""
         );
+        this.browserInitialized = false;
     }
 
     static async start(runtime: IAgentRuntime): Promise<BrowserService> {
         const service = new BrowserService(runtime);
-        await service.initializeBrowser();
+        try {
+            await service.initializeBrowser();
+        } catch (error) {
+            logger.error("Failed to initialize browser service:", error);
+            logger.warn("Browser functionality will be disabled");
+        }
         return service;
     }
 
@@ -86,53 +93,64 @@ export class BrowserService extends Service implements IBrowserService {
     }
 
     async initializeBrowser() {
-        if (!this.browser) {
-            this.browser = await chromium.launch({
-                headless: true,
-                args: [
-                    "--disable-dev-shm-usage", // Uses /tmp instead of /dev/shm. Prevents memory issues on low-memory systems
-                    "--block-new-web-contents", // Prevents creation of new windows/tabs
-                ],
-            });
+        try {
+            if (!this.browser) {
+                this.browser = await chromium.launch({
+                    headless: true,
+                    args: [
+                        "--disable-dev-shm-usage", // Uses /tmp instead of /dev/shm. Prevents memory issues on low-memory systems
+                        "--block-new-web-contents", // Prevents creation of new windows/tabs
+                    ],
+                });
 
-            const platform = process.platform;
-            let userAgent = "";
+                const platform = process.platform;
+                let userAgent = "";
 
-            // Change the user agent to match the platform to reduce bot detection
-            switch (platform) {
-                case "darwin":
-                    userAgent =
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-                    break;
-                case "win32":
-                    userAgent =
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-                    break;
-                case "linux":
-                    userAgent =
-                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-                    break;
-                default:
-                    userAgent =
-                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+                // Change the user agent to match the platform to reduce bot detection
+                switch (platform) {
+                    case "darwin":
+                        userAgent =
+                            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+                        break;
+                    case "win32":
+                        userAgent =
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+                        break;
+                    case "linux":
+                        userAgent =
+                            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+                        break;
+                    default:
+                        userAgent =
+                            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+                }
+
+                this.context = await this.browser.newContext({
+                    userAgent,
+                    acceptDownloads: false,
+                });
+                
+                this.browserInitialized = true;
             }
-
-            this.context = await this.browser.newContext({
-                userAgent,
-                acceptDownloads: false,
-            });
-
+        } catch (error) {
+            logger.error("Error initializing browser:", error);
+            logger.warn("Browser functionality will be disabled");
+            this.browserInitialized = false;
         }
     }
 
     async stop() {
-        if (this.context) {
-            await this.context.close();
-            this.context = undefined;
-        }
-        if (this.browser) {
-            await this.browser.close();
-            this.browser = undefined;
+        try {
+            if (this.context) {
+                await this.context.close();
+                this.context = undefined;
+            }
+            if (this.browser) {
+                await this.browser.close();
+                this.browser = undefined;
+            }
+        } catch (error) {
+            logger.error("Error stopping browser:", error);
         }
     }
 
@@ -140,8 +158,29 @@ export class BrowserService extends Service implements IBrowserService {
         url: string,
         runtime: IAgentRuntime
     ): Promise<PageContent> {
-        await this.initializeBrowser();
-        return await this.fetchPageContent(url, runtime);
+        try {
+            if (!this.browserInitialized) {
+                await this.initializeBrowser();
+            }
+            
+            if (!this.browserInitialized || !this.browser || !this.context) {
+                logger.warn("Browser not initialized, returning default response");
+                return {
+                    title: url,
+                    description: "Browser functionality is disabled. Unable to fetch content.",
+                    bodyContent: "",
+                };
+            }
+            
+            return await this.fetchPageContent(url, runtime);
+        } catch (error) {
+            logger.error("Error in getPageContent:", error);
+            return {
+                title: url,
+                description: "Error fetching content",
+                bodyContent: "",
+            };
+        }
     }
 
     private getCacheKey(url: string): string {
@@ -159,15 +198,18 @@ export class BrowserService extends Service implements IBrowserService {
             return cached.content;
         }
 
+        if (!this.browserInitialized || !this.context) {
+            logger.warn("Browser context not initialized, returning default response");
+            return {
+                title: url,
+                description: "Browser functionality is disabled. Unable to fetch content.",
+                bodyContent: "",
+            };
+        }
+
         let page: Page | undefined;
 
         try {
-            if (!this.context) {
-                logger.log(
-                    "Browser context not initialized. Call initializeBrowser() first."
-                );
-            }
-
             page = await this.context.newPage();
 
             // Enable stealth mode
