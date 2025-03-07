@@ -7,7 +7,7 @@ import {
     type MemoryMetadata
 } from "@elizaos/core";
 import { v4 as uuid } from "uuid";
-import type { TrustTradingService } from "../tradingService";
+import type { CommunityInvestorService } from "../tradingService";
 import type { MessageRecommendation } from "./schema";
 import { RecommendationType, Conviction, ServiceTypes } from "../types";
 
@@ -19,49 +19,49 @@ type ExtendedMetadata = MemoryMetadata & {
 };
 
 export const confirmRecommendation: Action = {
-    name: "TRUST_CONFIRM_RECOMMENDATION",
+    name: "CONFIRM_RECOMMENDATION",
     description:
         "Confirms <draft_recommendations> to buy or sell memecoins/tokens in <user_recommendations_provider> from the <trust_plugin>",
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "do you wish to confirm this recommendation?\n {...recomendation}",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "yes, I would",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                    actions: ["CONFIRM_RECOMMENDATION"],
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "Are you just looking for details, or are you recommending this token?",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "I am recommending this token",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                    actions: ["CONFIRM_RECOMMENDATION"],
                 },
             },
         ],
@@ -70,8 +70,14 @@ export const confirmRecommendation: Action = {
 
     async handler(runtime: IAgentRuntime, message, _state, _options, callback: any) {
         console.log("confirmRecommendation is running");
-        if (!runtime.getService(ServiceTypes.TRUST_TRADING)) {
+        if (!runtime.getService(ServiceTypes.COMMUNITY_INVESTOR)) {
             console.log("no trading service");
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: runtime.agentId,
+                agentId: runtime.agentId,
+                roomId: message.roomId,
+                content: { thought: "No trading service found", actions: ["CONFIRM_RECOMMENDATION_FAILED"] },
+            });
             return;
         }
 
@@ -83,42 +89,40 @@ export const confirmRecommendation: Action = {
             const responseMemory: Memory = {
                 content: {
                     text: "Placing recommendation...",
+                    inReplyTo: message.id
+                        ? message.id
+                        : undefined,
+                    actions: ["CONFIRM_RECOMMENDATION"],
+                },
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                metadata: {
                     reaction: {
                         type: [{ type: "emoji", emoji: "👍" }],
                         onlyReaction: true,
                     },
-                    inReplyTo: message.id
-                        ? message.id
-                        : undefined,
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
                 },
-                userId: message.userId,
-                agentId: message.agentId,
-                roomId: message.roomId,
-                metadata: message.metadata,
                 createdAt: Date.now() * 1000,
             };
             await callback(responseMemory);
         }
 
-        const tradingService = runtime.getService<TrustTradingService>(
-            ServiceTypes.TRUST_TRADING
+        const tradingService = runtime.getService<CommunityInvestorService>(
+            ServiceTypes.COMMUNITY_INVESTOR
         )!;
 
         if (!tradingService.hasWallet("solana")) {
             console.log("no registered solana wallet in trading service");
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: runtime.agentId,
+                agentId: runtime.agentId,
+                roomId: message.roomId,
+                content: { thought: "No registered solana wallet in trading service", actions: ["CONFIRM_RECOMMENDATION_FAILED"] },
+            });
             return;
         }
-
-        ///     if (state) {
-        ///         state = await runtime.updateRecentMessageState(state);
-        ///     } else {
-        ///         console.log(
-        ///             "no state, composing new state, this is very expensive"
-        ///         );
-        ///         state = await runtime.composeState(message);
-        ///     }
-
+        
         const recommendationsManager =
             runtime.getMemoryManager("recommendations")!;
 
@@ -128,17 +132,12 @@ export const confirmRecommendation: Action = {
         });
 
         const newUserRecommendations = recentRecommendations
-            .filter((m) => m.userId === message.userId)
+            .filter((m) => m.entityId === message.entityId)
             .sort((a, b) => (b?.createdAt ?? 0) - (a?.createdAt ?? 0));
 
         if (newUserRecommendations.length === 0) return;
 
-        console.log(
-            "newUserRecommendations",
-            JSON.stringify(newUserRecommendations)
-        );
-
-        //     const context = composeContext({
+        //     const prompt = composePrompt({
         //         state: {
         //             ...state,
         //             recommendations: formatRecommendations(newUserRecommendations),
@@ -149,7 +148,7 @@ export const confirmRecommendation: Action = {
 
         //     const text = await generateText({
         //         runtime,
-        //         context: context,
+        //         prompt,
         //         modelType: ModelTypes.TEXT_SMALL,
         //         stop: [],
         //     });
@@ -157,8 +156,7 @@ export const confirmRecommendation: Action = {
         //const tokens = parseTokensResponse(xmlResponse);
 
         const tokens = [
-            //@ts-ignore
-            newUserRecommendations[0]?.content?.recommendation?.tokenAddress ??
+            newUserRecommendations[0]?.metadata?.recommendation?.tokenAddress ??
                 "",
         ];
 
@@ -171,41 +169,41 @@ export const confirmRecommendation: Action = {
                     message.roomId
                 );
 
-            const users = await Promise.all(
+            const entities = await Promise.all(
                 participants.map((id) =>
                     runtime.databaseAdapter.getEntityById(id)
                 )
-            ).then((users) => users.filter((user) => !!user));
+            ).then((entities) => entities.filter((participant) => !!participant));
 
             for (const tokenAddress of [tokens[tokens.length - 1]]) {
                 const memory = newUserRecommendations.find(
                     (r) =>
-                        (r.content.recommendation as MessageRecommendation)
+                        (r.metadata.recommendation as MessageRecommendation)
                             .tokenAddress === tokenAddress
                 );
 
                 if (!memory) continue;
 
-                const recommendation = memory.content
+                const recommendation = memory.metadata
                     .recommendation as MessageRecommendation;
 
-                const user = users.find((user) => {
+                const participant = entities.find((participant) => {
                     return (
-                        user.names.map((name) => name.toLowerCase().trim())
+                        participant.names.map((name) => name.toLowerCase().trim())
                             .includes(recommendation.username.toLowerCase().trim()) ||
-                        user.id === message.userId
+                        participant.id === message.entityId
                     );
                 });
 
-                if (!user) {
+                if (!participant) {
                     console.warn(
-                        "Could not find user: ",
+                        "Could not find participant: ",
                         recommendation.username
                     );
                     continue;
                 }
 
-                const entity = await runtime.databaseAdapter.getEntityById(user.id);
+                const entity = await runtime.databaseAdapter.getEntityById(participant.id);
 
                 const result = await tradingService.handleRecommendation(
                     entity,
@@ -230,23 +228,6 @@ export const confirmRecommendation: Action = {
 
                 const newUUID = uuid() as UUID;
 
-                await Promise.all([
-                    recommendationsManager.removeMemory(memory.id!),
-                    recommendationsManager.createMemory({
-                        id: newUUID,
-                        userId: user.id,
-                        agentId: message.agentId,
-                        roomId: message.roomId,
-                        content: {
-                            text: "",
-                            recommendation: {
-                                ...recommendation,
-                                confirmed: true,
-                            },
-                        },
-                    }),
-                ]);
-
                 if (callback && result) {
                     switch (recommendation.type) {
                         case "BUY": {
@@ -257,12 +238,16 @@ export const confirmRecommendation: Action = {
                                     inReplyTo: message.id
                                         ? message.id
                                         : undefined,
-                                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                                    actions: ["CONFIRM_RECOMMENDATION_BUY_STARTED"],
                                 },
-                                userId: user.id,
+                                entityId: participant.id,
                                 agentId: message.agentId,
                                 roomId: message.roomId,
-                                metadata: message.metadata,
+                                metadata: {
+                                    type: "CONFIRM_RECOMMENDATION",
+                                    recommendation,
+                                    confirmed: true,
+                                },
                                 createdAt: Date.now() * 1000,
                             };
                             await callback(responseMemory);
@@ -281,7 +266,7 @@ export const confirmRecommendation: Action = {
     },
 
     async validate(_runtime, message) {
-        if (message.agentId === message.userId) return false;
+        if (message.agentId === message.entityId) return false;
         return true;
     },
 };

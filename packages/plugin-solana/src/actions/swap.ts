@@ -1,7 +1,7 @@
 import {
     type Action,
     type ActionExample,
-    composeContext,
+    composePrompt,
     type HandlerCallback,
     type IAgentRuntime,
     logger,
@@ -111,12 +111,12 @@ async function getTokenFromWallet(
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
-        if (!solanaClient) {
+        const solanaService = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
+        if (!solanaService) {
             throw new Error('SolanaService not initialized');
         }
 
-        const walletData = await solanaClient.getCachedData();
+        const walletData = await solanaService.getCachedData();
         if (!walletData) {
             return null;
         }
@@ -170,8 +170,8 @@ export const executeSwap: Action = {
         'EXCHANGE_TOKENS_SOLANA',
     ],
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
-        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME);
-        return !!solanaClient;
+        const solanaService = runtime.getService(SOLANA_SERVICE_NAME);
+        return !!solanaService;
     },
     description:
         'Perform a token swap from one token to another on Solana. Works with SOL and SPL tokens.',
@@ -182,30 +182,24 @@ export const executeSwap: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
-        let currentState = state;
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
 
         try {
-            if (!currentState) {
-                currentState = await runtime.composeState(message);
-            } else {
-                currentState = await runtime.updateRecentMessageState(currentState);
-            }
-
-            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
-            if (!solanaClient) {
+            const solanaService = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
+            if (!solanaService) {
                 throw new Error('SolanaService not initialized');
             }
 
-            const walletData = await solanaClient.getCachedData();
-            currentState.walletInfo = walletData;
+            const walletData = await solanaService.getCachedData();
+            state.values.walletInfo = walletData;
 
-            const swapContext = composeContext({
-                state: currentState,
+            const swapPrompt = composePrompt({
+                state,
                 template: swapTemplate,
             });
 
             const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                context: swapContext,
+                prompt: swapPrompt,
             });
 
             const response = parseJSONObjectFromText(result);
@@ -307,16 +301,16 @@ export const executeSwap: Action = {
     examples: [
         [
             {
-                user: '{{user1}}',
+                name: '{{name1}}',
                 content: {
                     text: 'Swap 0.1 SOL for USDC',
                 },
             },
             {
-                user: '{{user2}}',
+                name: '{{name2}}',
                 content: {
                     text: "I'll help you swap 0.1 SOL for USDC",
-                    action: 'SWAP_SOLANA',
+                    actions: ['SWAP_SOLANA'],
                 },
             },
         ],

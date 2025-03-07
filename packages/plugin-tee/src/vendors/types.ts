@@ -2,8 +2,6 @@ import type { Action, Provider } from '@elizaos/core';
 
 export const TeeVendorNames = {
     PHALA: 'phala',
-    MARLIN: 'marlin',
-    FLEEK: 'fleek',
     SGX_GRAMINE: 'sgx_gramine',
 } as const;
 

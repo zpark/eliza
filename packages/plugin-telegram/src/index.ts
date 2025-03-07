@@ -1,6 +1,5 @@
 import { Service, type IAgentRuntime, logger, type Plugin } from "@elizaos/core";
 import { type Context, Telegraf } from "telegraf";
-import replyAction from "./actions/reply.ts";
 import { validateTelegramConfig } from "./environment.ts";
 import { MessageManager } from "./messageManager.ts";
 import { TelegramTestSuite } from "./tests.ts";
@@ -140,7 +139,6 @@ const telegramPlugin: Plugin = {
     name: TELEGRAM_SERVICE_NAME,
     description: "Telegram client plugin",
     services: [TelegramService],
-    actions: [replyAction],
     tests: [new TelegramTestSuite()]
 };
 export default telegramPlugin;

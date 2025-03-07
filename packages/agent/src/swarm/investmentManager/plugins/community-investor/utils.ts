@@ -1,21 +1,10 @@
 import { XMLParser } from "fast-xml-parser";
 import type { ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import type { TemplateVariables } from "./types";
 
-export function render<Template extends string>(
-    str: Template,
-    data: TemplateVariables<Template>
-) {
-    return str.replace(/\{\{(\w+)\}\}/g, (_match, key) => data[key] || "");
-}
 
 export function getZodJsonSchema(schema: ZodType<any>) {
     return zodToJsonSchema(schema, "schema").definitions?.schema;
-}
-
-export function prompt<Template extends string>(t: Template) {
-    return (data: TemplateVariables<Template>) => render(t, data);
 }
 
 export function extractXMLFromResponse(output: string, tag: string) {

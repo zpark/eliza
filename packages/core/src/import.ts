@@ -16,7 +16,7 @@ export const registerDynamicImport = (specifier: string, module: any) => {
 
 export async function handlePluginImporting(plugins: string[]) {
   if (plugins.length > 0) {
-      logger.info("Plugins are: ", plugins);
+      logger.debug("Imported are: ", plugins);
       const importedPlugins = await Promise.all(
           plugins.map(async (plugin) => {
               try {

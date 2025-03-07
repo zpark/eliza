@@ -2,8 +2,8 @@ import {
     type IAgentRuntime,
     type Memory,
     type Provider,
-    type State,
-    logger,
+    type ProviderResult,
+    logger
 } from "@elizaos/core";
 import { Connection, Keypair, PublicKey, type VersionedTransaction } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
@@ -173,20 +173,6 @@ export class WalletProvider {
         }
     }
 
-    async getFormattedPortfolio(): Promise<string> {
-        try {
-            const [portfolio, prices] = await Promise.all([
-                this.fetchPortfolioValue(),
-                BirdeyeClient.createFromRuntime(this.runtime).fetchPrices(),
-            ]);
-
-            return this.formatPortfolio(portfolio, prices);
-        } catch (error) {
-            console.error("Error generating portfolio report:", error);
-            return "Unable to fetch wallet information. Please try again later.";
-        }
-    }
-
     async fetchPortfolioValue(): Promise<WalletPortfolio> {
         return await BirdeyeClient.createFromRuntime(
             this.runtime
@@ -256,11 +242,24 @@ export const walletProvider: Provider = {
     get: async (
         runtime: IAgentRuntime,
         _message: Memory,
-        _state?: State
-    ): Promise<string | null> => {
+    ): Promise<ProviderResult> => {
         try {
             const provider = WalletProvider.createFromRuntime(runtime);
-            return await provider.getFormattedPortfolio();
+            const [portfolio, prices] = await Promise.all([
+                provider.fetchPortfolioValue(),
+                BirdeyeClient.createFromRuntime(runtime).fetchPrices(),
+            ]);
+
+            const text = provider.formatPortfolio(portfolio, prices);
+            return {
+                data: {
+                    solanaPortfolio:portfolio,
+                },
+                values: {
+                    solanaPortfolio: text
+                },
+                text,
+            };
         } catch (error) {
             console.error("Error in wallet provider:", error);
             return null;

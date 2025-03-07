@@ -1,20 +1,20 @@
 import type { ZodSchema, z } from "zod";
 import { createUniqueUuid } from "..";
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import { logger } from "../logger";
-import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, RoleName, type State, type UUID } from "../types";
+import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, type ModelType, ModelTypes, Role, type State, type UUID } from "../types";
 
 export const generateObject = async ({
   runtime,
-  context,
-  modelType = ModelTypes.TEXT_LARGE,
+  prompt,
+  modelType,
   stopSequences = [],
   output = "object",
   enumValues = [],
   schema,
 }): Promise<any> => {
-  if (!context) {
-    const errorMessage = "generateObject context is empty";
+  if (!prompt) {
+    const errorMessage = "generateObject prompt is empty";
     console.error(errorMessage);
     throw new Error(errorMessage);
   }
@@ -23,7 +23,7 @@ export const generateObject = async ({
   if (output === "enum" && enumValues) {
     const response = await runtime.useModel(modelType, {
       runtime,
-      context,
+      prompt,
       modelType,
       stopSequences,
       maxTokens: 8,
@@ -55,7 +55,7 @@ export const generateObject = async ({
   // Regular object/array generation
   const response = await runtime.useModel(modelType, {
     runtime,
-    context,
+    prompt,
     modelType,
     stopSequences,
     object: true,
@@ -98,20 +98,20 @@ export const generateObject = async ({
 
 // Role modification validation helper
 const canModifyRole = (
-  currentRole: RoleName,
-  targetRole: RoleName | null,
-  newRole: RoleName
+  currentRole: Role,
+  targetRole: Role | null,
+  newRole: Role
 ): boolean => {
   // Owners can modify any role except other owners
-  if (currentRole === RoleName.OWNER) {
-    return targetRole !== RoleName.OWNER;
+  if (currentRole === Role.OWNER) {
+    return targetRole !== Role.OWNER;
   }
 
   // Admins can only modify NONE roles and can't promote to OWNER or ADMIN
-  if (currentRole === RoleName.ADMIN) {
+  if (currentRole === Role.ADMIN) {
     return (
-      (!targetRole || targetRole === RoleName.NONE) &&
-      ![RoleName.OWNER, RoleName.ADMIN].includes(newRole)
+      (!targetRole || targetRole === Role.NONE) &&
+      ![Role.OWNER, Role.ADMIN].includes(newRole)
     );
   }
 
@@ -144,7 +144,7 @@ Return the results in this JSON format:
 {
 "roleAssignments": [
   {
-    "userId": "discord_id",
+    "entityId": "<UUID of the entity being assigned to>",
     "newRole": "ROLE_NAME"
   }
 ]
@@ -154,27 +154,27 @@ If no valid role assignments are found, return an empty array.`;
 
 async function generateObjectArray({
   runtime,
-  context,
+  prompt,
   modelType = ModelTypes.TEXT_SMALL,
   schema,
   schemaName,
   schemaDescription,
 }: {
   runtime: IAgentRuntime;
-  context: string;
+  prompt: string;
   modelType: ModelType;
   schema?: ZodSchema;
   schemaName?: string;
   schemaDescription?: string;
 }): Promise<z.infer<typeof schema>[]> {
-  if (!context) {
-    logger.error("generateObjectArray context is empty");
+  if (!prompt) {
+    logger.error("generateObjectArray prompt is empty");
     return [];
   }
   
   const result = await generateObject({
     runtime,
-    context,
+    prompt,
     modelType,
     output: "array",
     schema,
@@ -189,8 +189,8 @@ async function generateObjectArray({
 }
 
 interface RoleAssignment {
-  userId: UUID;
-  newRole: RoleName;
+  entityId: UUID;
+  newRole: Role;
 }
 
 const updateRoleAction: Action = {
@@ -202,7 +202,7 @@ const updateRoleAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    _state: State
+    state: State
   ): Promise<boolean> => {
     logger.info("Starting role update validation");
 
@@ -212,7 +212,7 @@ const updateRoleAction: Action = {
       return false;
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -233,7 +233,7 @@ const updateRoleAction: Action = {
       const world = await runtime.databaseAdapter.getWorld(worldId);
 
       // Get requester ID and convert to UUID for consistent lookup
-      const requesterId = message.userId;
+      const requesterId = message.entityId;
 
       // Get roles from world metadata
       if (!world.metadata?.roles) {
@@ -242,7 +242,7 @@ const updateRoleAction: Action = {
       }
 
       // Lookup using UUID for consistency
-      const requesterRole = world.metadata.roles[requesterId] as RoleName
+      const requesterRole = world.metadata.roles[requesterId] as Role
 
       logger.info(`Requester ${requesterId} role:`, requesterRole);
 
@@ -251,7 +251,7 @@ const updateRoleAction: Action = {
         return false;
       }
 
-      if (![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole)) {
+      if (![Role.OWNER, Role.ADMIN].includes(requesterRole)) {
         logger.info(
           `Validation failed: Role ${requesterRole} insufficient for role management`
         );
@@ -278,7 +278,7 @@ const updateRoleAction: Action = {
       await callback(response.content);
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
     const world = await runtime.databaseAdapter.getWorld(room.worldId);
 
     if (!room) {
@@ -286,13 +286,13 @@ const updateRoleAction: Action = {
     }
 
     const serverId = world.serverId;
-    const requesterId = message.userId;
+    const requesterId = message.entityId;
 
     if (!world || !world.metadata) {
       logger.error(`No world or metadata found for server ${serverId}`);
       await callback({
         text: "Unable to process role changes due to missing server data.",
-        action: "UPDATE_ROLE",
+        actions: ["UPDATE_ROLE"],
         source: "discord",
       });
       return;
@@ -305,12 +305,12 @@ const updateRoleAction: Action = {
 
     // Get requester's role from world metadata
     const requesterRole =
-      (world.metadata.roles[requesterId] as RoleName) || RoleName.NONE;
+      (world.metadata.roles[requesterId] as Role) || Role.NONE;
 
     // Get all entities in the room
     const entities = await runtime.databaseAdapter.getEntitiesForRoom(room.id, true);
 
-    // Build server members context from entities
+    // Build server members prompt from entities
     const serverMembersContext = entities
       .map(entity => {
         const discordData = entity.components?.find(c => c.type === 'discord')?.data;
@@ -320,8 +320,8 @@ const updateRoleAction: Action = {
       })
       .join("\n");
 
-    // Create extraction context
-    const extractionContext = composeContext({
+    // Create extraction prompt
+    const extractionPrompt = composePrompt({
       state: {
         ...state,
         serverMembers: serverMembersContext,
@@ -333,14 +333,14 @@ const updateRoleAction: Action = {
     // Extract role assignments
     const result = (await generateObjectArray({
       runtime,
-      context: extractionContext,
+      prompt: extractionPrompt,
       modelType: ModelTypes.TEXT_SMALL,
     })) as RoleAssignment[];
 
     if (!result?.length) {
       await callback({
         text: "No valid role assignments found in the request.",
-        action: "UPDATE_ROLE",
+        actions: ["UPDATE_ROLE"],
         source: "discord",
       });
       return;
@@ -350,35 +350,35 @@ const updateRoleAction: Action = {
     let worldUpdated = false;
 
     for (const assignment of result) {
-      let targetEntity = entities.find(e => e.id === assignment.userId);
+      let targetEntity = entities.find(e => e.id === assignment.entityId);
       if(!targetEntity) {
-        targetEntity = entities.find(e => e.id === assignment.userId);
+        targetEntity = entities.find(e => e.id === assignment.entityId);
         console.log("Trying to write to generated tenant ID")
       }
       if (!targetEntity) {
         console.log("Could not find an ID ot assign to")
       }
 
-      const currentRole = world.metadata.roles[assignment.userId];
+      const currentRole = world.metadata.roles[assignment.entityId];
 
       // Validate role modification permissions
       if (!canModifyRole(requesterRole, currentRole, assignment.newRole)) {
         await callback({
           text: `You don't have permission to change ${targetEntity.names[0]}'s role to ${assignment.newRole}.`,
-          action: "UPDATE_ROLE",
+          actions: ["UPDATE_ROLE"],
           source: "discord",
         });
         continue;
       }
 
       // Update role in world metadata
-      world.metadata.roles[assignment.userId] = assignment.newRole;
+      world.metadata.roles[assignment.entityId] = assignment.newRole;
 
       worldUpdated = true;
 
       await callback({
         text: `Updated ${targetEntity.names[0]}'s role to ${assignment.newRole}.`,
-        action: "UPDATE_ROLE",
+        actions: ["UPDATE_ROLE"],
         source: "discord",
       });
     }
@@ -393,49 +393,49 @@ const updateRoleAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
-          text: "Make {{user2}} an ADMIN",
+          text: "Make {{name2}} an ADMIN",
           source: "discord",
         },
       },
       {
-        user: "{{user3}}",
+        name: "{{name3}}",
         content: {
-          text: "Updated {{user2}}'s role to ADMIN.",
-          action: "UPDATE_ROLE",
+          text: "Updated {{name2}}'s role to ADMIN.",
+          actions: ["UPDATE_ROLE"],
         },
       },
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Set @alice and @bob as admins",
           source: "discord",
         },
       },
       {
-        user: "{{user3}}",
+        name: "{{name3}}",
         content: {
           text: "Updated alice's role to ADMIN.\nUpdated bob's role to ADMIN.",
-          action: "UPDATE_ROLE",
+          actions: ["UPDATE_ROLE"],
         },
       },
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Ban @troublemaker",
           source: "discord", 
         }
       },
       {
-        user: "{{user3}}",
+        name: "{{name3}}",
         content: {
           text: "I cannot ban users.",
-          action: "REPLY",
+          actions: ["REPLY"],
         }
       }
     ]

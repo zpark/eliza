@@ -20,14 +20,14 @@ export class SqliteTeeLogDAO extends TeeLogDAO<Database> {
 
     async addLog(log: TeeLog): Promise<boolean> {
         const stmt = this.db.prepare(
-            'INSERT INTO tee_logs (id, agentId, roomId, userId, type, content, timestamp, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO tee_logs (id, agentId, roomId, entityId, type, content, timestamp, signature) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         );
         try {
             stmt.run(
                 log.id,
                 log.agentId,
                 log.roomId,
-                log.userId,
+                log.entityId,
                 log.type,
                 log.content,
                 log.timestamp,
@@ -60,9 +60,9 @@ export class SqliteTeeLogDAO extends TeeLogDAO<Database> {
             whereConditions.push('roomId = ?');
             params.push(query.roomId);
         }
-        if (query.userId && query.userId !== '') {
-            whereConditions.push('userId = ?');
-            params.push(query.userId);
+        if (query.entityId && query.entityId !== '') {
+            whereConditions.push('entityId = ?');
+            params.push(query.entityId);
         }
         if (query.type && query.type !== '') {
             whereConditions.push('type = ?');

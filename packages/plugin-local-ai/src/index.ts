@@ -565,7 +565,7 @@ class LocalAIManager {
       }
 
       if (!this.ctx) {
-        throw new Error("Failed to create context");
+        throw new Error("Failed to create prompt");
       }
 
       this.sequence = this.ctx.getSequence();
@@ -719,7 +719,7 @@ class LocalAIManager {
         }
         this.activeModelConfig = MODEL_SPECS.medium;
         activeModel = this.mediumModel;
-        // QUICK TEST FIX: Always create fresh context
+        // QUICK TEST FIX: Always create fresh prompt
         this.ctx = await activeModel.createContext({ contextSize: MODEL_SPECS.medium.contextSize });
       } else {
         if (!this.smallModel) {
@@ -727,12 +727,12 @@ class LocalAIManager {
         }
         this.activeModelConfig = MODEL_SPECS.small;
         activeModel = this.smallModel;
-        // QUICK TEST FIX: Always create fresh context
+        // QUICK TEST FIX: Always create fresh prompt
         this.ctx = await activeModel.createContext({ contextSize: MODEL_SPECS.small.contextSize });
       }
 
       if (!this.ctx) {
-        throw new Error("Failed to create context");
+        throw new Error("Failed to create prompt");
       }
       
       // QUICK TEST FIX: Always get fresh sequence
@@ -748,25 +748,25 @@ class LocalAIManager {
         throw new Error("Failed to create chat session");
       }
       logger.info("Created new chat session for model:", params.modelType);
-      // Log incoming context for debugging
-      logger.info("Incoming context structure:", {
-        contextLength: params.context.length,
-        hasAction: params.context.includes("action"),
+      // Log incoming prompt for debugging
+      logger.info("Incoming prompt structure:", {
+        contextLength: params.prompt.length,
+        hasAction: params.prompt.includes("action"),
         runtime: !!params.runtime,
         stopSequences: params.stopSequences
       });
 
-      const tokens = await this.tokenizerManager.encode(params.context, this.activeModelConfig);
+      const tokens = await this.tokenizerManager.encode(params.prompt, this.activeModelConfig);
       logger.info("Input tokens:", { count: tokens.length });
 
-      // QUICK TEST FIX: Add system message to reset context
+      // QUICK TEST FIX: Add system message to reset prompt
       const systemMessage = "You are a helpful AI assistant. Respond to the current request only.";
       await this.chatSession.prompt(systemMessage, {
         maxTokens: 1, // Minimal tokens for system message
         temperature: 0.0
       });
 
-      let response = await this.chatSession.prompt(params.context, {
+      let response = await this.chatSession.prompt(params.prompt, {
         maxTokens: 8192,
         temperature: 0.7,
         topP: 0.9,
@@ -935,13 +935,13 @@ export const localAIPlugin: Plugin = {
   },
 
   models: {
-    [ModelTypes.TEXT_SMALL]: async (runtime: IAgentRuntime, { context, stopSequences = [] }: GenerateTextParams) => {
+    [ModelTypes.TEXT_SMALL]: async (runtime: IAgentRuntime, { prompt, stopSequences = [] }: GenerateTextParams) => {
       try {
         const modelConfig = localAIManager.getTextModelSource();
         
         if (modelConfig.source !== 'local') {
           return await localAIManager.generateTextOllamaStudio({ 
-            context, 
+            prompt, 
             stopSequences,
             runtime,
             modelType: ModelTypes.TEXT_SMALL
@@ -949,7 +949,7 @@ export const localAIPlugin: Plugin = {
         }
         
         return await localAIManager.generateText({ 
-          context, 
+          prompt, 
           stopSequences,
           runtime,
           modelType: ModelTypes.TEXT_SMALL
@@ -960,13 +960,13 @@ export const localAIPlugin: Plugin = {
       }
     },
 
-    [ModelTypes.TEXT_LARGE]: async (runtime: IAgentRuntime, { context, stopSequences = [] }: GenerateTextParams) => {
+    [ModelTypes.TEXT_LARGE]: async (runtime: IAgentRuntime, { prompt, stopSequences = [] }: GenerateTextParams) => {
       try {
         const modelConfig = localAIManager.getTextModelSource();
         
         if (modelConfig.source !== 'local') {
           return await localAIManager.generateTextOllamaStudio({ 
-            context, 
+            prompt, 
             stopSequences,
             runtime,
             modelType: ModelTypes.TEXT_LARGE
@@ -974,7 +974,7 @@ export const localAIPlugin: Plugin = {
         }
         
         return await localAIManager.generateText({ 
-          context, 
+          prompt, 
           stopSequences,
           runtime,
           modelType: ModelTypes.TEXT_LARGE
@@ -1110,7 +1110,7 @@ export const localAIPlugin: Plugin = {
               
               // Test TEXT_SMALL model initialization
               const result = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-                context: "Debug Mode: Test initialization. Respond with 'Initialization successful' if you can read this.",
+                prompt: "Debug Mode: Test initialization. Respond with 'Initialization successful' if you can read this.",
                 stopSequences: []
               });
 
@@ -1141,7 +1141,7 @@ export const localAIPlugin: Plugin = {
               logger.info("Starting TEXT_LARGE model test");
               
               const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                context: "Debug Mode: Generate a one-sentence response about artificial intelligence.",
+                prompt: "Debug Mode: Generate a one-sentence response about artificial intelligence.",
                 stopSequences: []
               });
 

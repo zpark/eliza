@@ -17,7 +17,7 @@ export const logTable = pgTable(
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),
-        userId: uuid("userId")
+        entityId: uuid("entityId")
             .notNull()
             .references(() => entityTable.id),
         body: jsonb("body").notNull(),
@@ -34,7 +34,7 @@ export const logTable = pgTable(
         }).onDelete("cascade"),
         foreignKey({
             name: "fk_user",
-            columns: [table.userId],
+            columns: [table.entityId],
             foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]

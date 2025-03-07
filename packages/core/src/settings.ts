@@ -1,10 +1,11 @@
 import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
-import type { IAgentRuntime, OnboardingConfig, OnboardingSetting, WorldData, WorldSettings } from "./types";
+import type { IAgentRuntime, OnboardingConfig, Setting, World, WorldSettings } from "./types";
+import crypto from "node:crypto";
 
 function createSettingFromConfig(
-  configSetting: Omit<OnboardingSetting, "value">
-): OnboardingSetting {
+  configSetting: Omit<Setting, "value">
+): Setting {
   return {
     name: configSetting.name,
     description: configSetting.description,
@@ -18,6 +19,102 @@ function createSettingFromConfig(
     onSetAction: configSetting.onSetAction || null,
     visibleIf: configSetting.visibleIf || null,
   };
+}
+
+/**
+ * Generate a salt for settings encryption
+ */
+function getSalt(runtime: IAgentRuntime): string {
+  const secretSalt = process.env.SECRET_SALT || "secretsalt";
+  return secretSalt + runtime.agentId;
+}
+
+/**
+ * Applies salt to the value of a setting
+ * Only applies to secret settings with string values
+ */
+function saltSettingValue(setting: Setting, salt: string): Setting {
+  const settingCopy = { ...setting };
+  
+  // Only encrypt string values in secret settings
+  if (setting.secret === true && typeof setting.value === 'string' && setting.value) {
+    // Create key and iv from the salt
+    const key = crypto.createHash('sha256').update(salt).digest().slice(0, 32);
+    const iv = crypto.randomBytes(16);
+    
+    // Encrypt the value
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    let encrypted = cipher.update(setting.value, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    // Store IV with the encrypted value so we can decrypt it later
+    settingCopy.value = `${iv.toString('hex')}:${encrypted}`;
+  }
+  
+  return settingCopy;
+}
+
+/**
+ * Removes salt from the value of a setting
+ * Only applies to secret settings with string values
+ */
+function unsaltSettingValue(setting: Setting, salt: string): Setting {
+  const settingCopy = { ...setting };
+  
+  // Only decrypt string values in secret settings
+  if (setting.secret === true && typeof setting.value === 'string' && setting.value) {
+    try {
+      // Split the IV and encrypted value
+      const parts = setting.value.split(':');
+      if (parts.length !== 2) {
+        throw new Error('Invalid encrypted value format');
+      }
+      
+      const iv = Buffer.from(parts[0], 'hex');
+      const encrypted = parts[1];
+      
+      // Create key from the salt
+      const key = crypto.createHash('sha256').update(salt).digest().slice(0, 32);
+      
+      // Decrypt the value
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      settingCopy.value = decrypted;
+    } catch (error) {
+      logger.error(`Error decrypting setting value: ${error}`);
+      // Return the encrypted value on error
+    }
+  }
+  
+  return settingCopy;
+}
+
+/**
+ * Applies salt to all settings in a WorldSettings object
+ */
+function saltWorldSettings(worldSettings: WorldSettings, salt: string): WorldSettings {
+  const saltedSettings: WorldSettings = {};
+  
+  for (const [key, setting] of Object.entries(worldSettings)) {
+    saltedSettings[key] = saltSettingValue(setting, salt);
+  }
+  
+  return saltedSettings;
+}
+
+/**
+ * Removes salt from all settings in a WorldSettings object
+ */
+function unsaltWorldSettings(worldSettings: WorldSettings, salt: string): WorldSettings {
+  const unsaltedSettings: WorldSettings = {};
+  
+  for (const [key, setting] of Object.entries(worldSettings)) {
+    unsaltedSettings[key] = unsaltSettingValue(setting, salt);
+  }
+  
+  return unsaltedSettings;
 }
 
 /**
@@ -42,8 +139,12 @@ export async function updateWorldSettings(
       world.metadata = {};
     }
 
+    // Apply salt to settings before saving
+    const salt = getSalt(runtime);
+    const saltedSettings = saltWorldSettings(worldSettings, salt);
+
     // Update settings state
-    world.metadata.settings = worldSettings;
+    world.metadata.settings = saltedSettings;
 
     // Save updated world
     await runtime.databaseAdapter.updateWorld(world);
@@ -70,7 +171,12 @@ export async function getWorldSettings(
       return null;
     }
 
-    return world.metadata.settings as WorldSettings;
+    // Get settings from metadata
+    const saltedSettings = world.metadata.settings as WorldSettings;
+    
+    // Remove salt from settings before returning
+    const salt = getSalt(runtime);
+    return unsaltWorldSettings(saltedSettings, salt);
   } catch (error) {
     logger.error(`Error getting settings state: ${error}`);
     return null;
@@ -80,16 +186,19 @@ export async function getWorldSettings(
 /**
  * Initializes settings configuration for a server
  */
-export async function initializeOnboardingConfig(
+export async function initializeOnboarding(
   runtime: IAgentRuntime,
-  world: WorldData,
+  world: World,
   config: OnboardingConfig
 ): Promise<WorldSettings | null> {
   try {
     // Check if settings state already exists
     if (world.metadata?.settings) {
       logger.info(`Onboarding state already exists for server ${world.serverId}`);
-      return world.metadata.settings as WorldSettings;
+      // Get settings from metadata and remove salt
+      const saltedSettings = world.metadata.settings as WorldSettings;
+      const salt = getSalt(runtime);
+      return unsaltWorldSettings(saltedSettings, salt);
     }
     
     // Create new settings state
@@ -107,6 +216,7 @@ export async function initializeOnboardingConfig(
       world.metadata = {};
     }
     
+    // No need to salt here as the settings are just initialized with null values
     world.metadata.settings = worldSettings;
     
     await runtime.databaseAdapter.updateWorld(world);

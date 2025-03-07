@@ -379,7 +379,7 @@ export class SttTtsPlugin implements Plugin {
             try {
                 const responseMemory: Memory = {
                     id: createUniqueUuid(this.runtime, `${memory.id}-voice-response-${Date.now()}`),
-                    userId: this.runtime.agentId,
+                    entityId: this.runtime.agentId,
                     agentId: this.runtime.agentId,
                     content: {
                         ...content,
@@ -392,7 +392,7 @@ export class SttTtsPlugin implements Plugin {
                 };
 
                 if (responseMemory.content.text?.trim()) {
-                    await this.runtime.messageManager.createMemory(responseMemory);
+                    await this.runtime.getMemoryManager("messages").createMemory(responseMemory);
                     this.isProcessingAudio = false;
                     this.volumeBuffers.clear();
                     await this.speakText(content.text);

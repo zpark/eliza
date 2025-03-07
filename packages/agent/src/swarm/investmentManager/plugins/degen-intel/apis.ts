@@ -53,7 +53,7 @@ export const routes: Route[] = [
     path: "/tweets",
     handler: async (_req: any, res: any, runtime: IAgentRuntime) => {
       try {
-        const memories = await runtime.messageManager.getMemories({
+        const memories = await runtime.getMemoryManager("messages").getMemories({
           roomId: createUniqueUuid(runtime, "twitter-feed"),
           end: Date.now(),
           count: 50
@@ -80,7 +80,7 @@ export const routes: Route[] = [
     path: "/sentiment",
     handler: async (_req: any, res: any, runtime: IAgentRuntime) => {
       try {
-        const memories = await runtime.messageManager.getMemories({
+        const memories = await runtime.getMemoryManager("messages").getMemories({
           roomId: createUniqueUuid(runtime, "sentiment-analysis"),
           end: Date.now(),
           count: 30

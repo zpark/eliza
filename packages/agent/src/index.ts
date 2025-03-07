@@ -21,7 +21,7 @@ import {
   loadCharacters,
   loadCharacterTryPath
 } from "./server/loader.ts";
-import { defaultCharacter } from "./single-agent/character.ts";
+import { character as defaultCharacter } from "./swarm/communityManager";
 import { startScenario } from "./swarm/scenario.ts";
 
 import * as fs from "node:fs";
@@ -78,18 +78,6 @@ export function parseArguments(): {
   }
 }
 
-export async function createAgent(
-  character: Character,
-  plugins: Plugin[] = []
-): Promise<IAgentRuntime> {
-  logger.log(`Creating runtime for character ${character.name}`);
-  return new AgentRuntime({
-    character,
-    fetch: logFetch,
-    plugins
-  });
-}
-
 async function startAgent(
   character: Character,
   server: AgentServer,
@@ -100,7 +88,11 @@ async function startAgent(
   try {
     character.id ??= stringToUuid(character.name);
 
-    const runtime: IAgentRuntime = await createAgent(character, plugins);
+    const runtime = new AgentRuntime({
+      character,
+      fetch: logFetch,
+      plugins
+    });
 
     if (init) {
       await init(runtime);

@@ -5,20 +5,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
 
-// Generate a unique ID for messages
-function generateMessageId(msg: Memory | TransformedMessage): string {
-  const timestamp = typeof msg.createdAt === 'number' ? msg.createdAt : 0;
-  const user = 'userId' in msg ? msg.userId : msg.user;
-  const text = 'content' in msg && typeof msg.content === 'object' ? 
-    msg.content.text : 
-    'text' in msg ? msg.text : '';
-  
-  return `${timestamp}-${user}-${text.substring(0, 20)}`;
-}
-
 // Define the ContentWithUser type
 type ContentWithUser = Content & {
-  user: string;
+  name: string;
   createdAt: number;
   isLoading?: boolean;
   worldId?: string;
@@ -27,27 +16,16 @@ type ContentWithUser = Content & {
 
 // Define the Memory type needed for the useMessages hook
 type Memory = {
-  userId: string;
+  id: UUID;
+  entityId: string;
   content: {
     text: string;
     attachments?: Media[];
     source?: string;
-    action?: string;
+    actions?: string[];
   };
   createdAt: number;
   worldId?: string;
-};
-
-// Define a type for transformed messages to avoid type mismatches
-type TransformedMessage = {
-  text: string;
-  user: string;
-  createdAt: number;
-  attachments?: Media[];
-  source?: string;
-  action?: string;
-  worldId?: string;
-  id: string; // Add ID field
 };
 
 // Constants for stale times
@@ -250,7 +228,7 @@ export function useAgentMessages(agentId: UUID) {
 
 // The original useMessages hook remains for backward compatibility
 export function useMessages(agentId: UUID, roomId: UUID): {
-  data: TransformedMessage[] | undefined;
+  data: Memory[] | undefined;
   isLoading: boolean;
   isError: boolean;
   error: unknown;
@@ -268,27 +246,12 @@ export function useMessages(agentId: UUID, roomId: UUID): {
   const messagesQuery = useQuery({
     queryKey: ['messages', agentId, roomId, worldId],
     queryFn: () => apiClient.getMemories(agentId, roomId),
-    select: (data: { memories: Memory[] }): TransformedMessage[] => {
+    select: (data: { memories: Memory[] }): Memory[] => {
       if (!data?.memories) return [];
-      
-      // Transform the memories into the ContentWithUser format expected by the chat component
-      const transformedMessages: TransformedMessage[] = data.memories.map((memory: Memory): TransformedMessage => {
-        const transformed: TransformedMessage = {
-          text: memory.content.text,
-          user: memory.userId === agentId ? 'system' : 'user',
-          createdAt: memory.createdAt,
-          attachments: memory.content.attachments,
-          source: memory.content.source,
-          action: memory.content.action,
-          worldId: memory.worldId || worldId, // Include worldId in the transformed messages
-          id: generateMessageId(memory) // Generate a unique ID
-        };
-        return transformed;
-      });
 
       // Update the oldest message timestamp if we have messages
-      if (transformedMessages.length > 0) {
-        const timestamps: number[] = transformedMessages.map((msg: TransformedMessage): number => msg.createdAt);
+      if (data.memories.length > 0) {
+        const timestamps: number[] = data.memories.map((msg): number => msg.createdAt);
         const oldest: number = Math.min(...timestamps);
         setOldestMessageTimestamp(oldest);
         
@@ -298,7 +261,7 @@ export function useMessages(agentId: UUID, roomId: UUID): {
         setHasMoreMessages(false);
       }
 
-      return transformedMessages;
+      return data.memories;
     },
     staleTime: STALE_TIMES.FREQUENT
   });
@@ -317,45 +280,31 @@ export function useMessages(agentId: UUID, roomId: UUID): {
       });
       
       if (response?.memories && response.memories.length > 0) {
-        // Transform the memories
-        const transformedMessages: TransformedMessage[] = response.memories.map((memory: Memory): TransformedMessage => {
-          const transformed: TransformedMessage = {
-            text: memory.content.text,
-            user: memory.userId === agentId ? 'system' : 'user',
-            createdAt: memory.createdAt,
-            attachments: memory.content.attachments,
-            source: memory.content.source,
-            action: memory.content.action,
-            worldId: memory.worldId || worldId,
-            id: generateMessageId(memory) // Generate a unique ID
-          };
-          return transformed;
-        });
         
         // Update the oldest message timestamp
-        const timestamps: number[] = transformedMessages.map((msg: TransformedMessage): number => msg.createdAt);
+        const timestamps: number[] = response.memories.map((msg: Memory): number => msg.createdAt);
         const oldest: number = Math.min(...timestamps);
         setOldestMessageTimestamp(oldest);
         
         // Merge with existing messages
-        const existingMessages: TransformedMessage[] = queryClient.getQueryData<TransformedMessage[]>(['messages', agentId, roomId, worldId]) || [];
+        const existingMessages: Memory[] = queryClient.getQueryData<Memory[]>(['messages', agentId, roomId, worldId]) || [];
         
         // Create a Map with message ID as key to filter out any potential duplicates
-        const messageMap = new Map<string, TransformedMessage>();
+        const messageMap = new Map<string, Memory>();
         
         // Add existing messages to the map
-        existingMessages.forEach((msg: TransformedMessage): void => {
+        existingMessages.forEach((msg: Memory): void => {
           messageMap.set(msg.id, msg);
         });
         
         // Add new messages to the map, overwriting any with the same ID
-        transformedMessages.forEach((msg: TransformedMessage): void => {
+        response.memories.forEach((msg: Memory): void => {
           messageMap.set(msg.id, msg);
         });
         
         // Convert back to array and sort
-        const mergedMessages: TransformedMessage[] = Array.from(messageMap.values());
-        mergedMessages.sort((a: TransformedMessage, b: TransformedMessage): number => a.createdAt - b.createdAt);
+        const mergedMessages: Memory[] = Array.from(messageMap.values());
+        mergedMessages.sort((a: Memory, b: Memory): number => a.createdAt - b.createdAt);
         
         // Update the cache
         queryClient.setQueryData(['messages', agentId, roomId, worldId], mergedMessages);

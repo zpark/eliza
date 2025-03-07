@@ -146,7 +146,7 @@ Format in markdown without adding any additional headers.`,
 [Description of what the handler does]
 
 #### Examples
-[Use Examples object in Action code to give a Natural language example replace {{user2}} with "Agent" and {{user1}} with "User"]
+[Use Examples object in Action code to give a Natural language example replace {{name2}} with "Agent" and {{name1}} with "Anon"]
 
 Format in markdown without adding any additional headers.`,
 

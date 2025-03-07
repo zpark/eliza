@@ -64,7 +64,7 @@ export class TeeLogManager {
     public async log(
         agentId: string,
         roomId: string,
-        userId: string,
+        entityId: string,
         type: string,
         content: string,
     ): Promise<boolean> {
@@ -76,7 +76,7 @@ export class TeeLogManager {
         const timestamp = new Date().getTime();
 
         // Join the information into a single string
-        const messageToSign = `${agentId}|${roomId}|${userId}|${type}|${content}|${timestamp}`;
+        const messageToSign = `${agentId}|${roomId}|${entityId}|${type}|${content}|${timestamp}`;
 
         // Sign the joined message
         const signature = `0x${keyPair.sign(messageToSign).toDER('hex')}`;
@@ -85,7 +85,7 @@ export class TeeLogManager {
             id: v4(),
             agentId,
             roomId,
-            userId,
+            entityId,
             type,
             content,
             timestamp,

@@ -7,10 +7,9 @@
 // sourceEntityId represents who is making the update, entityId is who they are talking about
 
 import { v4 as uuidv4 } from 'uuid';
-import { composeContext } from "../context";
 import { findEntityByName } from "../entities";
 import { logger } from "../logger";
-import { parseJSONObjectFromText } from "../parsing";
+import { composePrompt } from "../prompts";
 import {
   type Action,
   type ActionExample,
@@ -114,10 +113,10 @@ export const updateEntityAction: Action = {
         await callback(response.content);
       }
 
-      const sourceEntityId = message.userId;
+      const sourceEntityId = message.entityId;
       const roomId = message.roomId;
       const agentId = runtime.agentId;
-      const room = await runtime.databaseAdapter.getRoom(roomId);
+      const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
       const worldId = room.worldId;
 
       // First, find the entity being referenced
@@ -126,7 +125,7 @@ export const updateEntityAction: Action = {
       if (!entity) {
         await callback({
           text: "I'm not sure which entity you're trying to update. Could you please specify who you're talking about?",
-          action: "UPDATE_ENTITY_ERROR",
+          actions: ["UPDATE_ENTITY_ERROR"],
           source: message.content.source,
         });
         return;
@@ -136,13 +135,13 @@ export const updateEntityAction: Action = {
       let existingComponent = null;
 
       // Generate component data using the combined template
-      const context = composeContext({
+      const prompt = composePrompt({
         state,
         template: componentTemplate,
       });
 
       const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-        context,
+        prompt,
         stopSequences: []
       });
 
@@ -163,7 +162,7 @@ export const updateEntityAction: Action = {
         logger.error(`Failed to parse component data: ${error.message}`);
         await callback({
           text: "I couldn't properly understand the component information. Please try again with more specific information.",
-          action: "UPDATE_ENTITY_ERROR",
+          actions: ["UPDATE_ENTITY_ERROR"],
           source: message.content.source,
         });
         return;
@@ -195,7 +194,7 @@ export const updateEntityAction: Action = {
 
         await callback({
           text: `I've updated the ${componentType} information for ${entity.names[0]}.`,
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
           source: message.content.source,
         });
       } else {
@@ -212,7 +211,7 @@ export const updateEntityAction: Action = {
 
         await callback({
           text: `I've added new ${componentType} information for ${entity.names[0]}.`,
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
           source: message.content.source,
         });
       }
@@ -220,7 +219,7 @@ export const updateEntityAction: Action = {
       logger.error(`Error in updateEntity handler: ${error}`);
       await callback({
         text: "There was an error processing the entity information.",
-        action: "UPDATE_ENTITY_ERROR",
+        actions: ["UPDATE_ENTITY_ERROR"],
         source: message.content.source,
       });
     }
@@ -229,46 +228,46 @@ export const updateEntityAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Please update my telegram username to @dev_guru",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated your telegram information.",
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
         },
       },
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Set Jimmy's twitter username to @jimmy_codes",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated Jimmy's twitter information.",
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
         },
       },
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Update my discord username to dev_guru#1234",
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{name2}}",
         content: {
           text: "I've updated your discord information.",
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
         },
       },
     ],

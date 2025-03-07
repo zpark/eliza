@@ -1,7 +1,7 @@
 import {
     ChannelType,
     cleanJsonResponse,
-    composeContext,
+    composePrompt,
     createUniqueUuid,
     extractAttributes,
     type IAgentRuntime,
@@ -53,11 +53,6 @@ export class TwitterPostClient {
                     : "disabled"
             }`
         );
-
-        const targetUsers = this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
-        if (targetUsers) {
-            logger.log(`- Target Users: ${targetUsers}`);
-        }
 
         if (this.isDryRun) {
             logger.log(
@@ -164,9 +159,9 @@ export class TwitterPostClient {
         await runtime.ensureParticipantInRoom(runtime.agentId, roomId);
 
         // Create a memory for the tweet
-        await runtime.messageManager.createMemory({
+        await runtime.getMemoryManager("messages").createMemory({
             id: createUniqueUuid(this.runtime, tweet.id),
-            userId: runtime.agentId,
+            entityId: runtime.agentId,
             agentId: runtime.agentId,
             content: {
                 text: rawTweetContent.trim(),
@@ -302,30 +297,32 @@ export class TwitterPostClient {
                 .join(", ")
             const state = await this.runtime.composeState(
                 {
-                    userId: this.runtime.agentId,
+                    entityId: this.runtime.agentId,
                     roomId: roomId,
                     agentId: this.runtime.agentId,
                     content: {
                         text: topics || "",
-                        action: "TWEET",
+                        actions: ["TWEET"],
                     },
-                },
-                {
-                    twitterUserName: this.client.profile.username
                 }
             );
 
-            const context = composeContext({
+            state.values = {
+                ...state.values,
+                twitterUserName: this.client.profile.username
+            };
+
+            const prompt = composePrompt({
                 state,
                 template:
                     this.runtime.character.templates?.twitterPostTemplate ||
                     twitterPostTemplate,
             });
 
-            logger.debug(`generate post prompt:\n${context}`);
+            logger.debug(`generate post prompt:\n${prompt}`);
 
             const response = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
-                context,
+                prompt,
             });
 
             const rawTweetContent = cleanJsonResponse(response);

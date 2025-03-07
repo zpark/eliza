@@ -12,6 +12,7 @@ import {
   ServiceTypes
 } from "@elizaos/core";
 import {
+  type Channel,
   type Client,
   ChannelType as DiscordChannelType,
   type Message as DiscordMessage,
@@ -24,7 +25,7 @@ export class MessageManager {
   private client: Client;
   private runtime: IAgentRuntime;
   private attachmentManager: AttachmentManager;
-  private getChannelType: (channelId: string) => Promise<ChannelType>;
+  private getChannelType: (channel: Channel) => Promise<ChannelType>;
   constructor(discordClient: any) {
     this.client = discordClient.client;
     this.runtime = discordClient.runtime;
@@ -60,7 +61,7 @@ export class MessageManager {
       return;
     }
 
-    const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+    const entityId = createUniqueUuid(this.runtime, message.author.id);
 
     const userName = message.author.bot
       ? `${message.author.username}#${message.author.discriminator}`
@@ -74,7 +75,7 @@ export class MessageManager {
 
     if (message.guild) {
       const guild = await message.guild.fetch();
-      type = await this.getChannelType(message.channel.id);
+      type = await this.getChannelType(message.channel as Channel);
       serverId = guild.id;
     } else {
       type = ChannelType.DM;
@@ -82,10 +83,10 @@ export class MessageManager {
     }
 
     await this.runtime.ensureConnection({
-      userId: userIdUUID,
+      entityId: entityId,
       roomId,
       userName,
-      userScreenName: name,
+      name: name,
       source: "discord",
       channelId: message.channel.id,
       serverId,
@@ -120,18 +121,18 @@ export class MessageManager {
         return;
       }
 
-      const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+      const entityId = createUniqueUuid(this.runtime, message.author.id);
 
       const messageId = createUniqueUuid(this.runtime, message.id);
 
       const newMessage: Memory = {
         id: messageId,
-        userId: userIdUUID,
+        entityId: entityId,
         agentId: this.runtime.agentId,
         roomId: roomId,
         content: {
-          name: name,
-          userName: userName,
+          // name: name,
+          // userName: userName,
           text: processedContent || " ",
           attachments: attachments,
           source: "discord",
@@ -160,17 +161,18 @@ export class MessageManager {
 
           const memories: Memory[] = [];
           for (const m of messages) {
-            const action = content.action;
+            const actions = content.actions;
 
             const memory: Memory = {
               id: createUniqueUuid(this.runtime, m.id),
-              userId: this.runtime.agentId,
+              entityId: this.runtime.agentId,
               agentId: this.runtime.agentId,
               content: {
                 ...content,
-                action,
+                actions,
                 inReplyTo: messageId,
                 url: m.url,
+                channelType: type,
               },
               roomId,
               createdAt: m.createdTimestamp,
@@ -179,7 +181,7 @@ export class MessageManager {
           }
 
           for (const m of memories) {
-            await this.runtime.messageManager.createMemory(m);
+            await this.runtime.getMemoryManager("messages").createMemory(m);
           }
           return memories;
         } catch (error) {
@@ -207,10 +209,10 @@ export class MessageManager {
     const mentionRegex = /<@!?(\d+)>/g;
     processedContent = processedContent.replace(
       mentionRegex,
-      (match, userId) => {
-        const user = message.mentions.users.get(userId);
+      (match, entityId) => {
+        const user = message.mentions.users.get(entityId);
         if (user) {
-          return `${user.username} (@${userId})`;
+          return `${user.username} (@${entityId})`;
         }
         return match;
       }

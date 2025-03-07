@@ -547,8 +547,8 @@
           "notNull": true,
           "default": "now()"
         },
-        "userId": {
-          "name": "userId",
+        "entityId": {
+          "name": "entityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -598,7 +598,7 @@
           "tableFrom": "goals",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -650,7 +650,7 @@
           "tableFrom": "goals",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -683,8 +683,8 @@
           "notNull": true,
           "default": "now()"
         },
-        "userId": {
-          "name": "userId",
+        "entityId": {
+          "name": "entityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -715,7 +715,7 @@
           "tableFrom": "logs",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -754,7 +754,7 @@
           "tableFrom": "logs",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -798,8 +798,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "userId": {
-          "name": "userId",
+        "entityId": {
+          "name": "entityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -911,7 +911,7 @@
           "tableFrom": "memories",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -963,7 +963,7 @@
           "tableFrom": "memories",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -1018,8 +1018,8 @@
           "notNull": true,
           "default": "now()"
         },
-        "userId": {
-          "name": "userId",
+        "entityId": {
+          "name": "entityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -1048,7 +1048,7 @@
           "name": "idx_participants_user",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "entityId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1081,7 +1081,7 @@
           "tableFrom": "participants",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"
@@ -1133,7 +1133,7 @@
           "tableFrom": "participants",
           "tableTo": "entities",
           "columnsFrom": [
-            "userId"
+            "entityId"
           ],
           "columnsTo": [
             "id"

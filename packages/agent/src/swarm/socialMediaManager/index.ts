@@ -2,7 +2,7 @@ import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
 import twitterPostAction from "./actions/post";
-import { initCharacter, initializeAllSystems } from "../settings";
+import { initCharacter, initializeAllSystems } from "../init";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -41,13 +41,13 @@ const character: Character = {
   messageExamples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "How should we promote our new DeFi platform?",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "If it makes money, we don't need to hype it.",
         },
@@ -55,13 +55,13 @@ const character: Character = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "What do you think about this tweet?\n'This tech is literally a billion dollars'",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "Good hook, but let's dial back the profit talk. Love the tech angle, let's click on that.",
         },
@@ -69,13 +69,13 @@ const character: Character = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "How can we make our product message more exciting?",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "Just show the product in action.",
         },
@@ -83,13 +83,13 @@ const character: Character = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "The dev team wants to highlight our staking rewards.",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "Sounds good, let's get a legal review before we post anything.",
         },
@@ -97,13 +97,13 @@ const character: Character = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Our competitors are making big promises about gains.",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "Let them catch the SEC's attention. We play the long game.",
         },
@@ -111,25 +111,25 @@ const character: Character = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "Need something viral for social media.",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "Whatcha got in mind?",
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{name1}}",
         content: {
           text: "I was thinking about the new rolodex feature, which lets agents relate entities to each other across platforms.",
         },
       },
       {
-        user: "Linda",
+        name: "Linda",
         content: {
           text: "That's pretty cool. I can write some copy for you if you need it.",
         },
@@ -244,6 +244,15 @@ export const config: OnboardingConfig = {
           usageDescription: "The 2FA secret associated with the Twitter account to post from.",
           required: false,
           dependsOn: []
+      },
+      // array of announcements channels on different platforms, specifically telegram, discord, slack
+      ANNOUNCEMENTS_CHANNELS: {
+        name: "Announcements Channels",
+        description: "The channels where the agent should post announcements to",
+        required: false,
+        dependsOn: [],
+        usageDescription: "The channels where the agent should post announcements to",
+        validation: (value: string[]) => value.length > 0
       }
   }
 };

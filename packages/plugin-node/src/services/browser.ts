@@ -1,4 +1,3 @@
-import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import { type IAgentRuntime, type IBrowserService, logger, ModelTypes, parseJSONObjectFromText, Service, type ServiceType, ServiceTypes, settings, stringToUuid, trimTokens } from "@elizaos/core";
 import CaptchaSolver from "capsolver-npm";
 import {
@@ -6,7 +5,7 @@ import {
     type BrowserContext,
     chromium,
     type Page,
-} from "playwright";
+} from "patchright";
 
 async function generateSummary(
     runtime: IAgentRuntime,
@@ -30,7 +29,7 @@ async function generateSummary(
   \`\`\``;
 
     const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-        context: prompt,
+        prompt,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);
@@ -57,7 +56,6 @@ type PageContent = {
 export class BrowserService extends Service implements IBrowserService {
     private browser: Browser | undefined;
     private context: BrowserContext | undefined;
-    private blocker: PlaywrightBlocker | undefined;
     private captchaSolver: CaptchaSolver;
     private cacheKey = "content/browser";
 
@@ -69,7 +67,6 @@ export class BrowserService extends Service implements IBrowserService {
         this.runtime = runtime;
         this.browser = undefined;
         this.context = undefined;
-        this.blocker = undefined;
         this.captchaSolver = new CaptchaSolver(
             settings.CAPSOLVER_API_KEY || ""
         );
@@ -125,9 +122,6 @@ export class BrowserService extends Service implements IBrowserService {
                 acceptDownloads: false,
             });
 
-            this.blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(
-                fetch
-            );
         }
     }
 
@@ -180,11 +174,6 @@ export class BrowserService extends Service implements IBrowserService {
             await page.setExtraHTTPHeaders({
                 "Accept-Language": "en-US,en;q=0.9",
             });
-
-            // Apply ad blocker
-            if (this.blocker) {
-                await this.blocker.enableBlockingInPage(page);
-            }
 
             const response = await page.goto(url, { waitUntil: "networkidle" });
 
@@ -307,31 +296,39 @@ export class BrowserService extends Service implements IBrowserService {
         url: string,
         runtime: IAgentRuntime
     ): Promise<{ title: string; description: string; bodyContent: string }> {
-        // Try Internet Archive
-        const archiveUrl = `https://web.archive.org/web/${url}`;
-        try {
-            return await this.fetchPageContent(archiveUrl, runtime);
-        } catch (error) {
-            logger.error("Error fetching from Internet Archive:", error);
+        // because this (tryAlternativeSources) calls fetchPageContent
+        // and fetchPageContent calls tryAlternativeSources
+        // we need these url.matches to progress
+        // through the things to try
+        if (!url.match(/web.archive.org\/web/)) {
+            // Try Internet Archive
+            const archiveUrl = `https://web.archive.org/web/${url}`;
+            try {
+                return await this.fetchPageContent(archiveUrl, runtime);
+            } catch (error) {
+                logger.error("Error fetching from Internet Archive:", error);
+            }
         }
 
-        // Try Google Search as a last resort
-        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
-            url
-        )}`;
-        try {
-            return await this.fetchPageContent(googleSearchUrl, runtime);
-        } catch (error) {
-            logger.error("Error fetching from Google Search:", error);
-            logger.error(
-                "Failed to fetch content from alternative sources"
-            );
-            return {
-                title: url,
-                description:
-                    "Error, could not fetch content from alternative sources",
-                bodyContent: "",
-            };
+        if (!url.match(/www.google.com\/search/)) {
+            // Try Google Search as a last resort
+            const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+                url
+            )}`;
+            try {
+                return await this.fetchPageContent(googleSearchUrl, runtime);
+            } catch (error) {
+                logger.error("Error fetching from Google Search:", error);
+                logger.error(
+                    "Failed to fetch content from alternative sources"
+                );
+                return {
+                    title: url,
+                    description:
+                        "Error, could not fetch content from alternative sources",
+                    bodyContent: "",
+                };
+            }
         }
     }
 }

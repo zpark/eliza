@@ -1,6 +1,6 @@
 import {
   ChannelType,
-  type Service,
+  Service,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
@@ -10,15 +10,18 @@ import {
 } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 
-export class ScenarioService implements Service {
+export class ScenarioService extends Service {
   static serviceType = "scenario";
-  runtime: IAgentRuntime;
+  capabilityDescription = "The agent is currently in a scenario testing environment. It can create rooms, send messages, and talk to other agents in a live interactive testing environment.";
   private messageHandlers: Map<UUID, HandlerCallback[]> = new Map();
   private rooms: Map<string, { roomId: UUID }> = new Map();
 
+  constructor(protected runtime: IAgentRuntime) {
+    super(runtime);
+  }
+
   static async start(runtime: IAgentRuntime) {
-    const service = new ScenarioService();
-    service.runtime = runtime;
+    const service = new ScenarioService(runtime);
     return service;
   }
 
@@ -28,8 +31,12 @@ export class ScenarioService implements Service {
     if (!service) {
       throw new Error("Scenario service not found");
     }
-    service.messageHandlers.clear();
-    service.rooms.clear();
+    service.stop();
+  }
+
+  async stop() {
+    this.messageHandlers.clear();
+    this.rooms.clear();
   }
 
   // Create a room for an agent
@@ -58,20 +65,20 @@ export class ScenarioService implements Service {
     for (const receiver of receivers) {
       const roomData = this.rooms.get(receiver.agentId);
       if (!roomData) continue;
-      const userId = createUniqueUuid(receiver, sender.agentId)
+      const entityId = createUniqueUuid(receiver, sender.agentId)
       
         // Ensure connection exists
         await receiver.ensureConnection({
-          userId,
+          entityId,
           roomId: roomData.roomId,
           userName: sender.character.name,
-          userScreenName: sender.character.name,
+          name: sender.character.name,
           source: "scenario",
           type: ChannelType.GROUP,
         });
 
       const memory: Memory = {
-        userId,
+        entityId,
         agentId: receiver.agentId,
         roomId: roomData.roomId,
         content: {
@@ -79,10 +86,11 @@ export class ScenarioService implements Service {
           source: "scenario",
           name: sender.character.name,
           userName: sender.character.name,
+          channelType: ChannelType.GROUP,
         },
       };
 
-      await receiver.messageManager.createMemory(memory);
+      await receiver.getMemoryManager("messages").createMemory(memory);
     }
   }
 
@@ -97,31 +105,31 @@ export class ScenarioService implements Service {
       const roomData = this.rooms.get(receiver.agentId);
       if (!roomData) continue;
       
-      const userId = createUniqueUuid(receiver, sender.agentId);
+      const entityId = createUniqueUuid(receiver, sender.agentId);
 
       if (receiver.agentId !== sender.agentId) {
         // Ensure connection exists
         await receiver.ensureConnection({
-          userId,
+          entityId,
           roomId: roomData.roomId,
           userName: sender.character.name,
-          userScreenName: sender.character.name,
+          name: sender.character.name,
           source: "scenario",
           type: ChannelType.GROUP,
         });
       } else {
         await receiver.ensureConnection({
-          userId: sender.agentId,
+          entityId: sender.agentId,
           roomId: roomData.roomId,
           userName: sender.character.name,
-          userScreenName: sender.character.name,
+          name: sender.character.name,
           source: "scenario",
           type: ChannelType.GROUP,
         });
       }
 
       const memory: Memory = {
-        userId: receiver.agentId !== sender.agentId ? userId : sender.agentId,
+        entityId: receiver.agentId !== sender.agentId ? entityId : sender.agentId,
         agentId: receiver.agentId,
         roomId: roomData.roomId,
         content: {
@@ -129,6 +137,7 @@ export class ScenarioService implements Service {
           source: "scenario",
           name: sender.character.name,
           userName: sender.character.name,
+          channelType: ChannelType.GROUP,
         },
       };
 
@@ -136,7 +145,7 @@ export class ScenarioService implements Service {
         runtime: receiver,
         message: memory,
         roomId: roomData.roomId,
-        userId: receiver.agentId !== sender.agentId ? userId : sender.agentId,
+        entityId: receiver.agentId !== sender.agentId ? entityId : sender.agentId,
         source: "scenario",
         type: ChannelType.GROUP,
       });
@@ -149,7 +158,7 @@ export class ScenarioService implements Service {
       participants.map(async (member) => {
         const roomData = this.rooms.get(member.agentId);
         if (!roomData) return [];
-        return member.messageManager.getMemories({
+        return member.getMemoryManager("messages").getMemories({
           roomId: roomData.roomId,
         });
       })

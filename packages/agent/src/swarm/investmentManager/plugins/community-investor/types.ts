@@ -727,5 +727,5 @@ export interface TradePerformance {
 }
 
 export const ServiceTypes = {
-    TRUST_TRADING: "trust_trading",
+    COMMUNITY_INVESTOR: "community_investor",
 } as const;

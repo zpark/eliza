@@ -1,6 +1,6 @@
 import pino, { type LogFn, type DestinationStream } from "pino";
 import pretty from "pino-pretty";
-import { parseBooleanFromText } from "./parsing";
+import { parseBooleanFromText } from "./prompts";
 
 interface LogEntry {
     time?: number;

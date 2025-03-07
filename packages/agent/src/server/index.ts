@@ -12,7 +12,6 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createApiRouter } from "./api/index.ts";
 import { adapter } from "./database.ts";
-import replyAction from "./reply.ts";
 
 export type ServerMiddleware = (
     req: express.Request,
@@ -121,9 +120,6 @@ export class AgentServer {
                     logger.debug(`Registered TEE action: ${action.name}`);
                 }
             }
-
-            // Register reply action
-            runtime.registerAction(replyAction);
             logger.debug(`Registered reply action for agent ${runtime.agentId}`);
 
             // Register routes

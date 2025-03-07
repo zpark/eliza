@@ -1,16 +1,14 @@
 import {
-    formatMessages,
+    composePrompt,
     type IAgentRuntime,
     type Memory,
-    ModelTypes,
     type Provider,
     type State,
     type UUID
 } from "@elizaos/core";
 import { z } from "zod";
-import { CoingeckoClient } from "../clients";
 import { formatRecommenderReport } from "../reports";
-import type { TrustTradingService } from "../tradingService";
+import type { CommunityInvestorService } from "../tradingService";
 import {
     ServiceTypes,
     type PositionWithBalance,
@@ -19,7 +17,6 @@ import {
     type TokenPerformance as TypesTokenPerformance,
     type Transaction as TypesTransaction
 } from "../types";
-import { getZodJsonSchema, render } from "../utils";
 // Create a simple formatter module inline if it doesn't exist
 // This will be used until a proper formatters.ts file is created
 const formatters = {
@@ -77,46 +74,10 @@ Total P&L: {{totalPnL}}
 
 </data_provider>`;
 
-const dataLoaderTemplate = `You are a data provider system for a memecoin trading platform. Your task is to detect necessary data operations from messages and output required actions.
-
-<available_actions>
-{{actions}}
-</available_actions>
-
-Current data state:
-<tokens>
-{{tokens}}
-</tokens>
-
-<positions>
-{{positions}}
-</positions>
-
-Analyze the following messages and output any required actions:
-<messages>
-{{messages}}
-</messages>
-
-Rules:
-
-- Detect any new token addresses mentioned in messages
-- Do not modify the contract address, even if it contains words like "pump" or "meme" (i.e. BtNpKW19V1vefFvVzjcRsCTj8cwwc1arJcuMrnaApump)
-- Compare mentioned tokens against current data state
-- Consider data freshness when tokens or positions are queried
-- Order actions by dependency (loading new data before refreshing)
-- Only output necessary actions
-
-Output structure:
-<o>
-[List of actions to be taken if applicable]
-<action name="[action name]">[action parameters as JSON]</action>
-</o>
-`;
-
 type DataActionState = {
     runtime: IAgentRuntime;
     message: Memory;
-    tradingService: TrustTradingService;
+    tradingService: CommunityInvestorService;
     tokens: TypesTokenPerformance[];
     positions: PositionWithBalance[];
     transactions: TypesTransaction[];
@@ -136,7 +97,7 @@ function createAction<Params extends z.AnyZodObject = z.AnyZodObject>(
 }
 
 // Available actions
-const actions = [
+const _actions = [
     createAction({
         name: "refresh_token",
         description: "Refresh token information from chain",
@@ -147,7 +108,7 @@ const actions = [
         async handler({ tradingService, tokens }, params) {
             // Normalize token address
             const tokenAddress = params.tokenAddress.toLowerCase();
-            // Update token information using the TrustTradingService
+            // Update token information using the CommunityInvestorService
             await tradingService.updateTokenPerformance(params.chain, tokenAddress);
             // Could also update trade history, position balances, etc.
         },
@@ -168,7 +129,7 @@ const actions = [
             positionIds: z.array(z.string().uuid()).describe("Position IDs to close"),
         }),
         async handler({runtime}, { positionIds }) {
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+            const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
             for (const positionId of positionIds) {
                 await tradingService.closePosition(positionId as UUID);
             }
@@ -181,7 +142,7 @@ const actions = [
             entityId: z.string().uuid().describe("Entity ID to update"),
         }),
         async handler({runtime, message}, { entityId }) {
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+            const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
             // Use db method instead - assuming this is the correct replacement
             await tradingService.initializeRecommenderMetrics(entityId as UUID, message.content.source);
         },
@@ -198,7 +159,7 @@ const actions = [
                 // Get token address from position
                 const position = positions.find(p => p.id === positionId);
                 if (position) {
-                    const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+                    const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
                     await tradingService.updateTokenPerformance(position.chain, position.tokenAddress);
                 }
             }
@@ -237,7 +198,7 @@ async function runActions(
     positions: PositionWithBalance[],
     transactions: TypesTransaction[]
 ) {
-    const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+    const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
     
     return Promise.all(
         actions.map(async (actionCall) => {
@@ -255,8 +216,7 @@ export const dataProvider: Provider = {
     async get(
         runtime: IAgentRuntime,
         message: Memory,
-        _state?: State
-    ): Promise<string> {
+    ) {
         try {
             // Extract token addresses from message and recent context
             const messageContent = message.content.text;
@@ -285,9 +245,9 @@ export const dataProvider: Provider = {
             );
 
             // Get entity info if message is from a user
-            const clientUserId = message.userId === message.agentId ? "" : message.userId;
+            const clientUserId = message.entityId === message.agentId ? "" : message.entityId;
             const entity = await runtime.databaseAdapter.getEntityById(clientUserId as UUID);
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+            const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
 
             // Add updatedAt to RecommenderMetrics to make it compatible
             const recommenderMetrics = entity
@@ -301,12 +261,12 @@ export const dataProvider: Provider = {
                   } as TypesRecommenderMetrics
                 : undefined;
 
+            // Process metrics history if available
             const metricsHistory = entity
                 ? await tradingService.getRecommenderMetricsHistory(entity.id)
                 : [];
                 
-            // Convert metrics history to compatible type
-            const typedMetricsHistory = metricsHistory.map(history => ({
+            const typedMetricsHistory = metricsHistory.map((history) => ({
                 ...history,
                 historyId: history.entityId
             }));
@@ -320,18 +280,13 @@ export const dataProvider: Provider = {
                       )
                     : "";
 
-            // Get market data
-            // Use the static method to create the client
-            const coingeckoClient = CoingeckoClient.createFromRuntime(runtime);
-            const priceData = await coingeckoClient.fetchGlobal();
             const totalCurrentValue = "$0.00";
             const totalRealizedPnL = "$0.00";
             const totalUnrealizedPnL = "$0.00";
             const totalPnL = "$0.00";
-            const prices = priceData?.data?.market_data?.prices || {};
-            const marketCapPercentage = priceData?.data?.market_data?.market_cap_percentage || {};
+            const _positionReports: string[] = [];
 
-            return render(dataProviderTemplate, {
+            const stateData = {
                 tokenReports: tokenReports.join("\n"),
                 totalCurrentValue,
                 totalRealizedPnL,
@@ -339,144 +294,44 @@ export const dataProvider: Provider = {
                 totalPnL,
                 entity: recommenderReport,
                 globalMarketData: JSON.stringify({
-                    prices,
-                    marketCapPercentage,
-                }),
+                    prices: {},
+                    marketCapPercentage: {},
+                })
+            };
+
+            const renderedText = composePrompt({
+                state: stateData as unknown as State,
+                template: dataProviderTemplate,
             });
+
+            return {
+                data: {
+                    tokens,
+                    positions,
+                    transactions,
+                    entity,
+                    metrics,
+                    metricsHistory: typedMetricsHistory
+                },
+                values: {
+                    tokenReports: tokenReports.join("\n"),
+                    totalCurrentValue,
+                    totalRealizedPnL,
+                    totalUnrealizedPnL,
+                    totalPnL,
+                    recommenderReport,
+                    hasTokens: tokens.length > 0 ? "true" : "false",
+                    hasPositions: positions.length > 0 ? "true" : "false"
+                },
+                text: renderedText
+            };
         } catch (error) {
-            const tokenSet = new Set<string>();
-            const tokens: TokenPerformance[] = [];
-            const positions: PositionWithBalance[] = [];
-            const transactions: TypesTransaction[] = [];
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
-
-            // Get open positions
-            const openPositions = await tradingService.getOpenPositionsWithBalance();
-            
-            for (const position of openPositions) {
-                if (tokenSet.has(`${position.chain}:${position.tokenAddress}`))
-                    continue;
-
-                const tokenPerformance = await tradingService.getTokenPerformance(
-                    position.chain,
-                    position.tokenAddress
-                );
-
-                if (tokenPerformance) tokens.push(tokenPerformance);
-
-                tokenSet.add(`${position.chain}:${position.tokenAddress}`);
-            }
-
-            const context = render(dataLoaderTemplate, {
-                actions: actions
-                    .map(
-                        (a) =>
-                            `${a.name}: ${a.description}\nParams: ${JSON.stringify(
-                                getZodJsonSchema(a.params)
-                            )}`
-                    )
-                    .join("\n\n"),
-                tokens: JSON.stringify(tokens, jsonFormatter),
-                positions: JSON.stringify(positions, jsonFormatter),
-                // Add missing messages parameter
-                messages: message.content.text,
-            });
-
-            const dataProviderResponse = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                messages: [
-                    {
-                        role: "system",
-                        content: context,
-                    },
-                    {
-                        role: "user",
-                        // Fix formatMessages call by providing the required structure
-                        content: formatMessages({
-                            messages: [message],
-                            actors: [] // Provide empty actors array 
-                        }),
-                    },
-                ],
-            });
-
-            if (dataProviderResponse) {
-                const extractedText = dataProviderResponse.match(
-                    /<o>(.*?)<\/o>/s
-                );
-                const actions = extractedText
-                    ? extractActions(extractedText[1])
-                    : [];
-
-                try {
-                    if (actions.length > 0) {
-                        await runActions(actions, runtime, message, tokens as TypesTokenPerformance[], positions, transactions);
-                    }
-
-                    const tokenReports = await Promise.all(
-                        tokens.map(async (token) => formatTokenPerformance(token))
-                    );
-
-                    const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
-
-                    const entity = await runtime.databaseAdapter.getEntityById(message.userId as UUID);
-
-                    // Add updatedAt to RecommenderMetrics to make it compatible
-                    const recommenderMetrics = entity
-                        ? await tradingService.getRecommenderMetrics(entity.id)
-                        : undefined;
-                        
-                    const metrics = recommenderMetrics
-                        ? {
-                            ...recommenderMetrics,
-                            updatedAt: Date.now() // Add missing updatedAt property
-                          } as TypesRecommenderMetrics
-                        : undefined;
-
-                    const metricsHistory = entity
-                        ? await tradingService.getRecommenderMetricsHistory(entity.id)
-                        : [];
-                        
-                    // Convert metrics history to compatible type
-                    const typedMetricsHistory = metricsHistory.map(history => ({
-                        ...history,
-                        historyId: history.entityId
-                    }));
-
-                    const recommenderReport =
-                        entity && metrics
-                            ? formatRecommenderReport(
-                                  entity as any,
-                                  metrics,
-                                  typedMetricsHistory
-                              )
-                            : "";
-
-                    const totalCurrentValue = "$0.00";
-                    const totalRealizedPnL = "$0.00";
-                    const totalUnrealizedPnL = "$0.00";
-                    const totalPnL = "$0.00";
-                    const _positionReports: string[] = [];
-
-                    return render(dataProviderTemplate, {
-                        tokenReports: tokenReports.join("\n"),
-                        totalCurrentValue,
-                        totalRealizedPnL,
-                        totalUnrealizedPnL,
-                        totalPnL,
-                        entity: recommenderReport,
-                        globalMarketData: JSON.stringify({
-                            prices: {},
-                            marketCapPercentage: {},
-                        }),
-                    });
-                } catch (error) {
-                    console.log(error);
-                    return "";
-                }
-            }
-
             console.log(error);
-            return "";
+            return {
+                data: {},
+                values: {},
+                text: ""
+            };
         }
     },
 };

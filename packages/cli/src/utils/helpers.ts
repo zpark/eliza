@@ -10,7 +10,7 @@ export function formatMessageExamples(examples: MessageExample[][]): string {
   
   return examples.map((conversation, i) => {
     const messages = conversation.map(msg => {
-      const user = msg.user === "{{user1}}" ? "User" : msg.user;
+      const user = msg.name === "{{name1}}" ? "Anon" : msg.name;
       return `  ${user}: ${msg.content.text}`;
     }).join("\n");
     return `\nConversation ${i + 1}:\n${messages}`;

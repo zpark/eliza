@@ -4,7 +4,7 @@ import {
 } from "@elizaos/core";
 import { z, ZodError } from "zod";
 
-const twitterUsernameSchema = z
+const _twitterUsernameSchema = z
     .string()
     .min(1, "An X/Twitter Username must be at least 1 character long")
     .max(15, "An X/Twitter Username cannot exceed 15 characters")
@@ -31,7 +31,6 @@ export const twitterEnvSchema = z.object({
     TWITTER_2FA_SECRET: z.string().default(undefined),
     TWITTER_RETRY_LIMIT: z.number().int(),
     TWITTER_POLL_INTERVAL: z.number().int(),
-    TWITTER_TARGET_USERS: z.array(twitterUsernameSchema).default([]),
     // I guess it's possible to do the transformation with zod
     // not sure it's preferable, maybe a readability issue
     // since more people will know js/ts than zod
@@ -99,7 +98,7 @@ function safeParseInt(
 // This also is organized to serve as a point of documentation for the client
 // most of the inputs from the framework (env/character)
 
-// we also do a lot of typing/parsing here
+// we also do a lot of typing/prompt here
 // so we can do it once and only once per character
 export async function validateTwitterConfig(
     runtime: IAgentRuntime,
@@ -142,12 +141,6 @@ export async function validateTwitterConfig(
                 runtime.getSetting("TWITTER_POLL_INTERVAL") ||
                     process.env.TWITTER_POLL_INTERVAL,
                 120 // 2m
-            ),
-
-            // comma separated string
-            TWITTER_TARGET_USERS: parseTargetUsers(
-                runtime.getSetting("TWITTER_TARGET_USERS") ||
-                    process.env.TWITTER_TARGET_USERS
             ),
 
             // bool

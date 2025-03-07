@@ -6,6 +6,13 @@ import { promises as fs } from 'node:fs'; // Fix: Use node: protocol
 import { calculateSHA256 } from '../utils';
 import { RemoteAttestationProvider } from './base';
 
+// Define the ProviderResult interface if not already imported
+interface ProviderResult {
+    data?: any;
+    values?: Record<string, string>;
+    text?: string;
+}
+
 /**
  * Phala TEE Cloud Provider
  * @example
@@ -77,7 +84,7 @@ class PhalaRemoteAttestationProvider extends RemoteAttestationProvider {
 // Keep the original provider for backwards compatibility
 const phalaRemoteAttestationProvider: Provider = {
     name: 'phala-remote-attestation',
-    get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
+    get: async (runtime: IAgentRuntime, message: Memory) => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaRemoteAttestationProvider(teeMode);
         const agentId = runtime.agentId;
@@ -87,7 +94,7 @@ const phalaRemoteAttestationProvider: Provider = {
                 agentId: agentId,
                 timestamp: Date.now(),
                 message: {
-                    userId: message.userId,
+                    entityId: message.entityId,
                     roomId: message.roomId,
                     content: message.content.text,
                 },
@@ -96,7 +103,16 @@ const phalaRemoteAttestationProvider: Provider = {
             const attestation = await provider.generateAttestation(
                 JSON.stringify(attestationMessage),
             );
-            return `Your Agent's remote attestation is: ${JSON.stringify(attestation)}`;
+            return {
+                text: `Your Agent's remote attestation is: ${JSON.stringify(attestation)}`,
+                data: {
+                    attestation,
+                },
+                values: {
+                    quote: attestation.quote,
+                    timestamp: attestation.timestamp.toString(),
+                },
+            };
         } catch (error) {
             console.error('Error in remote attestation provider:', error);
             throw new Error(
@@ -105,38 +121,6 @@ const phalaRemoteAttestationProvider: Provider = {
                 }`,
             );
         }
-    },
-};
-
-/**
- * Marlin TEE Provider
- * @example
- * ```ts
- * const provider = new MarlinRemoteAttestationProvider();
- * ```
- */
-class MarlinRemoteAttestationProvider extends RemoteAttestationProvider {}
-
-const marlinRemoteAttestationProvider: Provider = {
-    name: 'marlin-remote-attestation',
-    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
-        return 'Marlin Remote Attestation Provider';
-    },
-};
-
-/**
- * Fleek TEE Provider
- * @example
- * ```ts
- * const provider = new FleekRemoteAttestationProvider();
- * ```
- */
-class FleekRemoteAttestationProvider extends RemoteAttestationProvider {}
-
-const fleekRemoteAttestationProvider: Provider = {
-    name: 'fleek-remote-attestation',
-    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
-        return 'Fleek Remote Attestation Provider';
     },
 };
 
@@ -217,21 +201,36 @@ class SgxAttestationProvider extends RemoteAttestationProvider {
 
 const sgxAttestationProvider: Provider = {
     name: 'sgx-gramine-remote-attestation',
-    get: async (runtime: IAgentRuntime, _message: Memory, _state?: State) => {
+    get: async (
+        runtime: IAgentRuntime,
+        _message: Memory,
+    ): Promise<ProviderResult> => {
         const provider = new SgxAttestationProvider();
         const agentId = runtime.agentId;
 
         try {
             // console.log("Generating attestation for agent: ", agentId);
             const attestation = await provider.generateAttestation(agentId);
-            return `Your Agent's remote attestation is: ${JSON.stringify(attestation)}`;
+
+            return {
+                data: attestation,
+                values: {
+                    quote: attestation.quote,
+                    timestamp: attestation.timestamp.toString(),
+                },
+                text: `Your Agent's remote attestation is: ${JSON.stringify(attestation)}`,
+            };
         } catch (error) {
             console.error('Error in remote attestation provider:', error);
-            throw new Error(
-                `Failed to generate SGX Quote: ${
-                    error instanceof Error ? error.message : 'Unknown error'
-                }`,
-            );
+            const errorMessage = `Failed to generate SGX Quote: ${
+                error instanceof Error ? error.message : 'Unknown error'
+            }`;
+
+            return {
+                data: null,
+                values: {},
+                text: errorMessage,
+            };
         }
     },
 };
@@ -239,10 +238,6 @@ const sgxAttestationProvider: Provider = {
 export {
     phalaRemoteAttestationProvider,
     PhalaRemoteAttestationProvider,
-    marlinRemoteAttestationProvider,
-    MarlinRemoteAttestationProvider,
-    fleekRemoteAttestationProvider,
-    FleekRemoteAttestationProvider,
     sgxAttestationProvider,
     SgxAttestationProvider,
 };

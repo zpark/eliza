@@ -127,7 +127,7 @@ export function LogViewer() {
     const level = getLevelName(log.level)
     
     const numberedFields = Object.entries(log)
-      .filter(([key]) => !isNaN(Number(key)))
+      .filter(([key]) => !Number.isNaN(Number(key)))
       .sort((a, b) => Number(a[0]) - Number(b[0]))
     
     const extraFields = numberedFields.length > 0

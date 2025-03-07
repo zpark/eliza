@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import type { IAgentRuntime, Memory, Provider, State } from "../types";
+import type { IAgentRuntime, Memory, Provider, ProviderResult, State } from "../types";
 
 // Define an interface for option objects
 interface OptionObject {
@@ -7,13 +7,12 @@ interface OptionObject {
   description?: string;
 }
 
-export const optionsProvider: Provider = {
-    name: "options",
+export const choiceProvider: Provider = {
+    name: "CHOICE",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state?: State
-    ): Promise<string> => {
+    ): Promise<ProviderResult> => {
         try {
             // Get all pending tasks for this room with options
             const pendingTasks = await runtime.databaseAdapter.getTasks({
@@ -22,14 +21,30 @@ export const optionsProvider: Provider = {
             });
 
             if (!pendingTasks || pendingTasks.length === 0) {
-                return "";
+                return {
+                    data: {
+                        tasks: [],
+                    },
+                    values: {
+                        tasks: "No pending choices for the moment.",
+                    },
+                    text: "No pending choices for the moment.",
+                };
             }
 
             // Filter tasks that have options
             const tasksWithOptions = pendingTasks.filter(task => task.metadata?.options);
             
             if (tasksWithOptions.length === 0) {
-                return "";
+                return {
+                    data: {
+                        tasks: [],
+                    },
+                    values: {
+                        tasks: "No pending choices for the moment.",
+                    },
+                    text: "No pending choices for the moment.",
+                };
             }
             // Format tasks into a readable list
             let output = "# Pending Tasks\n\n";
@@ -64,12 +79,28 @@ export const optionsProvider: Provider = {
 
             output += "To select an option, reply with the option name (e.g., 'post' or 'cancel').\n";
 
-            return output.trim();
+            return {
+                data: {
+                    tasks: tasksWithOptions,
+                },
+                values: {
+                    tasks: output,
+                },
+                text: output,
+            };
         } catch (error) {
             logger.error("Error in options provider:", error);
-            return "Error retrieving pending tasks with options.";
+            return {
+                data: {
+                    tasks: [],
+                },
+                values: {
+                    tasks: "There was an error retrieving pending tasks with options.",
+                },
+                text: "There was an error retrieving pending tasks with options.",
+            };
         }
     }
 };
 
-export default optionsProvider;
+export default choiceProvider;

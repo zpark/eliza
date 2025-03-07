@@ -1,7 +1,7 @@
 import {
     type Action,
     type ActionExample,
-    composeContext,
+    composePrompt,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
@@ -98,33 +98,26 @@ export default {
         'PAY_SOLANA',
     ],
     validate: async (_runtime: IAgentRuntime, message: Memory) => {
-        logger.log('Validating transfer from user:', message.userId);
+        logger.log('Validating transfer from entity:', message.entityId);
         return true;
     },
     description: 'Transfer SOL or SPL tokens to another address on Solana.',
     handler: async (
         runtime: IAgentRuntime,
-        message: Memory,
+        _message: Memory,
         state: State,
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
         logger.log('Starting TRANSFER handler...');
 
-        let currentState = state;
-        if (!currentState) {
-            currentState = (await runtime.composeState(message)) as State;
-        } else {
-            currentState = await runtime.updateRecentMessageState(currentState);
-        }
-
-        const transferContext = composeContext({
-            state: currentState,
+        const transferPrompt = composePrompt({
+            state: state,
             template: transferTemplate,
         });
 
         const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-            context: transferContext,
+            prompt: transferPrompt,
         });
 
         const content = parseJSONObjectFromText(result);
@@ -261,31 +254,31 @@ export default {
     examples: [
         [
             {
-                user: '{{user1}}',
+                name: '{{name1}}',
                 content: {
                     text: 'Send 1.5 SOL to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: '{{user2}}',
+                name: '{{name2}}',
                 content: {
                     text: 'Sending SOL now...',
-                    action: 'TRANSFER_SOLANA',
+                    actions: ['TRANSFER_SOLANA'],
                 },
             },
         ],
         [
             {
-                user: '{{user1}}',
+                name: '{{name1}}',
                 content: {
                     text: 'Send 69 $DEGENAI BieefG47jAHCGZBxi2q87RDuHyGZyYC3vAzxpyu8pump to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: '{{user2}}',
+                name: '{{name2}}',
                 content: {
                     text: 'Sending the tokens now...',
-                    action: 'TRANSFER_SOLANA',
+                    actions: ['TRANSFER_SOLANA'],
                 },
             },
         ],

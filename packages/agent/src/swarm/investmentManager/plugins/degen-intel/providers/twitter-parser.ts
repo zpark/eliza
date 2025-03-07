@@ -170,7 +170,7 @@ export default class TwitterParser {
 			await this.runtime.databaseAdapter.setCache<Sentiment[]>("sentiments", updatedSentiments);
 		}
 
-		logger.info(`Updated timeframes, added ${timeSlots.length} new slots`);
+		logger.debug(`Updated timeframes, added ${timeSlots.length} new slots`);
 	}
 
 	async parseTweets() {
@@ -194,11 +194,11 @@ export default class TwitterParser {
 		);
 
 		if (!unprocessedSentiment) {
-			logger.info("No unprocessed timeslots available.");
+			logger.debug("No unprocessed timeslots available.");
 			return true;
 		}
 
-		logger.info(`Trying to process ${new Date(unprocessedSentiment.timeslot).toISOString()}`);
+		logger.debug(`Trying to process ${new Date(unprocessedSentiment.timeslot).toISOString()}`);
 
 		const timeslot = new Date(unprocessedSentiment.timeslot);
 		const fromDate = new Date(timeslot);
@@ -206,7 +206,7 @@ export default class TwitterParser {
 		fromDate.setUTCSeconds(fromDate.getUTCSeconds() + 1);
 
 		/** Retrieve tweets from message manager */
-		const memories = await this.runtime.messageManager.getMemories({
+		const memories = await this.runtime.getMemoryManager("messages").getMemories({
 			roomId: this.roomId,
 			start: fromDate.getTime(),
 			end: timeslot.getTime()
@@ -239,7 +239,7 @@ export default class TwitterParser {
 		const prompt = template.replace("{{tweets}}", bulletpointTweets);
 
 		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-			context: prompt,
+			prompt,
 			system: rolePrompt,
 			temperature: 0.2,
 			maxTokens: 4096,

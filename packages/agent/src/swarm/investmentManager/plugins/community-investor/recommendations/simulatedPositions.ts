@@ -8,40 +8,40 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { formatFullReport } from "../reports";
 import { ServiceTypes, type TokenPerformance, type Transaction } from "../types";
-import type { TrustTradingService } from "../tradingService";
+import type { CommunityInvestorService } from "../tradingService";
 
 export const getSimulatedPositions: Action = {
-    name: "TRUST_GET_SIMULATED_POSITIONS",
+    name: "GET_SIMULATED_POSITIONS",
     description:
         "Retrieves and formats position data for the agent's portfolio",
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "{{agentName}} show me my simulated positions",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_SIMULATED_POSITIONS",
+                    actions: ["GET_SIMULATED_POSITIONS"],
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
                     text: "{{agentName}} show me simulated positions",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_SIMULATED_POSITIONS",
+                    actions: ["GET_SIMULATED_POSITIONS"],
                 },
             },
         ],
@@ -50,12 +50,12 @@ export const getSimulatedPositions: Action = {
 
     async handler(runtime, message, _state, _options, callback: any) {
         console.log("getSimulatedPositions is running");
-        const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
+        const tradingService = runtime.getService<CommunityInvestorService>(ServiceTypes.COMMUNITY_INVESTOR);
 
         try {
             const [positions, user] = await Promise.all([
                 tradingService.getOpenPositionsWithBalance(),
-                runtime.databaseAdapter.getEntityById(message.userId),
+                runtime.databaseAdapter.getEntityById(message.entityId),
             ]);
 
             if (!user) {
@@ -80,9 +80,9 @@ export const getSimulatedPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        action: "TRUST_GET_SIMULATED_POSITIONS"
+                        actions: ["GET_SIMULATED_POSITIONS"]
                     },
-                    userId: message.userId,
+                    entityId: message.entityId,
                     agentId: message.agentId,
                     roomId: message.roomId,
                     metadata: message.metadata,
@@ -192,9 +192,9 @@ export const getSimulatedPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        action: "TRUST_GET_SIMULATED_POSITIONS"
+                        actions: ["GET_SIMULATED_POSITIONS"]
                     },
-                    userId: message.userId,
+                    entityId: message.entityId,
                     agentId: message.agentId,
                     roomId: message.roomId,
                     metadata: message.metadata,
@@ -209,7 +209,7 @@ export const getSimulatedPositions: Action = {
     },
 
     async validate(_runtime: IAgentRuntime, message: Memory) {
-        if (message.agentId === message.userId) return false;
+        if (message.agentId === message.entityId) return false;
         return true;
     },
 };

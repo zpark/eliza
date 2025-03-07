@@ -1,5 +1,5 @@
 // If a user is new to the server, greet them in the general channel
-// Only available if the SHOULD_GREET_NEW_USERS setting is true, which should be loaded from the cache from settings
+// Only available if the SHOULD_GREET_NEW_PERSONS setting is true, which should be loaded from the cache from settings
 
 import {
     type Action,
@@ -20,15 +20,15 @@ interface GreetingSettings {
 }
 
 export const greetAction: Action = {
-    name: "GREET_NEW_USER",
+    name: "GREET_NEW_PERSON",
     similes: ["WELCOME_USER", "SAY_HELLO", "INTRODUCE"],
     description: "Greets new users in the configured channel",
     validate: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state: State
+        state: State
     ): Promise<boolean> => {
-        const room = await runtime.databaseAdapter.getRoom(message.roomId);
+        const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -62,17 +62,11 @@ export const greetAction: Action = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state: State,
+        state: State,
         _options: any,
         callback: HandlerCallback,
-        responses: Memory[]
     ): Promise<void> => {
-        // Handle initial responses
-        for (const response of responses) {
-            await callback(response.content);
-        }
-
-        const room = await runtime.databaseAdapter.getRoom(message.roomId);
+        const room = state.data.room ?? await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -89,6 +83,12 @@ export const greetAction: Action = {
 
             if (!settings?.enabled || !settings.channelId) {
                 logger.error("Greeting settings not properly configured");
+                await runtime.getMemoryManager("messages").createMemory({
+                    entityId: runtime.agentId,
+                    agentId: runtime.agentId,
+                    roomId: message.roomId,
+                    content: { thought: "Greeting settings were not properly configured so I couldn't greet the new person", actions: ["GREET_NEW_PERSON"], result: "failed" },
+                });
                 return;
             }
 
@@ -98,13 +98,13 @@ export const greetAction: Action = {
 
             const content: Content = {
                 text: greeting,
-                action: "GREET_NEW_USER",
+                actions: ["GREET_NEW_PERSON"],
                 source: "discord",
             };
 
             // Create memory of greeting
-            await runtime.messageManager.createMemory({
-                userId: runtime.agentId,
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: runtime.agentId,
                 agentId: runtime.agentId,
                 roomId: message.roomId,
                 content,
@@ -122,33 +122,33 @@ export const greetAction: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "{{user2}} joined the server",
+                    text: "{{name2}} joined the server",
                     source: "discord",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
-                    text: "Welcome {{user2}}! I'm the community manager. Feel free to introduce yourself!",
-                    action: "GREET_NEW_USER",
+                    text: "Welcome {{name2}}! I'm the community manager. Feel free to introduce yourself!",
+                    actions: ["GREET_NEW_PERSON"],
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                name: "{{name1}}",
                 content: {
-                    text: "Can someone greet {{user2}}?",
+                    text: "Can someone greet {{name2}}?",
                     source: "discord",
                 },
             },
             {
-                user: "{{user3}}",
+                name: "{{name3}}",
                 content: {
-                    text: "Hi {{user2}}! Welcome to our community!",
-                    action: "GREET_NEW_USER",
+                    text: "Hi {{name2}}! Welcome to our community!",
+                    actions: ["GREET_NEW_PERSON"],
                 },
             },
         ],

@@ -175,6 +175,8 @@ const character: Character = {
 
 The above was extracted from these notes
 
+# Script of example interactions
+
 PM: Hey, I just need to get set up, you got a minute?
 You: Sure
 PM: What are you working on? Let's just pick one project or team to start small.

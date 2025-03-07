@@ -3,11 +3,11 @@
 
 import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
-import { RoleName, type IAgentRuntime, type WorldData } from "./types";
+import { Role, type IAgentRuntime, type World } from "./types";
 
 export interface ServerOwnershipState {
   servers: {
-    [serverId: string]: WorldData;
+    [serverId: string]: World;
   };
 }
 
@@ -17,30 +17,30 @@ export interface ServerOwnershipState {
  */
 export async function getUserServerRole(
   runtime: IAgentRuntime,
-  userId: string,
+  entityId: string,
   serverId: string
-): Promise<RoleName> {
+): Promise<Role> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
     const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world || !world.metadata?.roles) {
-      return RoleName.NONE;
+      return Role.NONE;
     }
 
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as RoleName;
+    if (world.metadata.roles[entityId]?.role) {
+      return world.metadata.roles[entityId].role as Role;
     }
 
     // Also check original ID format
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as RoleName;
+    if (world.metadata.roles[entityId]?.role) {
+      return world.metadata.roles[entityId].role as Role;
     }
 
-    return RoleName.NONE;
+    return Role.NONE;
   } catch (error) {
     logger.error(`Error getting user role: ${error}`);
-    return RoleName.NONE;
+    return Role.NONE;
   }
 }
 
@@ -49,10 +49,10 @@ export async function getUserServerRole(
  */
 export async function findWorldForOwner(
   runtime: IAgentRuntime,
-  userId: string
-): Promise<WorldData | null> {
+  entityId: string
+): Promise<World | null> {
   try {
-    if (!userId) {
+    if (!entityId) {
       logger.error("User ID is required to find server");
       return null;
     }
@@ -67,12 +67,12 @@ export async function findWorldForOwner(
 
     // Find world where the user is the owner
     for (const world of worlds) {
-      if (world.metadata?.ownership?.ownerId === userId) {
+      if (world.metadata?.ownership?.ownerId === entityId) {
         return world;
       }
     }
 
-    logger.info(`No server found for owner ${userId}`);
+    logger.info(`No server found for owner ${entityId}`);
     return null;
   } catch (error) {
     logger.error(`Error finding server for owner: ${error}`);
