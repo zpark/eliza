@@ -3,7 +3,6 @@
   "scripts": {
     "clean": "rm -rf dist .turbo node_modules .turbo-tsconfig.json tsconfig.tsbuildinfo",
     "format": "biome format .",
-    "clean": "rm -rf **/node_modules **/dist **/.turbo ",
     "cli": "bun --filter=@elizaos/cli cli",
     "lint": "turbo run lint:fix --filter=./packages/*",
     "check": "biome check . --fix --unsafe --verbose",
