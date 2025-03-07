@@ -228,12 +228,11 @@ export const apiClient = {
     },
     
     // Room-related routes
-    getRooms: (agentId: string) => {
+    getRooms: () => {
         const worldId = WorldManager.getWorldId();
         return fetcher({ 
-            url: `/agents/${agentId}/rooms`,
+            url: `/agents/${worldId}/rooms`,
             method: "GET",
-            body: { worldId }
         });
     },
     

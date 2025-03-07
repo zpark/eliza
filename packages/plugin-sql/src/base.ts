@@ -1393,7 +1393,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 .where(
                     and(
                         eq(participantTable.roomId, roomId),
-                        eq(participantTable.agentId, this.agentId)
+                        // eq(participantTable.agentId, this.agentId)
                     )
                 );
 

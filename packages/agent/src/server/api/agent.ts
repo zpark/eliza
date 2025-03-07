@@ -1073,91 +1073,59 @@ export function agentRouter(
   );
 
   // Rooms endpoints
-  router.get("/:agentId/rooms", async (req, res) => {
-    const agentId = validateUuid(req.params.agentId);
-    if (!agentId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_ID",
-          message: "Invalid agent ID format",
-        },
-      });
-      return;
-    }
-
-    const runtime = agents.get(agentId);
-
-    if (!runtime) {
-      res.status(404).json({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Agent not found",
-        },
-      });
-      return;
-    }
-
+  router.get('/:worldId/rooms', async (req, res) => {
+    const worldId = validateUuid(req.params.worldId);
     try {
-      const worldId = req.query.worldId as string;
-      const rooms = await runtime.databaseAdapter.getRoomsForParticipant(
-        agentId
-      );
+        const rooms = await db.getRooms(worldId);
 
-      const roomDetails = await Promise.all(
-        rooms.map(async (roomId) => {
-          try {
-            const roomData = await runtime.databaseAdapter.getRoom(roomId);
-            if (!roomData) return null;
-
-            if (worldId && roomData.worldId !== worldId) {
-              return null;
-            }
-
-            const entities = await runtime.databaseAdapter.getEntitiesForRoom(
-              roomId,
-              true
-            );
-
-            return {
-              id: roomId,
-              name: roomData.name || new Date().toLocaleString(),
-              source: roomData.source,
-              worldId: roomData.worldId,
-              entities: entities,
-            };
-          } catch (error) {
-            logger.error(
-              `[ROOMS GET] Error getting details for room ${roomId}:`,
-              error
-            );
-            return null;
-          }
-        })
-      );
-
-      const validRooms = roomDetails.filter((room) => room !== null);
-
-      res.json({
-        success: true,
-        data: validRooms,
-      });
+        const roomDetails = await Promise.all(
+            rooms.map(async (roomData) => {
+                try {
+                    
+                    if (!roomData) return null;
+                    
+                    if (worldId && roomData.worldId !== worldId) {
+                        return null;
+                    }
+                    
+                    const participantsIds = await db.getParticipantsForRoom(roomData.id);
+                    const participants = await Promise.all(
+                      participantsIds.map(async (agentId) => await db.getAgent(agentId))
+                    );
+                    
+                    return {
+                        id: roomData.id,
+                        name: roomData.name || new Date().toLocaleString(),
+                        source: roomData.source,
+                        worldId: roomData.worldId,
+                        participants: participants,
+                        agentId: roomData.agentId
+                    };
+                } catch (error) {
+                    logger.error(`[ROOMS GET] Error getting details for room ${roomData.id}:`, error);
+                    return null;
+                }
+            })
+        );
+        
+        const validRooms = roomDetails.filter(room => room !== null);
+        
+        res.json({
+            success: true,
+            data: validRooms
+        });
     } catch (error) {
-      logger.error(
-        `[ROOMS GET] Error retrieving rooms for agent ${agentId}:`,
-        error
-      );
-      res.status(500).json({
-        success: false,
-        error: {
-          code: "FETCH_ERROR",
-          message: "Failed to retrieve rooms",
-          details: error.message,
-        },
-      });
+        logger.error(`[ROOMS GET] Error retrieving rooms for agent`, error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'FETCH_ERROR',
+                message: 'Failed to retrieve rooms',
+                details: error.message
+            }
+        });
     }
-  });
+});
 
   router.post("/:agentId/rooms", async (req, res) => {
     const agentId = validateUuid(req.params.agentId);
