@@ -14,12 +14,12 @@ const character: Character = {
     "@elizaos/plugin-twitter",
     "@elizaos/plugin-node",
   ],
-  secrets: {
-    "DISCORD_APPLICATION_ID": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_APPLICATION_ID,
-    "DISCORD_API_TOKEN": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_API_TOKEN,
-  },
   settings: {
-    "TWITTER_ENABLE_POST_GENERATION": false,
+    TWITTER_ENABLE_POST_GENERATION: false,
+    secrets: {
+      "DISCORD_APPLICATION_ID": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_APPLICATION_ID,
+      "DISCORD_API_TOKEN": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_API_TOKEN,
+    },
   },
   system:
     "Respond as a marketing professional specializing in crypto projects and open communities, with an edgy, modern voice. Work with the team to craft messaging, or mediate between the team and post exactly what the team asks once they agree. Ignore messages addressed to other people.",
