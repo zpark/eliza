@@ -93,7 +93,8 @@ export default function ProfileOverlay({ isOpen, onClose, agent, agents }: Profi
                                     }}/>
                                     {isDropdownOpen && (
                                         <div className="absolute right-0 -top-1 mt-2 w-30 bg-muted border rounded shadow-md z-10" ref={dropdownRef}>
-                                            <div 
+                                            <Button
+                                                variant={"ghost"}
                                                 className="w-full px-4 py-2 text-left opacity-50 hover:opacity-100 cursor-pointer flex items-center gap-1" 
                                                 onClick={() => {
                                                     setIsDropdownOpen(false);
@@ -105,20 +106,24 @@ export default function ProfileOverlay({ isOpen, onClose, agent, agents }: Profi
                                                 </div>
                                                 
                                                 <div>Setting</div>
-                                            </div>
-                                            <div 
+                                            </Button>
+                                            <Button
+                                                variant={"ghost"}
                                                 className="w-full px-4 py-2 text-left opacity-50 hover:opacity-100 cursor-pointer flex items-center gap-1" 
                                                 onClick={() => {
-                                                    setIsGroupPanelOpen(true);
+                                                    if (isActive) {
+                                                        setIsGroupPanelOpen(true);
+                                                    }
                                                     setIsDropdownOpen(false);
                                                 }}
+                                                disabled={!isActive}
                                             >
                                                 <div>
                                                     <Users className="w-4 h-4"/>
                                                 </div>
                                                 
                                                 <div>Group</div>
-                                            </div>
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
