@@ -3,7 +3,7 @@
   "scripts": {
     "format": "biome format .",
     "clean": "rm -rf **/node_modules **/dist **/.turbo ",
-    "cli": "bun --filter=@elizaos/cli cli",
+    "cli": "bun --filter=@elizaos/eliza-dev cli",
     "lint": "turbo run lint:fix --filter=./packages/*",
     "check": "biome check . --fix --unsafe --verbose",
     "preinstall": "npx only-allow bun",

@@ -1,14 +1,7 @@
-import {
-  ChannelType,
-  Service,
-  type HandlerCallback,
-  type IAgentRuntime,
-  type Memory,
-  type UUID,
-  createUniqueUuid,
-  logger
-} from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
+import { createUniqueUuid } from "../entities";
+import { logger } from "../logger";
+import { ChannelType, HandlerCallback, IAgentRuntime, Memory, Service, UUID } from "../types";
 
 export class ScenarioService extends Service {
   static serviceType = "scenario";

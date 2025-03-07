@@ -38,7 +38,7 @@ import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
-import { TaskService } from "./services/taskService.ts";
+import { TaskService } from "./services/task.ts";
 import {
   type ChannelType,
   type Content,
@@ -51,6 +51,7 @@ import {
   type Room,
   type World,
 } from "./types.ts";
+import { ScenarioService } from "./services/scenario.ts";
 
 type ServerJoinedParams = {
   runtime: IAgentRuntime;
@@ -489,7 +490,7 @@ export const bootstrapPlugin: Plugin = {
     actionsProvider,
     recentMessagesProvider,
   ],
-  services: [TaskService],
+  services: [TaskService, ScenarioService],
 };
 
 export default bootstrapPlugin;

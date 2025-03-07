@@ -1,7 +1,7 @@
 {
   "name": "@elizaos/cli",
-  "version": "0.2.0-alpha.1",
-  "description": "Add components to your apps.",
+  "version": "1.0.0-alpha.0",
+  "description": "elizaOS CLI - Manage your AI agents and plugins",
   "publishConfig": {
     "access": "public"
   },
@@ -26,15 +26,15 @@
   },
   "scripts": {
     "cli": "bun build src/index.ts --outdir dist --watch",
-    "build": "bun build src/index.ts --outdir dist --target node",
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --external nothing",
     "typecheck": "tsc --noEmit",
     "start:cli": "node dist/index.js",
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
     "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
     "release": "changeset version",
-    "pub:beta": "bun build && bun publish --no-git-checks --access public --tag beta",
-    "pub:next": "bun build && bun publish --no-git-checks --access public --tag next",
-    "pub:release": "bun build && bun publish --access public",
+    "pub:beta": "bun build src/index.ts --outdir dist --target node --format esm --external nothing && bun publish --no-git-checks --access public --tag beta",
+    "pub:next": "bun build src/index.ts --outdir dist --target node --format esm --external nothing && bun publish --no-git-checks --access public --tag next",
+    "pub:release": "bun build src/index.ts --outdir dist --target node --format esm --external nothing && bun publish --access public",
     "test": "vitest run",
     "test:dev": "REGISTRY_URL=http://localhost:3333 vitest run"
   },
@@ -50,8 +50,8 @@
     "commander": "^10.0.0",
     "cosmiconfig": "^8.1.3",
     "diff": "^5.1.0",
-    "@elizaos/core": "*:workspace",
-    "@elizaos/plugin-sql": "*:workspace",
+    "@elizaos/core": "^0.25.9",
+    "@elizaos/plugin-sql": "^0.25.6",
     "execa": "^7.0.0",
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.1.0",

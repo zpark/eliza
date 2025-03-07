@@ -13,5 +13,5 @@
         "transpileOnly": true,
         "esm": true
     },
-    "include": ["src"]
+    "include": ["src", "../core/src/services/scenario.ts"]
 }

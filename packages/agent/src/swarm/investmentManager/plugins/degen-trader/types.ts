@@ -1,5 +1,3 @@
-import { IAgentRuntime } from "@elizaos/core";
-
 // Token Security Types
 export interface TokenSecurityData {
   ownerBalance: string;

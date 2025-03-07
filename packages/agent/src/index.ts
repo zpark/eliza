@@ -22,7 +22,6 @@ import {
   loadCharacterTryPath
 } from "./server/loader.ts";
 import { character as defaultCharacter } from "./swarm/communityManager";
-import { startScenario } from "./swarm/scenario.ts";
 
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -196,9 +195,6 @@ const startAgents = async () => {
           swarmMember.plugins
         );
         members.push(runtime);
-      }
-      if (args.scenario) {
-        startScenario(members);
       }
       logger.info("Loaded characters from swarm configuration");
     } catch (error) {
