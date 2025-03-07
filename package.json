@@ -8,7 +8,7 @@
     "check": "biome check . --fix --unsafe --verbose",
     "preinstall": "npx only-allow bun",
     "postinstall": "bun run install:browsers",
-    "install:browsers": "npx playwright@1.48.2 install chromium && npx patchright install",
+    "install:browsers": "npx patchright install",
     "migrate": "turbo run migrate --filter=./packages/plugin-sql",
     "migrate:generate": "turbo run migrate:generate --filter=./packages/plugin-sql",
     "swarm": "LOG_LEVEL=trace turbo run build --filter=./packages/core && LOG_LEVEL=trace concurrently \"turbo run start --filter=@elizaos/agent -- --swarm \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
