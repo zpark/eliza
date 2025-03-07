@@ -4,9 +4,9 @@
     "clean": "rm -rf dist .turbo node_modules .turbo-tsconfig.json tsconfig.tsbuildinfo",
     "cli": "bun --filter=@elizaos/cli cli",
     "lint": "biome ci --config-path=./biome.json",
-	"format": "biome format --write --config-path=./biome.json",
+    "format": "biome format --write --config-path=./biome.json",
     "preinstall": "npx only-allow bun",
-    "migrate": "turbo run migrate --filter=./packages/plugin-sql",
+    "migrate": "turbo run migrate --filter=./packages/plugin-sql --force",
     "migrate:generate": "turbo run migrate:generate --filter=./packages/plugin-sql",
     "swarm": "LOG_LEVEL=trace turbo run build --filter=./packages/core && LOG_LEVEL=trace concurrently \"turbo run start --filter=@elizaos/agent -- --swarm \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
     "swarm:scenario": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm --scenario \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
@@ -58,6 +58,7 @@
     "node": "23.3.0"
   },
   "dependencies": {
+    "@playwright/test": "^1.51.0",
     "zod": "3.24.1"
   },
   "packageManager": "bun@1.2.2",
