@@ -79,7 +79,7 @@ export const openaiPlugin: Plugin = {
         throw new Error(
           `Invalid plugin configuration: ${error.errors
             .map((e) => e.message)
-            .join(", ")}`
+            .join(", ")} - You need to configure the OPENAI_API_KEY in your environment variables`
         );
       }
       throw error;

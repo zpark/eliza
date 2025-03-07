@@ -38,7 +38,7 @@ export const anthropicPlugin: Plugin = {
         throw new Error(
           `Invalid plugin configuration: ${error.errors
             .map((e) => e.message)
-            .join(", ")}`
+            .join(", ")} - you need to configure the ANTHROPIC_API_KEY in your environment variables`
         );
       }
       throw error;

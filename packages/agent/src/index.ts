@@ -94,9 +94,6 @@ async function startAgent(
       plugins
     });
 
-    if (init) {
-      await init(runtime);
-    }
 
     // initialize database
     // find a db from the plugins
@@ -105,16 +102,31 @@ async function startAgent(
       postgresUrl: process.env.POSTGRES_URL,
     }, runtime.agentId);
     runtime.databaseAdapter = db;
+    
+    // check if there is an agents table and continue to while loop until it is
+    while (true) {
+      try {
+        await db.getAgent(runtime.agentId)
+        break;
+      } catch (error) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        logger.error("Waiting for tables to be created...");
+      }
+    }
+
 
     // Make sure character exists in database
-    await runtime.databaseAdapter.ensureAgentExists(character);
 
-    // start services/plugins/process knowledge    
-    await runtime.initialize();
+    if (init) {
+      await init(runtime);
+    }
 
     // add to container
     server.registerAgent(runtime);
-    
+  
+    await runtime.initialize();
+    await runtime.databaseAdapter.ensureAgentExists(character);
+
     // report to console
     logger.debug(`Started ${runtime.character.name} as ${runtime.agentId}`);
 
@@ -251,11 +263,11 @@ if (
 ) {
   // Handle uncaught exceptions to prevent the process from crashing
   process.on("uncaughtException", (err) => {
-    console.error("uncaughtException", err);
+    logger.error("uncaughtException", err);
   });
 
   // Handle unhandled rejections to prevent the process from crashing
   process.on("unhandledRejection", (err) => {
-    console.error("unhandledRejection", err);
+    logger.error("unhandledRejection", err);
   });
 }
