@@ -6,14 +6,16 @@ import { Cog, Loader2, MessageSquare, MoreHorizontal, Play, Square, Users } from
 import { useAgentManagement } from "@/hooks/use-agent-management";
 import { useNavigate } from "react-router";
 import { useEffect, useRef, useState } from "react";
+import GroupPanel from "./group-panel";
 
 interface ProfileOverlayProps {
     isOpen: boolean;
     onClose: () => void;
-    agent: Agent
+    agent: Agent;
+    agents: Agent[];
 }
 
-export default function ProfileOverlay({ isOpen, onClose, agent }: ProfileOverlayProps) {
+export default function ProfileOverlay({ isOpen, onClose, agent, agents }: ProfileOverlayProps) {
     if (!isOpen) return null;
 
     const { 
@@ -31,6 +33,7 @@ export default function ProfileOverlay({ isOpen, onClose, agent }: ProfileOverla
     const isProcessing = isStarting || isStopping;
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isGroupPanelOpen, setIsGroupPanelOpen] = useState(false);
     
     // handle Start/Stop button
     let buttonLabel = "Start";
@@ -64,111 +67,115 @@ export default function ProfileOverlay({ isOpen, onClose, agent }: ProfileOverla
             className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
             onClick={onClose}
         >
-            <Card className="flex flex-col items-center justify-between h-[64vh] w-[64vh]" 
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="p-3 h-[30%] w-full flex items-end">
-                    <div className="flex w-full h-full justify-between items-end">
-                        <div className="flex flex-col gap-2">
-                            <div className="bg-muted rounded-full w-20 h-20 flex justify-center items-center relative">
-                                {agent && <div className="text-4xl">{formatAgentName(agent.name)}</div>}
-                                <div className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white ${isActive ? "bg-green-500" : "bg-muted-foreground"}`} />
+            {!isGroupPanelOpen ?
+               <Card className="flex flex-col items-center justify-between h-[70vh] w-[70vh]" 
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="p-3 h-[30%] w-full flex items-end">
+                        <div className="flex w-full h-full justify-between items-end">
+                            <div className="flex flex-col gap-2">
+                                <div className="bg-muted rounded-full w-20 h-20 flex justify-center items-center relative">
+                                    {agent && <div className="text-4xl">{formatAgentName(agent.name)}</div>}
+                                    <div className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white ${isActive ? "bg-green-500" : "bg-muted-foreground"}`} />
+                                </div>
+                                <div className="flex justify-center items-center mr-4 font-bold">
+                                    {agent && <div className="text-xl">{(agent.name)}</div>}
+                                </div>
                             </div>
-                            <div className="flex justify-center items-center mr-4 font-bold">
-                                {agent && <div className="text-xl">{(agent.name)}</div>}
-                            </div>
-                        </div>
 
-                        <div className="flex flex-col items-end justify-between h-full">
+                            <div className="flex flex-col items-end justify-between h-full">
+                                
+                                <div 
+                                    className="relative " 
+                                >
+                                    <MoreHorizontal className="w-5 h-5 cursor-pointer" onClick={() => {
+                                        setIsDropdownOpen(true);
+                                    }}/>
+                                    {isDropdownOpen && (
+                                        <div className="absolute right-0 -top-1 mt-2 w-30 bg-muted border rounded shadow-md z-10" ref={dropdownRef}>
+                                            <div 
+                                                className="w-full px-4 py-2 text-left opacity-50 hover:opacity-100 cursor-pointer flex items-center gap-1" 
+                                                onClick={() => {
+                                                    setIsDropdownOpen(false);
+                                                    navigate(`/settings/${agent.id}`)
+                                                }}
+                                            >
+                                                <div>
+                                                    <Cog className="w-4 h-4"/>
+                                                </div>
+                                                
+                                                <div>Setting</div>
+                                            </div>
+                                            <div 
+                                                className="w-full px-4 py-2 text-left opacity-50 hover:opacity-100 cursor-pointer flex items-center gap-1" 
+                                                onClick={() => {
+                                                    setIsGroupPanelOpen(true);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                            >
+                                                <div>
+                                                    <Users className="w-4 h-4"/>
+                                                </div>
+                                                
+                                                <div>Group</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant={"secondary"}
+                                        className={`mr-4`}
+                                        onClick={() => {                 
+                                            if (isActive) {
+                                                navigate(`/chat/${agent.id}`)
+                                            }
+                                        }}
+                                        size={"default"}
+                                        disabled= {!isActive}
+                                    >
+                                        <MessageSquare className={"w-10 h-10 rounded-full"} style={{ height: 14, width: 14 }} />
+                                        {"Message"}
+                                    </Button>
+
+                                    <Button
+                                        variant={"secondary"}
+                                        className={`mr-4 ${isActive ? "text-red-500" : ""}`}
+                                        onClick={() => {
+                                            if (isProcessing) return; // Prevent action while processing
+                                                                
+                                            if (!isActive) {
+                                                startAgent(agent);
+                                            } else {
+                                                stopAgent(agent);
+                                            }
+                                        }}
+                                        size={"default"}
+                                        disabled={isProcessing}
+                                    >
+                                        {buttonIcon}
+                                        {buttonLabel}
+                                    </Button>
+                                </div>
+                            </div>
                             
-                            <div 
-                                className="relative " 
-                            >
-                                <MoreHorizontal className="w-5 h-5 cursor-pointer" onClick={() => {
-                                    setIsDropdownOpen(true);
-                                }}/>
-                                {isDropdownOpen && (
-                                    <div className="absolute right-0 -top-1 mt-2 w-30 bg-muted border rounded shadow-md z-10" ref={dropdownRef}>
-                                        <div 
-                                            className="w-full px-4 py-2 text-left opacity-50 hover:opacity-100 cursor-pointer flex items-center gap-1" 
-                                            onClick={() => {
-                                                setIsDropdownOpen(false);
-                                                navigate(`/settings/${agent.id}`)
-                                            }}
-                                        >
-                                            <div>
-                                                <Cog className="w-4 h-4"/>
-                                            </div>
-                                            
-                                            <div>Setting</div>
-                                        </div>
-                                        <div 
-                                            className="w-full px-4 py-2 text-left opacity-50 hover:opacity-100 cursor-pointer flex items-center gap-1" 
-                                            onClick={() => {
-                                                setIsDropdownOpen(false);
-                                            }}
-                                        >
-                                            <div>
-                                                <Users className="w-4 h-4"/>
-                                            </div>
-                                            
-                                            <div>Group</div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant={"secondary"}
-                                    className={`mr-4`}
-                                    onClick={() => {                 
-                                        if (isActive) {
-                                            navigate(`/chat/${agent.id}`)
-                                        }
-                                    }}
-                                    size={"default"}
-                                    disabled= {!isActive}
-                                >
-                                    <MessageSquare className={"w-10 h-10 rounded-full"} style={{ height: 14, width: 14 }} />
-                                    {"Message"}
-                                </Button>
-
-                                <Button
-                                    variant={"secondary"}
-                                    className={`mr-4 ${isActive ? "text-red-500" : ""}`}
-                                    onClick={() => {
-                                        if (isProcessing) return; // Prevent action while processing
-                                                            
-                                        if (!isActive) {
-                                            startAgent(agent);
-                                        } else {
-                                            stopAgent(agent);
-                                        }
-                                    }}
-                                    size={"default"}
-                                    disabled={isProcessing}
-                                >
-                                    {buttonIcon}
-                                    {buttonLabel}
-                                </Button>
-                            </div>
                         </div>
-                        
                     </div>
-                </div>
-                <CardContent className="p-3 h-[70%] w-full">
-                    <div className="rounded-md bg-muted h-full w-full mb-3">
-                        <div className="flex  h-full">
-                            <div className="p-6 overflow-scroll flex flex-col gap-2">
-                                <div>
-                                    <p>About Me</p>
-                                    {agent && <p className="text-sm text-gray-500">{agent?.system}</p>}
+                    <CardContent className="p-3 h-[70%] w-full">
+                        <div className="rounded-md bg-muted h-full w-full mb-3">
+                            <div className="flex  h-full">
+                                <div className="p-6 overflow-scroll flex flex-col gap-2">
+                                    <div>
+                                        <p className="font-light">About Me</p>
+                                        {agent && <p className="font-light text-sm text-gray-500">{agent?.system}</p>}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+                : <GroupPanel agent={agent} agents={agents} onClose={() => setIsGroupPanelOpen(false)}/>
+            }
         </div>
     );
 }
