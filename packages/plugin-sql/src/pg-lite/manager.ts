@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 export class PGliteClientManager implements IDatabaseClientManager<PGlite> {
     private client: PGlite;
     private shuttingDown = false;
-    private readonly shutdownTimeout = 800;
+    private readonly shutdownTimeout = 500;
 
     constructor(options: PGliteOptions) {
         this.client = new PGlite({
@@ -50,7 +50,6 @@ export class PGliteClientManager implements IDatabaseClientManager<PGlite> {
         }, this.shutdownTimeout);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, this.shutdownTimeout));
             await this.client.close();
             clearTimeout(timeout);
             logger.info("PGlite client shutdown completed successfully");
