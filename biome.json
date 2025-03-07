@@ -3,6 +3,18 @@
     "organizeImports": {
         "enabled": false
     },
+    "formatter": {
+        "enabled": true
+    },
+    "javascript": {
+        "parser": {
+            "unsafeParameterDecoratorsEnabled": true
+        },
+        "formatter": {
+            "quoteStyle": "double",
+            "semicolons": "always"
+        }
+    },
     "linter": {
         "enabled": true,
         "rules": {
@@ -57,17 +69,5 @@
             "**/cache/**",
             "**/tmp/**"
         ]
-    },
-    "formatter": {
-        "enabled": false
-    },
-    "javascript": {
-        "parser": {
-            "unsafeParameterDecoratorsEnabled": true
-        },
-        "formatter": {
-            "quoteStyle": "double",
-            "semicolons": "always"
-        }
     }
 }
