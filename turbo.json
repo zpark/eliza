@@ -7,6 +7,11 @@
       "outputs": ["dist/**"],
       "cache": false
     },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "outputs": ["dist/**"],
+      "cache": false
+    },
     "start": {
       "dependsOn": ["@elizaos/core#build"],
       "env": ["LOG_LEVEL"],
@@ -21,10 +26,6 @@
     "test": {
       "dependsOn": ["@elizaos/core#build"],
       "persistent": true,
-      "cache": false
-    },
-    "lint:fix": {
-      "dependsOn": ["@elizaos/core#build"],
       "cache": false
     },
     "swarm": {

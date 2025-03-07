@@ -35,7 +35,8 @@
     "scripts": {
         "build": "tsup --format esm --dts",
         "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run"
+        "test": "vitest run",
+        
     },
     "trustedDependencies": [
         "@discordjs/opus",

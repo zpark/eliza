@@ -28,9 +28,6 @@ jobs:
         with:
           version: latest
 
-      - name: Run Biome
-        run: biome ci
-
       - name: Create test env file
         run: |
           echo "TEST_DATABASE_CLIENT=sqlite" > packages/core/.env.test

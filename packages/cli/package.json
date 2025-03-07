@@ -27,10 +27,9 @@
   "scripts": {
     "cli": "bun build src/index.ts --outdir dist --watch",
     "build": "bun build src/index.ts --outdir dist --target node",
+    ,
     "typecheck": "tsc --noEmit",
     "start:cli": "node dist/index.js",
-    "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
-    "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache",
     "release": "changeset version",
     "pub:beta": "bun build && bun publish --no-git-checks --access public --tag beta",
     "pub:next": "bun build && bun publish --no-git-checks --access public --tag next",

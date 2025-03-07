@@ -2,10 +2,9 @@
   "name": "eliza",
   "scripts": {
     "clean": "rm -rf dist .turbo node_modules .turbo-tsconfig.json tsconfig.tsbuildinfo",
-    "format": "biome format .",
     "cli": "bun --filter=@elizaos/cli cli",
-    "lint": "turbo run lint:fix --filter=./packages/*",
-    "check": "biome check . --fix --unsafe --verbose",
+    "lint": "biome ci --config-path=./biome.json",
+	"format": "biome format --write --config-path=./biome.json",
     "preinstall": "npx only-allow bun",
     "migrate": "turbo run migrate --filter=./packages/plugin-sql",
     "migrate:generate": "turbo run migrate:generate --filter=./packages/plugin-sql",
