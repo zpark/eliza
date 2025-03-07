@@ -11,16 +11,20 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import { useAgents } from "@/hooks/use-query-hooks";
+import { useAgents, useRooms } from "@/hooks/use-query-hooks";
 import info from "@/lib/info.json";
 import type { Agent } from "@elizaos/core";
 import { Book, Cog, User, Scroll } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import ConnectionStatus from "./connection-status";
+import { formatAgentName } from "@/lib/utils";
   
 export function AppSidebar() {
   const location = useLocation();
   const { data: { data: agentsData } = {}, isPending: isAgentsPending } = useAgents();
+  const { data: { data: roomsData } = {} } = useRooms();
+
+  console.log(roomsData);
   return (
     <Sidebar className="bg-background">
       <SidebarHeader className="pb-4">
@@ -47,97 +51,25 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-6 py-2 text-sm font-medium text-muted-foreground">
-            <NavLink to={"/"}>
-              AGENTS
-            </NavLink>
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            <SidebarMenu>
-              {isAgentsPending ? (
-                <div>
-                  {Array.from({ length: 5 }).map((_, _index) => (
-                    <SidebarMenuItem key={`skeleton-item-${_index}`}>
-                      <SidebarMenuSkeleton />
-                    </SidebarMenuItem>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  {(() => {
-                    // Sort agents: enabled first, then disabled
-                    const sortedAgents = [...(agentsData?.agents || [])].sort((a, b) => {
-                      // Sort by enabled status (enabled agents first)
-                      if (a.enabled && !b.enabled) return -1;
-                      if (!a.enabled && b.enabled) return 1;
-                      // If both have same enabled status, sort alphabetically by name
-                      return a.name.localeCompare(b.name);
-                    });
-                    
-                    // Split into enabled and disabled groups
-                    const activeAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status === 'active');
-                    const inactiveAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status === 'inactive');
-                    
-                    return (
-                      <>
-                        {/* Render active section */}
-                        {activeAgents.length > 0 && (
-                          <div className="px-4 py-2 mt-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="size-2.5 rounded-full bg-green-500" />
-                              <span className="text-sm font-medium text-muted-foreground">Active</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Render enabled agents */}
-                        {activeAgents.map((agent) => (
-                          <SidebarMenuItem key={agent.id}>
-                            <NavLink to={`/chat/${agent.id}`}>
-                              <SidebarMenuButton
-                                isActive={location.pathname.includes(agent.id as string)}
-                                className="transition-colors px-4 py-2 my-1 rounded-md"
-                              >
-                                <div className="flex items-center gap-2">
-                                  
-                                  <User className="size-5" />
-                                  
-                                  <span className="text-base">{agent.name}</span>
-                                </div>
-                              </SidebarMenuButton>
-                            </NavLink>
-                          </SidebarMenuItem>
-                        ))}
-                        
-                        {/* Render inactive section */}
-                        {inactiveAgents.length > 0 && (
-                          <div className="px-4 py-2 mt-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="size-2.5 rounded-full bg-muted-foreground/50" />
-                              <span className="text-sm font-medium text-muted-foreground">Inactive</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Render disabled agents */}
-                        {inactiveAgents.map((agent) => (
-                          <SidebarMenuItem key={agent.id}>
-                            <div
-                              className="px-4 py-2 my-1 rounded-md"
-                            >
-                              <div className="flex items-center gap-2">
-                                <User className="size-5" />
-                                <span className="text-base">{agent.name}</span>
+          <SidebarGroupContent className="px-2 pt-6">
+            <div className="w-full h-full flex flex-col gap-6">
+              {
+                roomsData?.map((roomsData) => {
+                  return <NavLink to={`/room/${roomsData.id}`}>
+                    <div className="flex gap-2 items-center w-full cursor-pointer">
+                        <div className="bg-muted rounded-lg w-12 h-12 flex justify-center items-center relative overflow-hidden">
+                            {roomsData && (
+                              <div className="text-lg text-ellipsis overflow-hidden whitespace-nowrap max-w-[3.5rem] text-center">
+                                {formatAgentName(roomsData.name)}
                               </div>
-                            </div>
-                          </SidebarMenuItem>
-                        ))}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </SidebarMenu>
+                            )}
+                        </div>
+                        <div className=" truncate max-w-[100px]">{roomsData.name}</div>
+                    </div>
+                  </NavLink>
+                })
+              }
+              </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
