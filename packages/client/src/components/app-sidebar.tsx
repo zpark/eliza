@@ -4,27 +4,22 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import { useAgents, useRooms } from "@/hooks/use-query-hooks";
+import { useRooms } from "@/hooks/use-query-hooks";
 import info from "@/lib/info.json";
-import type { Agent } from "@elizaos/core";
-import { Book, Cog, User, Scroll } from "lucide-react";
-import { NavLink, useLocation } from "react-router";
+import { Book, Cog, Scroll } from "lucide-react";
+import { NavLink } from "react-router";
 import ConnectionStatus from "./connection-status";
 import { formatAgentName } from "@/lib/utils";
   
 export function AppSidebar() {
-  const location = useLocation();
-  const { data: { data: agentsData } = {}, isPending: isAgentsPending } = useAgents();
-  const { data: { data: roomsData } = {} } = useRooms();
-
-  console.log(roomsData);
+  const { data: { data: roomsData } = {}, isLoading } = useRooms();
+  
   return (
     <Sidebar className="bg-background">
       <SidebarHeader className="pb-4">
@@ -52,24 +47,35 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent className="px-2 pt-6">
-            <div className="w-full h-full flex flex-col gap-6">
+            <SidebarMenu>
               {
-                roomsData?.map((roomsData) => {
-                  return <NavLink to={`/room/${roomsData.id}`}>
-                    <div className="flex gap-2 items-center w-full cursor-pointer">
-                        <div className="bg-muted rounded-lg w-12 h-12 flex justify-center items-center relative overflow-hidden">
-                            {roomsData && (
-                              <div className="text-lg text-ellipsis overflow-hidden whitespace-nowrap max-w-[3.5rem] text-center">
-                                {formatAgentName(roomsData.name)}
-                              </div>
-                            )}
+                isLoading ? <div>
+                  {Array.from({ length: 5 }).map((_, _index) => (
+                    <SidebarMenuItem key={`skeleton-item-${_index}`}>
+                      <SidebarMenuSkeleton />
+                    </SidebarMenuItem>
+                  ))}
+                </div> :
+                <div className="w-full h-full flex flex-col gap-6">
+                  {
+                    roomsData?.map((roomsData) => {
+                      return <NavLink key={roomsData.id} to={`/room/${roomsData.id}`}>
+                        <div className="flex gap-2 items-center w-full cursor-pointer">
+                            <div className="bg-muted rounded-lg w-12 h-12 flex justify-center items-center relative overflow-hidden">
+                                {roomsData && (
+                                  <div className="text-lg text-ellipsis overflow-hidden whitespace-nowrap max-w-[3.5rem] text-center">
+                                    {formatAgentName(roomsData.name)}
+                                  </div>
+                                )}
+                            </div>
+                            <div className=" truncate max-w-[100px]">{roomsData.name}</div>
                         </div>
-                        <div className=" truncate max-w-[100px]">{roomsData.name}</div>
-                    </div>
-                  </NavLink>
-                })
+                      </NavLink>
+                    })
+                  }
+                </div>
               }
-              </div>
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

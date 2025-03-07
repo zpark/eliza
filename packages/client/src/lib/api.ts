@@ -290,5 +290,49 @@ export const apiClient = {
                 agentIds
             }
         });
-    }
+    },
+
+    sendRoomMessage: (
+        userId: UUID,
+        userName: string,
+        text: string,
+        roomId: UUID,
+        agentId: UUID,
+    ) => {
+        const worldId = WorldManager.getWorldId();
+        // Use JSON when there's no file
+        return fetcher({
+            url: `/agents/rooms/${roomId}/message`,
+            method: "POST",
+            body: {
+                text,
+                userName,
+                worldId,
+                userId,
+                agentId,
+            },
+        });
+    },
+
+    receiveRoomMessage: (
+        userId: UUID,
+        userName: string,
+        text: string,
+        roomId: UUID,
+        agentId: UUID,
+    ) => {
+        const worldId = WorldManager.getWorldId();
+        // Use JSON when there's no file
+        return fetcher({
+            url: `/agents/${agentId}/rooms/${roomId}/message`,
+            method: "POST",
+            body: {
+                text,
+                userName,
+                worldId,
+                userId,
+                agentId,
+            },
+        });
+    },
 };

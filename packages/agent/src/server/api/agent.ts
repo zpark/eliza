@@ -16,6 +16,7 @@ import {
   ModelTypes,
   parseJSONObjectFromText,
   validateUuid,
+  stringToUuid,
 } from "@elizaos/core";
 import express from "express";
 import fs from "node:fs";
@@ -1078,7 +1079,7 @@ export function agentRouter(
             rooms.map(async (roomData) => {
                 try {
                     
-                    if (!roomData) return null;
+                    if (!roomData || !roomData.name) return null;
                     
                     if (worldId && roomData.worldId !== worldId) {
                         return null;
@@ -1091,10 +1092,10 @@ export function agentRouter(
                     
                     return {
                         id: roomData.id,
-                        name: roomData.name || new Date().toLocaleString(),
+                        name: roomData.name,
                         source: roomData.source,
                         worldId: roomData.worldId,
-                        participants: participants,
+                        participants: participants.filter(Boolean),
                         agentId: roomData.agentId
                     };
                 } catch (error) {
@@ -1122,6 +1123,236 @@ export function agentRouter(
         });
     }
   });
+  router.post('/rooms/:roomId/message', async (req, res) => {
+      const roomId = validateUuid(req.params.roomId);
+      if (!roomId) {
+          res.status(400).json({
+              success: false,
+              error: {
+                  code: 'INVALID_ID',
+                  message: 'Invalid room ID format'
+              }
+          });
+          return;
+      }
+
+      const userId = req.body.userId;
+      const userName = req.body.userName;
+
+      const agentId = req.body.agentId;
+      const source = "direct"
+      const combinedString = `${Date.now()}:${agentId}`;
+      const messageId = stringToUuid(combinedString);
+
+      const text = req.body?.text?.trim();
+      if (!text) {
+          res.status(400).json({
+              success: false,
+              error: {
+                  code: 'INVALID_REQUEST',
+                  message: 'Text message is required'
+              }
+          });
+          return;
+      }
+              
+      const content: Content = {
+          text,
+          source,
+          inReplyTo: undefined,
+          user: userName,
+          userName,
+          userId,
+      };
+
+      const userMessage = {
+          content,
+          userId,
+          roomId,
+          agentId,
+      };
+
+      const memory: Memory = {
+          id: messageId,
+          ...userMessage,
+          agentId,
+          userId,
+          roomId,
+          content,
+          createdAt: Date.now(),
+      };
+
+      await db.createMemory(
+          memory,
+          "messages",
+          false
+      )
+
+      res.status(201).json({
+          success: true,
+          data: {
+              message: content,
+              messageId,
+              agentId,
+          }
+      });
+  })
+
+  router.post('/:agentId/rooms/:roomId/message', async (req, res) => {
+      const agentId = validateUuid(req.params.agentId);
+      if (!agentId) {
+          res.status(400).json({
+              success: false,
+              error: {
+                  code: 'INVALID_ID',
+                  message: 'Invalid agent ID format'
+              }
+          });
+          return;
+      }
+
+      const roomId = validateUuid(req.params.roomId);
+      if (!roomId) {
+          res.status(400).json({
+              success: false,
+              error: {
+                  code: 'INVALID_ID',
+                  message: 'Invalid room ID format'
+              }
+          });
+          return;
+      }
+
+      // get runtime
+      const runtime = agents.get(agentId);
+      if (!runtime) {
+          res.status(404).json({
+              success: false,
+              error: {
+                  code: 'NOT_FOUND',
+                  message: 'Agent not found'
+              }
+          });
+          return;
+      }
+
+      const userId = req.body.userId;
+      const userName = req.body.userName;
+      const worldId = req.body.worldId;
+      const source = "direct";
+      const text = req.body?.text?.trim();
+
+      try {
+        const messageId = createUniqueUuid(runtime, Date.now().toString());
+        
+        const content: Content = {
+            text,
+            source,
+            inReplyTo: undefined,
+            user: userName,
+            userName,
+            userId,
+            channelType: ChannelType.API,
+        };
+
+        const userMessage = {
+            content,
+            entityId: userId,
+            userId,
+            roomId,
+            agentId: runtime.agentId,
+        };
+
+        const memory: Memory = {
+            id: createUniqueUuid(runtime, messageId + userId),
+            ...userMessage,
+            agentId: runtime.agentId,
+            userId,
+            roomId,
+            content,
+            createdAt: Date.now(),
+        };
+
+        await runtime.getMemoryManager("messages").addEmbeddingToMemory(memory);
+        
+        let state = await runtime.composeState(userMessage);
+        
+        const prompt = composePrompt({
+          state,
+          template: messageHandlerTemplate,
+        });
+  
+        const responseText = await runtime.useModel(ModelTypes.TEXT_LARGE, {
+          prompt,
+        });
+
+        const response = parseJSONObjectFromText(responseText) as Content;
+        const shouldRespond =
+          response?.action && response.action === "RESPOND";
+        if (!response) {
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'MODEL_ERROR',
+                    message: 'No response from model'
+                }
+            });
+            return;
+        }
+
+        if (shouldRespond) {
+          const responseMessage: Memory = {
+              id: createUniqueUuid(runtime, messageId),
+              ...userMessage,
+              userId: runtime.agentId,
+              content: response,
+              createdAt: Date.now(),
+              roomId,
+          };
+
+          state = await runtime.updateRecentMessageState(state);
+
+          const replyHandler = async (message: Content) => {
+              if (!res.headersSent) {
+                  console.log("recieve message", text);
+                  console.log("response message", message)
+                  
+                  return res.status(201).json({
+                      success: true,
+                      data: {
+                          message,
+                          messageId,
+                          agentId,
+                      }
+                  });
+              }
+              return;
+          }
+
+          await runtime.processActions(
+              memory,
+              [responseMessage],
+              state,
+              replyHandler
+          );
+          await runtime.evaluate(memory, state);
+        }
+
+        if (!res.headersSent) {
+            res.status(202).json();
+        }
+      } catch (error) {
+          logger.error("Error processing message:", error);
+          res.status(500).json({
+              success: false,
+              error: {
+                  code: 'PROCESSING_ERROR',
+                  message: 'Error processing message',
+                  details: error.message
+              }
+          });
+      }
+  })
 
   router.post('/rooms/:roomId/participants', async (req, res) => {
     const roomId = validateUuid(req.params.roomId);
@@ -1466,16 +1697,16 @@ export function agentRouter(
 
     const runtime = agents.get(agentId);
 
-    if (!runtime) {
-      res.status(404).json({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Agent not found",
-        },
-      });
-      return;
-    }
+    // if (!runtime) {
+    //   res.status(404).json({
+    //     success: false,
+    //     error: {
+    //       code: "NOT_FOUND",
+    //       message: "Agent not found",
+    //     },
+    //   });
+    //   return;
+    // }
 
     try {
       const limit = req.query.limit
@@ -1486,11 +1717,22 @@ export function agentRouter(
         : Date.now();
       const _worldId = req.query.worldId as string;
 
-      const memories = await runtime.getMemoryManager("messages").getMemories({
-        roomId,
-        count: limit,
-        end: before,
-      });
+      let memories;
+      if (runtime) {
+        memories = await runtime.getMemoryManager("messages").getMemories({
+          roomId,
+          count: limit,
+          end: before,
+        });
+      }  else {
+        memories = await db.getMemories({
+          roomId,
+          tableName: "messages",
+          count: limit,
+          end: before,
+        })
+      }
+      
 
       res.json({
         success: true,

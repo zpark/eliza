@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import Chat from "@/components/group-chat2";
+import Chat from "@/components/group-chat";
 import type { UUID } from "@elizaos/core";
 
 export default function AgentRoute() {

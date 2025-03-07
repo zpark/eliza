@@ -91,7 +91,7 @@ export default function Home() {
                         
                     )}
                 </div>
-                <AppAgentsbar onlineAgents={onlineAgents || []} offlineAgents={offlineAgents || []}/>
+                <AppAgentsbar onlineAgents={onlineAgents || []} offlineAgents={offlineAgents || []} isLoading={isLoading}/>
             </div>
 
            

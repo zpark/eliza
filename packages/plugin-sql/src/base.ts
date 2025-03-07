@@ -544,7 +544,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 conditions.push(eq(memoryTable.unique, true));
             }
 
-            conditions.push(eq(memoryTable.agentId, this.agentId));
+            // conditions.push(eq(memoryTable.agentId, this.agentId));
 
             const query = this.db
                 .select({

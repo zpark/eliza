@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/api';
 import { WorldManager } from '@/lib/world-manager';
 import type { Agent, Content, Media, Room, UUID } from '@elizaos/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from './use-toast';
 
 // Define the ContentWithUser type
@@ -26,6 +26,7 @@ type Memory = {
   };
   createdAt: number;
   worldId?: string;
+  userId: UUID;
 };
 
 // Constants for stale times
@@ -242,29 +243,37 @@ export function useMessages(agentId: UUID, roomId: UUID): {
   const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(true);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   
+  
   // Initial fetch of messages
   const messagesQuery = useQuery({
     queryKey: ['messages', agentId, roomId, worldId],
-    queryFn: () => apiClient.getMemories(agentId, roomId),
-    select: (data: { memories: Memory[] }): Memory[] => {
-      if (!data?.memories) return [];
-
-      // Update the oldest message timestamp if we have messages
-      if (data.memories.length > 0) {
-        const timestamps: number[] = data.memories.map((msg): number => msg.createdAt);
-        const oldest: number = Math.min(...timestamps);
-        setOldestMessageTimestamp(oldest);
-        
-        // If we got less than the expected page size, there are probably no more messages
-        setHasMoreMessages(data.memories.length >= 20); // Assuming default page size is 20
-      } else {
-        setHasMoreMessages(false);
-      }
-
-      return data.memories;
+    queryFn: async () => {
+      const result = await apiClient.getMemories(agentId, roomId);
+      return result.data.memories.map((memory: Memory) => ({
+        text: memory.content.text,
+        user: memory.userId === agentId ? 'system' : 'user',
+        createdAt: memory.createdAt,
+        attachments: memory.content.attachments,
+        source: memory.content.source,
+        // action: memory.content.action,
+        worldId: memory.worldId || worldId,
+        id: memory.id,
+        userId: memory.userId
+      })).sort((a: Memory, b: Memory) => a.createdAt - b.createdAt);
     },
-    staleTime: STALE_TIMES.FREQUENT
+    enabled: Boolean(agentId && roomId), // Prevents unnecessary fetching
+    staleTime: STALE_TIMES.FREQUENT, 
   });
+
+  useEffect(() => {
+    if (messagesQuery.data && messagesQuery.data.length > 0) {
+      const timestamps = messagesQuery.data.map((msg: Memory) => msg.createdAt);
+      setOldestMessageTimestamp(Math.min(...timestamps));
+      setHasMoreMessages(messagesQuery.data.length >= 20); // Assuming default page size is 20
+    } else {
+      setHasMoreMessages(false);
+    }
+  }, [messagesQuery.data]);
 
   // Function to load older messages
   const loadOlderMessages = async (): Promise<boolean> => {
