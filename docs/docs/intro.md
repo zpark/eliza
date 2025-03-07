@@ -94,7 +94,7 @@ Eliza is backed by an active community of developers and users:
 
 - [**Open Source**](https://github.com/elizaos/eliza): Contribute to the project on GitHub
 - [**Examples**](https://github.com/elizaos/characters): Ready-to-use character templates and implementations
-- [**Support**](https://discord.gg/elizaos): Active communityfor troubleshooting and discussion
+- [**Support**](https://discord.gg/elizaos): Active community for troubleshooting and discussion
 
 Join us in building the future of autonomous AI agents with Eliza!
 
