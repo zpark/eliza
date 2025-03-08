@@ -46,7 +46,7 @@
         "@fal-ai/client": "1.2.0",
         "@supabase/supabase-js": "^2.49.1",
         "@types/uuid": "10.0.0",
-        "ai": "4.1.16",
+        "ai": "4.1.54",
         "better-sqlite3": "11.8.1",
         "bignumber.js": "9.1.2",
         "dotenv": "16.4.5",
