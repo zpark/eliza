@@ -55,7 +55,6 @@ export const openaiPlugin: Plugin = {
   },
   async init(config: Record<string, string>) {
     try {
-      console.log('openai config', config)
       const validatedConfig = await configSchema.parseAsync(config);
 
       // Set all environment variables at once

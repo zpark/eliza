@@ -24,7 +24,6 @@ export const anthropicPlugin: Plugin = {
   },
   async init(config: Record<string, string>) {
     try {
-      console.log('config', config)
       const validatedConfig = await configSchema.parseAsync(config);
 
       // Set all environment variables at once
