@@ -22,13 +22,13 @@
 
 ## ✨ Özellikler
 
--   🛠️ Discord, X (Twitter) ve Telegram için tam donanımlı bağlayıcılar
--   🔗 Tüm modelleri destekler (Llama, Grok, OpenAI, Anthropic, Gemini, etc.)
--   👥 Çoklu agent ve oda desteği
--   📚 Belgelerinizi kolayca içe aktarın ve etkileşime geçin
--   💾 Geri alınabilir hafıza ve belge deposu
--   🚀 Kolayca genişletilebilir - Kendi işlemlerinizi ve istemcilerinizi oluşturun
--   📦 Hızlı çalışır!
+- 🛠️ Discord, X (Twitter) ve Telegram için tam donanımlı bağlayıcılar
+- 🔗 Tüm modelleri destekler (Llama, Grok, OpenAI, Anthropic, Gemini, etc.)
+- 👥 Çoklu agent ve oda desteği
+- 📚 Belgelerinizi kolayca içe aktarın ve etkileşime geçin
+- 💾 Geri alınabilir hafıza ve belge deposu
+- 🚀 Kolayca genişletilebilir - Kendi işlemlerinizi ve istemcilerinizi oluşturun
+- 📦 Hızlı çalışır!
 
 ## Video Tutorials
 
@@ -36,19 +36,19 @@
 
 ## 🎯 Use Cases
 
--   🤖 Sohbet botları
--   🕵️ Otonom agentlar
--   📈 İş yönetimi
--   🎮 Video oyunu NPC'leri
--   🧠 Trading
+- 🤖 Sohbet botları
+- 🕵️ Otonom agentlar
+- 📈 İş yönetimi
+- 🎮 Video oyunu NPC'leri
+- 🧠 Trading
 
 ## 🚀 Hızlı Başlangıç
 
 ### Gereksinimler
 
--   [Python 2.7+](https://www.python.org/downloads/)
--   [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
--   [pnpm](https://pnpm.io/installation)
+- [Python 2.7+](https://www.python.org/downloads/)
+- [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- [pnpm](https://pnpm.io/installation)
 
 > **Windows Kullanıcıları** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) kullanmalıdır.
 
@@ -166,8 +166,8 @@ Başlamak için [buraya](https://fleek.xyz/eliza/) tıkla!
 
 ### Topluluk ve İletişim
 
--   Karşılaştığınız hatalar ve yapmak istediğiniz öneriler için [GitHub Issues](https://github.com/elizaos/eliza/issues)'u kullanabilirsiniz.
--   Uygulamalarınızı paylaşmak ve toplulukla vakit geçirmek için [Discord](https://discord.gg/ai16z)'u kullanabilirsiniz.
+- Karşılaştığınız hatalar ve yapmak istediğiniz öneriler için [GitHub Issues](https://github.com/elizaos/eliza/issues)'u kullanabilirsiniz.
+- Uygulamalarınızı paylaşmak ve toplulukla vakit geçirmek için [Discord](https://discord.gg/ai16z)'u kullanabilirsiniz.
 
 ## Atıf
 
