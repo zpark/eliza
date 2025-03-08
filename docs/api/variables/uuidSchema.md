@@ -1,8 +1,8 @@
-[@elizaos/core v0.25.8](../index.md) / uuidSchema
+[@elizaos/core v0.25.9](../index.md) / uuidSchema
 
 # Variable: uuidSchema
 
-> `const` **uuidSchema**: `ZodType`\<\`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`, `ZodTypeDef`, \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`\>
+> `const` **uuidSchema**: `ZodType`\<\`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`\>
 
 ## Defined in
 

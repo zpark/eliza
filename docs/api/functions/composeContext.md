@@ -1,8 +1,8 @@
-[@elizaos/core v0.25.8](../index.md) / composeContext
+[@elizaos/core v0.25.9](../index.md) / composeContext
 
 # Function: composeContext()
 
-> **composeContext**(`params`): `string`
+> **composeContext**(`params`): `any`
 
 Composes a context string by replacing placeholders in a template with corresponding values from the state.
 
@@ -32,7 +32,7 @@ The templating engine to use for compiling and evaluating the template (optional
 
 ## Returns
 
-`string`
+`any`
 
 The composed context string with placeholders replaced by corresponding state values.
 

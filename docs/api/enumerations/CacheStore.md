@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / CacheStore
+[@elizaos/core v0.25.9](../index.md) / CacheStore
 
 # Enumeration: CacheStore
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1254](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1254)
+[packages/core/src/types.ts:1255](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1255)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1255](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1255)
+[packages/core/src/types.ts:1256](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1256)
 
 ***
 
@@ -30,4 +30,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1256](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1256)
+[packages/core/src/types.ts:1257](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1257)
