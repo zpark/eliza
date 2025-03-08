@@ -6,7 +6,7 @@
 
 <div align="center">
 
-📑 [Teknik Rapor](https://arxiv.org/pdf/2501.06781) |  📖 [Dokümantasyon](https://elizaos.github.io/eliza/) | 🎯 [Örnekler](https://github.com/thejoven/awesome-eliza)
+📑 [Teknik Rapor](https://arxiv.org/pdf/2501.06781) | 📖 [Dokümantasyon](https://elizaos.github.io/eliza/) | 🎯 [Örnekler](https://github.com/thejoven/awesome-eliza)
 
 </div>
 
@@ -61,7 +61,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-### Elizayı manual olarak başlar (Sadece ne yaptığınızı biliyorsanız önerilir)
+### Eliza'yı manuel olarak başlatın (Sadece ne yaptığınızı biliyorsanız bunu yapmanız önerilir)
 
 #### Son yayınlanan versiyonu kontrol edin
 
@@ -120,7 +120,7 @@ sh scripts/start.sh
 
 Başlatma komutunu kullanma, karakter yönetimi ve sorun giderme dahil ayrıntılı talimatlar için [Başlatma Komutu Kılavuzu](./docs/docs/guides/start-script.md)'nu kullanın.
 
-> **Not**:  Başlatma komutu tüm bağımlılıkları, ortam kurulumunu ve karakter yönetimini otomatik olarak halleder..
+> **Not**: Başlatma komutu tüm bağımlılıkları, ortam kurulumunu ve karakter yönetimini otomatik olarak halleder.
 
 ---
 
@@ -152,10 +152,11 @@ pnpm install --include=optional sharp
 
 ---
 
-### Tek Tıkla Eliza'yı Başlatın 
+### Tek Tıkla Eliza'yı Başlatın
 
 Eliza'yı tek tıkla başlatmak için [Fleek](https://fleek.xyz/eliza/) kullanın. Bu, Eliza'yı geliştiriciler dışındaki kişilere açar ve agentınızı oluşturmak için aşağıdaki seçenekleri sunar:
-1. Bir şemyala başlama
+
+1. Bir şablonla başlama
 2. Karakter dosyasını sıfırdan oluşturma
 3. Önceden hazırlanmış karakter dosyasını yükleyin
 
@@ -171,6 +172,7 @@ Başlamak için [buraya](https://fleek.xyz/eliza/) tıkla!
 ## Atıf
 
 Artık Eliza OS hakkında bir [makale](https://arxiv.org/pdf/2501.06781) var ve bu makaleye şu şekilde atıfta bulunabilirsiniz:
+
 ```bibtex
 @article{walters2025eliza,
   title={Eliza: A Web3 friendly AI Agent Operating System},
@@ -185,7 +187,6 @@ Artık Eliza OS hakkında bir [makale](https://arxiv.org/pdf/2501.06781) var ve 
 <a href="https://github.com/elizaos/eliza/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=elizaos/eliza" alt="Eliza project contributors" />
 </a>
-
 
 ## Yıldız Geçmişi
 
