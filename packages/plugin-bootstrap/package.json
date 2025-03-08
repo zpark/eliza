@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-bootstrap",
-    "version": "0.25.6-alpha.1",
+    "version": "0.25.9",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -19,7 +19,10 @@
         "dist"
     ],
     "dependencies": {
-        "@elizaos/core": "workspace:*",
+        "@elizaos/core": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.5",
         "tsup": "8.3.5"
     },
     "scripts": {

@@ -67,6 +67,48 @@ const config = {
             },
         ],
         [
+          "@docusaurus/plugin-content-docs",
+          {
+            id: "packages",
+            path: "packages",
+            routeBasePath: "packages",
+            includeCurrentVersion: true,
+            sidebarItemsGenerator: async ({
+              defaultSidebarItemsGenerator,
+              ...args
+            }) => {
+              const sidebarItems = await defaultSidebarItemsGenerator(args);
+              // Add icons to categories
+              return sidebarItems
+                .map((item) => {
+                  if (item.type === "category") {
+                    switch (item.label.toLowerCase()) {        
+                      case "adapters":
+                        item.label = "🔌 " + item.label;
+                        break;
+                      case "clients":
+                        item.label = "🔗 " + item.label;
+                        break;
+                      case "plugins":
+                        item.label = "🧩 " + item.label;
+                        break;
+                      default:
+                        item.label = "📦 " + item.label;
+                    }
+                  }
+                  return item;                            
+                })
+                .sort((a, b) => {
+                  const labelA = a.label || "";
+                  const labelB = b.label || "";
+                  return labelA.localeCompare(labelB, undefined, {
+                    numeric: true,
+                  });
+                });
+            },
+          },
+        ],
+        [
             "docusaurus-plugin-typedoc",
             {
                 entryPoints: ["../packages/core/src/index.ts"],
@@ -128,6 +170,17 @@ const config = {
         [
             "classic",
             {
+                blog: {
+                    showReadingTime: true,
+                    editUrl: "https://github.com/elizaos/eliza/tree/main/docs/blog/",
+                    blogSidebarTitle: 'Recent posts',
+                    blogSidebarCount: 10,
+                    feedOptions: {
+                        type: 'all',
+                        title: 'ElizaOS Updates',
+                        description: 'Stay up to date with the latest from ElizaOS',
+                    },
+                },
                 docs: {
                     sidebarPath: "./sidebars.js",
                     editUrl: "https://github.com/elizaos/eliza/tree/main/docs/",
@@ -143,6 +196,22 @@ const config = {
         ],
     ],
     themeConfig: {
+        mermaid: {
+            theme: {
+                light: 'default',
+                dark: 'dark'
+            },
+            options: {
+                fontSize: 16,
+                flowchart: {
+                    htmlLabels: true,
+                    padding: 20,
+                    nodeSpacing: 50,
+                    rankSpacing: 50,
+                    curve: 'cardinal'
+                }
+            }
+        },
         colorMode: {
             defaultMode: "dark",
             disableSwitch: false,
@@ -173,6 +242,18 @@ const config = {
                     position: "left",
                     label: "API",
                     docId: "index",
+                },
+                {
+                  type: "doc",
+                  docsPluginId: "packages",
+                  position: "left",
+                  label: "Packages",
+                  docId: "index", // You'll need to create packages/index.md
+                },
+                {
+                  to: 'blog',
+                  label: 'Blog',
+                  position: 'left'
                 },
                 {
                     type: "doc",

@@ -67,9 +67,10 @@ async function get(
 async function set(
     runtime: AgentRuntime,
     item: KnowledgeItem,
-    chunkSize = 512,
-    bleed = 20
+    chunkSize = 512, // in tokens
+    bleed = 20 // in tokens
 ) {
+    // create document
     await runtime.documentsManager.createMemory({
         id: item.id,
         agentId: runtime.agentId,
@@ -80,9 +81,9 @@ async function set(
         embedding: getEmbeddingZeroVector(),
     });
 
-    const preprocessed = preprocess(item.content.text);
+    // create knowledge
+    const preprocessed = preprocess(item.content.text); // normalizes it (lowering case/clean up)
     const fragments = await splitChunks(preprocessed, chunkSize, bleed);
-
     for (const fragment of fragments) {
         const embedding = await embed(runtime, fragment);
         await runtime.knowledgeManager.createMemory({
