@@ -88,12 +88,12 @@
     "langdetect": "^0.2.1",
     "ollama-ai-provider": "0.16.1",
     "optional": "0.1.4",
-    "pnpm": "9.15.0",
+    "pnpm": "9.15.7",
     "sharp": "0.33.5",
     "ws": "8.18.0",
     "zod": "3.24.1"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@9.15.7",
   "workspaces": [
     "packages/*"
   ]
