@@ -1165,10 +1165,30 @@ export async function generateText({
 
             case ModelProviderName.VENICE: {
                 elizaLogger.debug("Initializing Venice model.");
-                const venice = createOpenAI({
+                
+                const bypass = parseBooleanFromText(
+                    runtime.getSetting("BYPASS_VENICE_SYSTEM_PROMPT")
+                )
+                    ? async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                        const options: RequestInit = { ...init };
+                        if (options?.body) {
+                            const body = JSON.parse(options.body as string);
+                            body.venice_parameters = {
+                                include_venice_system_prompt: false
+                            };
+                            options.body = JSON.stringify(body);
+                        }
+                        return runtime.fetch(input, options);
+                    }
+                    : undefined;
+
+                const veniceConfig = {
                     apiKey: apiKey,
                     baseURL: endpoint,
-                });
+                    ...(bypass ? { fetch: bypass } : {})
+                };
+
+                const venice = createOpenAI(veniceConfig);
 
                 const { text: veniceResponse } = await aiGenerateText({
                     model: venice.languageModel(model),
@@ -1183,17 +1203,10 @@ export async function generateText({
                     maxSteps: maxSteps,
                     maxTokens: max_response_length,
                 });
-
-                // console.warn("veniceResponse:")
-                // console.warn(veniceResponse)
+            
                 //rferrari: remove all text from <think> to </think>\n\n
-                response = veniceResponse.replace(
-                    /<think>[\s\S]*?<\/think>\s*\n*/g,
-                    ""
-                );
-                // console.warn(response)
-
-                // response = veniceResponse;
+                response = veniceResponse
+                    .replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
                 elizaLogger.debug("Received response from Venice model.");
                 break;
             }
@@ -1954,13 +1967,13 @@ export const generateImage = async (
                 seed: data.seed ?? 6252023,
                 ...(runtime.getSetting("FAL_AI_LORA_PATH")
                     ? {
-                          loras: [
-                              {
-                                  path: runtime.getSetting("FAL_AI_LORA_PATH"),
-                                  scale: 1,
-                              },
-                          ],
-                      }
+                        loras: [
+                            {
+                                path: runtime.getSetting("FAL_AI_LORA_PATH"),
+                                scale: 1,
+                            },
+                        ],
+                    }
                     : {}),
             };
 
