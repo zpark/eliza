@@ -51,7 +51,7 @@
         "bignumber.js": "9.1.2",
         "dotenv": "16.4.5",
         "fastembed": "1.14.1",
-        "glob": "11.0.0",
+        "glob": "11.0.1",
         "handlebars": "^4.7.8",
         "js-sha1": "0.7.0",
         "js-tiktoken": "1.0.15",
