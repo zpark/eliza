@@ -12,7 +12,7 @@ function TagIcon({label, color}: {label: string; color: string}) {
         width: 7,
         height: 7,
         borderRadius: '50%',
-        marginLeft: 6,
+        marginLeft: 2,
         marginRight: 6,
       }}
     />
@@ -54,6 +54,26 @@ function ShowcaseCardTag({tags}: {tags: TagType[]}) {
 }
 
 export default function ShowcaseCard({user}: {user: User}) {
+    // Function to convert title to documentation link
+  const getDocLink = (user: User) => {
+    const baseUrl = '/eliza/packages/';  // Make sure to include your baseUrl prefix
+    let category = '';
+    
+    if (user.tags.includes('adapter')) {
+      category = 'adapters/';
+    } else if (user.tags.includes('client')) {
+      category = 'clients/';
+    } else if (user.tags.includes('plugin')) {
+      category = 'plugins/';
+    }
+    
+    // Extract package name from title
+    // Convert to lowercase and remove spaces/special chars
+    const slug = user.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    
+    return `${baseUrl}${category}${slug}`;
+  };
+
   return (
     <li key={user.title} className="card shadow--md">
       <div className={clsx('card__image', styles.showcaseCardImage)}>
@@ -86,9 +106,17 @@ export default function ShowcaseCard({user}: {user: User}) {
         </div>
         <p className={styles.showcaseCardBody}>{user.description}</p>
       </div>
-      <ul className={clsx('card__footer', styles.cardFooter)}>
-        <ShowcaseCardTag tags={user.tags.filter(tag => tag)} />
-      </ul>
+      <div className={clsx('card__footer', styles.cardFooter)}>
+        <div className={styles.tagContainer}>
+          <ShowcaseCardTag tags={user.tags.filter(tag => tag)} />
+        </div>
+        <Link
+          to={getDocLink(user)}
+          className={clsx('button button--primary button--sm', styles.readmeBtn)}
+        >
+          Readme
+        </Link>
+      </div>
     </li>
   );
 }

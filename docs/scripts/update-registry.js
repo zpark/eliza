@@ -104,7 +104,45 @@ function fetchRegistry() {
  * Generate the TypeScript file with registry users
  */
 function generateUsersFile(plugins, customData) {
-  const users = plugins.map(plugin => {
+  // Extract names of plugins from GitHub
+  const registryPluginNames = plugins.map(plugin => plugin.id);
+  
+  // Find plugins in descriptions that aren't in the registry
+  const missingPlugins = [];
+  for (const pluginId in customData) {
+    if (!registryPluginNames.includes(pluginId)) {
+      // Create plugin data for missing plugins
+      const displayName = pluginId
+        .replace('@elizaos-plugins/plugin-', '')
+        .replace('@elizaos-plugins/client-', '')
+        .replace('@elizaos-plugins/adapter-', '')
+        .replace(/-/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      
+      const type = pluginId.includes('client-') ? 'client' :
+                   pluginId.includes('adapter-') ? 'adapter' :
+                   'plugin';
+                   
+      // Create the missing plugin entry
+      missingPlugins.push({
+        id: pluginId,
+        name: pluginId,
+        // Assuming GitHub repo path is usually the same as the plugin name
+        repo_url: `github:elizaos-plugins/${pluginId.split('/').pop()}`,
+        repo_path: `elizaos-plugins/${pluginId.split('/').pop()}`,
+        display_name: displayName,
+        type: type
+      });
+    }
+  }
+  
+  // Combine existing plugins with missing ones
+  const allPlugins = [...plugins, ...missingPlugins];
+  
+  // Continue with normal processing
+  const users = allPlugins.map(plugin => {
     const pluginData = customData[plugin.id] || {};
     
     const description = pluginData.description || 

@@ -1459,8 +1459,8 @@ export async function generateShouldRespond({
  */
 export async function splitChunks(
     content: string,
-    chunkSize = 1500,
-    bleed = 100
+    chunkSize = 1500, // in tokens
+    bleed = 100 // in tokens
 ): Promise<string[]> {
     elizaLogger.debug(`[splitChunks] Starting text split`);
 
@@ -1496,23 +1496,38 @@ export async function splitChunks(
     return chunks;
 }
 
-export function splitText(
-    content: string,
-    chunkSize: number,
-    bleed: number
-): string[] {
+
+function estimateTokensFromEnglishLength(stringLength) {
+    return Math.round(stringLength / 4); // Rough estimate: 1 token ≈ 4 characters in English
+}
+
+function estimateEnglishLengthFromTokens(tokenCount) {
+    return tokenCount * 4; // Reverse estimate: 1 token ≈ 4 characters in English
+}
+
+export function splitText(content: string, chunkSize: number, bleed: number): string[] {
+    // Convert chunk size and bleed from tokens to approximate character length
+    const chunkCharSize = estimateEnglishLengthFromTokens(chunkSize);
+    const bleedCharSize = estimateEnglishLengthFromTokens(bleed);
+
+    // If content is smaller than estimated chunk size, return it as a single chunk
+    if (content.length <= chunkCharSize) {
+        return [content];
+    }
+
     const chunks: string[] = [];
     let start = 0;
 
     while (start < content.length) {
-        const end = Math.min(start + chunkSize, content.length);
-        // Ensure we're not creating empty or invalid chunks
-        if (end > start) {
-            chunks.push(content.substring(start, end));
-        }
+        const end = Math.min(start + chunkCharSize, content.length);
+        chunks.push(content.substring(start, end));
 
-        // Ensure forward progress while preventing infinite loops
-        start = Math.max(end - bleed, start + 1);
+        // Move forward by (chunkSize - bleed), converted to character length
+        const nextStart = start + (chunkCharSize - bleedCharSize);
+        if (nextStart >= content.length || nextStart <= start) {
+            break; // Stop if no progress is made
+        }
+        start = nextStart;
     }
 
     return chunks;
@@ -2375,10 +2390,10 @@ async function handleOpenAI({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const endpoint = runtime.character.modelEndpointOverride || getEndpoint(provider);
     const baseURL = getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
-    const openai = createOpenAI({ 
-        apiKey, 
+    const openai = createOpenAI({
+        apiKey,
         baseURL,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: openai.languageModel(model),
@@ -2414,10 +2429,10 @@ async function handleAnthropic({
     const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
     elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
 
-    const anthropic = createAnthropic({ 
-        apiKey, 
+    const anthropic = createAnthropic({
+        apiKey,
         baseURL,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return await aiGenerateObject({
         model: anthropic.languageModel(model),
@@ -2445,10 +2460,10 @@ async function handleGrok({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const grok = createOpenAI({ 
-        apiKey, 
+    const grok = createOpenAI({
+        apiKey,
         baseURL: models.grok.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: grok.languageModel(model, { parallelToolCalls: false }),
@@ -2480,10 +2495,10 @@ async function handleGroq({
     const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
     elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
 
-    const groq = createGroq({ 
-        apiKey, 
+    const groq = createGroq({
+        apiKey,
         baseURL,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return await aiGenerateObject({
         model: groq.languageModel(model),
@@ -2513,7 +2528,7 @@ async function handleGoogle({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const google = createGoogleGenerativeAI({
         apiKey,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: google(model),
@@ -2567,10 +2582,10 @@ async function handleRedPill({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const redPill = createOpenAI({ 
-        apiKey, 
+    const redPill = createOpenAI({
+        apiKey,
         baseURL: models.redpill.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: redPill.languageModel(model),
@@ -2660,10 +2675,10 @@ async function handleDeepSeek({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const openai = createOpenAI({ 
-        apiKey, 
+    const openai = createOpenAI({
+        apiKey,
         baseURL: models.deepseek.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: openai.languageModel(model),
@@ -2786,10 +2801,10 @@ async function handleNearAi({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const nearai = createOpenAI({ 
-        apiKey, 
+    const nearai = createOpenAI({
+        apiKey,
         baseURL: models.nearai.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     const settings = schema ? { structuredOutputs: true } : undefined;
     return aiGenerateObject({

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / generateTweetActions
+[@elizaos/core v0.25.9](../index.md) / generateTweetActions
 
 # Function: generateTweetActions()
 
@@ -22,4 +22,4 @@ doesn't belong here
 
 ## Defined in
 
-[packages/core/src/generation.ts:2757](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L2757)
+[packages/core/src/generation.ts:2817](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L2817)
