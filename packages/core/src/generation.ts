@@ -4,7 +4,6 @@ import { createMistral } from "@ai-sdk/mistral";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import { bedrock } from "@ai-sdk/amazon-bedrock";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
@@ -54,9 +53,29 @@ import { fal } from "@fal-ai/client";
 
 import BigNumber from "bignumber.js";
 import { createPublicClient, http } from "viem";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
+
+// Simplify the types to avoid deep recursion
+type GenerationResult = GenerateObjectResult<unknown>;
+
+interface ProviderOptions {
+    runtime: IAgentRuntime;
+    provider: ModelProviderName;
+    model: string;
+    apiKey: string;
+    schema?: ZodSchema;
+    schemaName?: string;
+    schemaDescription?: string;
+    mode?: "auto" | "json" | "tool";
+    modelOptions: ModelSettings;
+    modelClass: ModelClass;
+    context: string;
+}
 
 /**
  * Trims the provided text context to a specified token limit using a tokenizer model and type.
@@ -347,9 +366,9 @@ export async function generateText({
     maxSteps = 1,
     stop,
     customSystemPrompt,
-    // verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
-    // verifiableInferenceOptions,
-}: {
+}: // verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
+// verifiableInferenceOptions,
+{
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
@@ -502,8 +521,7 @@ export async function generateText({
     const max_context_length =
         modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
     const max_response_length =
-        modelConfiguration?.maxOutputTokens ||
-        modelSettings.maxOutputTokens;
+        modelConfiguration?.maxOutputTokens || modelSettings.maxOutputTokens;
     const experimental_telemetry =
         modelConfiguration?.experimental_telemetry ||
         modelSettings.experimental_telemetry;
@@ -535,7 +553,8 @@ export async function generateText({
             case ModelProviderName.TOGETHER:
             case ModelProviderName.NINETEEN_AI:
             case ModelProviderName.AKASH_CHAT_API:
-            case ModelProviderName.LMSTUDIO: {
+            case ModelProviderName.LMSTUDIO:
+            case ModelProviderName.NEARAI: {
                 elizaLogger.debug(
                     "Initializing OpenAI model with Cloudflare check"
                 );
@@ -953,7 +972,10 @@ export async function generateText({
                         experimental_telemetry: experimental_telemetry,
                     });
 
-                    response = ollamaResponse;
+                    response = ollamaResponse.replace(
+                        /<think>[\s\S]*?<\/think>\s*\n*/g,
+                        ""
+                    );
                 }
                 elizaLogger.debug("Received response from Ollama model.");
                 break;
@@ -1143,10 +1165,30 @@ export async function generateText({
 
             case ModelProviderName.VENICE: {
                 elizaLogger.debug("Initializing Venice model.");
-                const venice = createOpenAI({
+                
+                const bypass = parseBooleanFromText(
+                    runtime.getSetting("BYPASS_VENICE_SYSTEM_PROMPT")
+                )
+                    ? async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                        const options: RequestInit = { ...init };
+                        if (options?.body) {
+                            const body = JSON.parse(options.body as string);
+                            body.venice_parameters = {
+                                include_venice_system_prompt: false
+                            };
+                            options.body = JSON.stringify(body);
+                        }
+                        return runtime.fetch(input, options);
+                    }
+                    : undefined;
+
+                const veniceConfig = {
                     apiKey: apiKey,
                     baseURL: endpoint,
-                });
+                    ...(bypass ? { fetch: bypass } : {})
+                };
+
+                const venice = createOpenAI(veniceConfig);
 
                 const { text: veniceResponse } = await aiGenerateText({
                     model: venice.languageModel(model),
@@ -1161,15 +1203,10 @@ export async function generateText({
                     maxSteps: maxSteps,
                     maxTokens: max_response_length,
                 });
-
-                // console.warn("veniceResponse:")
-                // console.warn(veniceResponse)
+            
                 //rferrari: remove all text from <think> to </think>\n\n
                 response = veniceResponse
                     .replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
-                // console.warn(response)
-
-                // response = veniceResponse;
                 elizaLogger.debug("Received response from Venice model.");
                 break;
             }
@@ -1290,6 +1327,34 @@ export async function generateText({
                 break;
             }
 
+            case ModelProviderName.SECRETAI:
+                {
+                    elizaLogger.debug("Initializing SecretAI model.");
+
+                    const secretAiProvider = createOllama({
+                        baseURL: getEndpoint(provider) + "/api",
+                        fetch: runtime.fetch,
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${apiKey}`,
+                        },
+                    });
+                    const secretAi = secretAiProvider(model);
+
+                    const { text: secretAiResponse } = await aiGenerateText({
+                        model: secretAi,
+                        prompt: context,
+                        tools: tools,
+                        onStepFinish: onStepFinish,
+                        temperature: temperature,
+                        maxSteps: maxSteps,
+                        maxTokens: max_response_length,
+                    });
+
+                    response = secretAiResponse;
+                }
+                break;
+
             case ModelProviderName.BEDROCK: {
                 elizaLogger.debug("Initializing Bedrock model.");
 
@@ -1394,23 +1459,76 @@ export async function generateShouldRespond({
  */
 export async function splitChunks(
     content: string,
-    chunkSize = 512,
-    bleed = 20
+    chunkSize = 1500, // in tokens
+    bleed = 100 // in tokens
 ): Promise<string[]> {
     elizaLogger.debug(`[splitChunks] Starting text split`);
 
-    const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: Number(chunkSize),
-        chunkOverlap: Number(bleed),
-    });
+    // Validate parameters
+    if (chunkSize <= 0) {
+        elizaLogger.warn(
+            `Invalid chunkSize (${chunkSize}), using default 1500`
+        );
+        chunkSize = 1500;
+    }
 
-    const chunks = await textSplitter.splitText(content);
+    if (bleed >= chunkSize) {
+        elizaLogger.warn(
+            `Bleed (${bleed}) >= chunkSize (${chunkSize}), adjusting bleed to 1/4 of chunkSize`
+        );
+        bleed = Math.floor(chunkSize / 4);
+    }
+
+    if (bleed < 0) {
+        elizaLogger.warn(`Invalid bleed (${bleed}), using default 100`);
+        bleed = 100;
+    }
+
+    const chunks = splitText(content, chunkSize, bleed);
+
     elizaLogger.debug(`[splitChunks] Split complete:`, {
         numberOfChunks: chunks.length,
         averageChunkSize:
             chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
             chunks.length,
     });
+
+    return chunks;
+}
+
+
+function estimateTokensFromEnglishLength(stringLength) {
+    return Math.round(stringLength / 4); // Rough estimate: 1 token ≈ 4 characters in English
+}
+
+function estimateEnglishLengthFromTokens(tokenCount) {
+    return tokenCount * 4; // Reverse estimate: 1 token ≈ 4 characters in English
+}
+
+export function splitText(content: string, chunkSize: number, bleed: number): string[] {
+    // Convert chunk size and bleed from tokens to approximate character length
+    const chunkCharSize = estimateEnglishLengthFromTokens(chunkSize);
+    const bleedCharSize = estimateEnglishLengthFromTokens(bleed);
+
+    // If content is smaller than estimated chunk size, return it as a single chunk
+    if (content.length <= chunkCharSize) {
+        return [content];
+    }
+
+    const chunks: string[] = [];
+    let start = 0;
+
+    while (start < content.length) {
+        const end = Math.min(start + chunkCharSize, content.length);
+        chunks.push(content.substring(start, end));
+
+        // Move forward by (chunkSize - bleed), converted to character length
+        const nextStart = start + (chunkCharSize - bleedCharSize);
+        if (nextStart >= content.length || nextStart <= start) {
+            break; // Stop if no progress is made
+        }
+        start = nextStart;
+    }
 
     return chunks;
 }
@@ -1669,7 +1787,9 @@ export const generateImage = async (
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
     if (!modelSettings) {
-        elizaLogger.warn("No model settings found for the image model provider.");
+        elizaLogger.warn(
+            "No model settings found for the image model provider."
+        );
         return { success: false, error: "No model settings available" };
     }
     const model = modelSettings.name;
@@ -1695,6 +1815,27 @@ export const generateImage = async (
                           return runtime.getSetting("VENICE_API_KEY");
                       case ModelProviderName.LIVEPEER:
                           return runtime.getSetting("LIVEPEER_GATEWAY_URL");
+                      case ModelProviderName.SECRETAI:
+                          return runtime.getSetting("SECRET_AI_API_KEY");
+                      case ModelProviderName.NEARAI:
+                          try {
+                              // Read auth config from ~/.nearai/config.json if it exists
+                              const config = JSON.parse(
+                                  fs.readFileSync(
+                                      path.join(
+                                          os.homedir(),
+                                          ".nearai/config.json"
+                                      ),
+                                      "utf8"
+                                  )
+                              );
+                              return JSON.stringify(config?.auth);
+                          } catch (e) {
+                              elizaLogger.warn(
+                                  `Error loading NEAR AI config. The environment variable NEARAI_API_KEY will be used. ${e}`
+                              );
+                          }
+                          return runtime.getSetting("NEARAI_API_KEY");
                       default:
                           // If no specific match, try the fallback chain
                           return (
@@ -1826,13 +1967,13 @@ export const generateImage = async (
                 seed: data.seed ?? 6252023,
                 ...(runtime.getSetting("FAL_AI_LORA_PATH")
                     ? {
-                          loras: [
-                              {
-                                  path: runtime.getSetting("FAL_AI_LORA_PATH"),
-                                  scale: 1,
-                              },
-                          ],
-                      }
+                        loras: [
+                            {
+                                path: runtime.getSetting("FAL_AI_LORA_PATH"),
+                                scale: 1,
+                            },
+                        ],
+                    }
                     : {}),
             };
 
@@ -2103,10 +2244,10 @@ export const generateObject = async ({
     schemaDescription,
     stop,
     mode = "json",
-    // verifiableInference = false,
-    // verifiableInferenceAdapter,
-    // verifiableInferenceOptions,
-}: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
+}: // verifiableInference = false,
+// verifiableInferenceAdapter,
+// verifiableInferenceOptions,
+GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
     if (!context) {
         const errorMessage = "generateObject context is empty";
         console.error(errorMessage);
@@ -2162,27 +2303,6 @@ export const generateObject = async ({
 };
 
 /**
- * Interface for provider-specific generation options.
- */
-interface ProviderOptions {
-    runtime: IAgentRuntime;
-    provider: ModelProviderName;
-    model: any;
-    apiKey: string;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-    mode?: "auto" | "json" | "tool";
-    experimental_providerMetadata?: Record<string, unknown>;
-    modelOptions: ModelSettings;
-    modelClass: ModelClass;
-    context: string;
-    // verifiableInference?: boolean;
-    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    // verifiableInferenceOptions?: VerifiableInferenceOptions;
-}
-
-/**
  * Handles AI generation based on the specified provider.
  *
  * @param {ProviderOptions} options - Configuration options specific to the provider.
@@ -2190,7 +2310,7 @@ interface ProviderOptions {
  */
 export async function handleProvider(
     options: ProviderOptions
-): Promise<GenerateObjectResult<unknown>> {
+): Promise<GenerationResult> {
     const {
         provider,
         runtime,
@@ -2238,6 +2358,12 @@ export async function handleProvider(
             return await handleDeepSeek(options);
         case ModelProviderName.LIVEPEER:
             return await handleLivepeer(options);
+        case ModelProviderName.SECRETAI:
+            return await handleSecretAi(options);
+        case ModelProviderName.NEARAI:
+            return await handleNearAi(options);
+        case ModelProviderName.BEDROCK:
+            return await handleBedrock(options);
         default: {
             const errorMessage = `Unsupported provider: ${provider}`;
             elizaLogger.error(errorMessage);
@@ -2262,12 +2388,14 @@ async function handleOpenAI({
     provider,
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const endpoint =
-        runtime.character.modelEndpointOverride || getEndpoint(provider);
-    const baseURL =
-        getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
-    const openai = createOpenAI({ apiKey, baseURL });
-    return await aiGenerateObject({
+    const endpoint = runtime.character.modelEndpointOverride || getEndpoint(provider);
+    const baseURL = getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
+    const openai = createOpenAI({
+        apiKey,
+        baseURL,
+        fetch: runtime.fetch
+    });
+    return aiGenerateObject({
         model: openai.languageModel(model),
         schema,
         schemaName,
@@ -2292,7 +2420,7 @@ async function handleAnthropic({
     mode = "auto",
     modelOptions,
     runtime,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+}: ProviderOptions): Promise<GenerationResult> {
     elizaLogger.debug("Handling Anthropic request with Cloudflare check");
     if (mode === "json") {
         elizaLogger.warn("Anthropic mode is set to json, changing to auto");
@@ -2301,7 +2429,11 @@ async function handleAnthropic({
     const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
     elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
 
-    const anthropic = createAnthropic({ apiKey, baseURL });
+    const anthropic = createAnthropic({
+        apiKey,
+        baseURL,
+        fetch: runtime.fetch
+    });
     return await aiGenerateObject({
         model: anthropic.languageModel(model),
         schema,
@@ -2326,9 +2458,14 @@ async function handleGrok({
     schemaDescription,
     mode = "json",
     modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const grok = createOpenAI({ apiKey, baseURL: models.grok.endpoint });
-    return await aiGenerateObject({
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const grok = createOpenAI({
+        apiKey,
+        baseURL: models.grok.endpoint,
+        fetch: runtime.fetch
+    });
+    return aiGenerateObject({
         model: grok.languageModel(model, { parallelToolCalls: false }),
         schema,
         schemaName,
@@ -2353,12 +2490,16 @@ async function handleGroq({
     mode = "json",
     modelOptions,
     runtime,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+}: ProviderOptions): Promise<GenerationResult> {
     elizaLogger.debug("Handling Groq request with Cloudflare check");
     const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
     elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
 
-    const groq = createGroq({ apiKey, baseURL });
+    const groq = createGroq({
+        apiKey,
+        baseURL,
+        fetch: runtime.fetch
+    });
     return await aiGenerateObject({
         model: groq.languageModel(model),
         schema,
@@ -2383,9 +2524,13 @@ async function handleGoogle({
     schemaDescription,
     mode = "json",
     modelOptions,
+    runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const google = createGoogleGenerativeAI({apiKey});
-    return await aiGenerateObject({
+    const google = createGoogleGenerativeAI({
+        apiKey,
+        fetch: runtime.fetch
+    });
+    return aiGenerateObject({
         model: google(model),
         schema,
         schemaName,
@@ -2408,9 +2553,10 @@ async function handleMistral({
     schemaDescription,
     mode,
     modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const mistral = createMistral();
-    return await aiGenerateObject({
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const mistral = createMistral({ fetch: runtime.fetch });
+    return aiGenerateObject({
         model: mistral(model),
         schema,
         schemaName,
@@ -2434,9 +2580,14 @@ async function handleRedPill({
     schemaDescription,
     mode = "json",
     modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const redPill = createOpenAI({ apiKey, baseURL: models.redpill.endpoint });
-    return await aiGenerateObject({
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const redPill = createOpenAI({
+        apiKey,
+        baseURL: models.redpill.endpoint,
+        fetch: runtime.fetch
+    });
+    return aiGenerateObject({
         model: redPill.languageModel(model),
         schema,
         schemaName,
@@ -2460,12 +2611,14 @@ async function handleOpenRouter({
     schemaDescription,
     mode = "json",
     modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
     const openRouter = createOpenAI({
         apiKey,
         baseURL: models.openrouter.endpoint,
+        fetch: runtime.fetch
     });
-    return await aiGenerateObject({
+    return aiGenerateObject({
         model: openRouter.languageModel(model),
         schema,
         schemaName,
@@ -2489,12 +2642,14 @@ async function handleOllama({
     mode = "json",
     modelOptions,
     provider,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
     const ollamaProvider = createOllama({
         baseURL: getEndpoint(provider) + "/api",
+        fetch: runtime.fetch
     });
     const ollama = ollamaProvider(model);
-    return await aiGenerateObject({
+    return aiGenerateObject({
         model: ollama,
         schema,
         schemaName,
@@ -2518,9 +2673,14 @@ async function handleDeepSeek({
     schemaDescription,
     mode,
     modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const openai = createOpenAI({ apiKey, baseURL: models.deepseek.endpoint });
-    return await aiGenerateObject({
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const openai = createOpenAI({
+        apiKey,
+        baseURL: models.deepseek.endpoint,
+        fetch: runtime.fetch
+    });
+    return aiGenerateObject({
         model: openai.languageModel(model),
         schema,
         schemaName,
@@ -2544,9 +2704,11 @@ async function handleBedrock({
     mode,
     modelOptions,
     provider,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    return await aiGenerateObject({
-        model: bedrock(model),
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const bedrockClient = bedrock(model);
+    return aiGenerateObject({
+        model: bedrockClient,
         schema,
         schemaName,
         schemaDescription,
@@ -2563,7 +2725,8 @@ async function handleLivepeer({
     schemaDescription,
     mode,
     modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
     console.log("Livepeer provider api key:", apiKey);
     if (!apiKey) {
         throw new Error(
@@ -2573,11 +2736,79 @@ async function handleLivepeer({
 
     const livepeerClient = createOpenAI({
         apiKey,
-        baseURL: apiKey, // Use the apiKey as the baseURL since it contains the gateway URL
+        baseURL: apiKey,
+        fetch: runtime.fetch
     });
-
-    return await aiGenerateObject({
+    return aiGenerateObject({
         model: livepeerClient.languageModel(model),
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        ...modelOptions,
+    });
+}
+
+/**
+ * Handles object generation for Secret AI models.
+ *
+ * @param {ProviderOptions} options - Options specific to Secret AI.
+ * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+ */
+async function handleSecretAi({
+    model,
+    apiKey,
+    schema,
+    schemaName,
+    schemaDescription,
+    mode = "json",
+    modelOptions,
+    provider,
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const secretAiProvider = createOllama({
+        baseURL: getEndpoint(provider) + "/api",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+        },
+        fetch: runtime.fetch
+    });
+    const secretAi = secretAiProvider(model);
+    return aiGenerateObject({
+        model: secretAi,
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        ...modelOptions,
+    });
+}
+
+/**
+ * Handles object generation for NEAR AI models.
+ *
+ * @param {ProviderOptions} options - Options specific to NEAR AI.
+ * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+ */
+async function handleNearAi({
+    model,
+    apiKey,
+    schema,
+    schemaName,
+    schemaDescription,
+    mode = "json",
+    modelOptions,
+    runtime,
+}: ProviderOptions): Promise<GenerationResult> {
+    const nearai = createOpenAI({
+        apiKey,
+        baseURL: models.nearai.endpoint,
+        fetch: runtime.fetch
+    });
+    const settings = schema ? { structuredOutputs: true } : undefined;
+    return aiGenerateObject({
+        model: nearai.languageModel(model, settings),
         schema,
         schemaName,
         schemaDescription,
@@ -2595,6 +2826,7 @@ interface TogetherAIImageResponse {
     }>;
 }
 
+// doesn't belong here
 export async function generateTweetActions({
     runtime,
     context,

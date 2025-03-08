@@ -6,6 +6,14 @@ sidebar_position: 2
 
 In this tutorial, we'll explore how to create an AI agent that embodies your own personality using data from your Twitter archive, videos, markdown files, and PDFs. We'll leverage the [Characterfile](https://github.com/ai16z/characterfile) repo and [Eliza framework](https://github.com/elizaOS/eliza) to generate and integrate the character data.
 
+<div className="responsive-iframe">                                                                                               
+  <iframe                                                                                                                         
+    src="https://www.youtube.com/embed/uouSdtcWXTQ?si=cm13L4T7DQUMXd0C"
+    title="YouTube video player"                                                                                                  
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"                              
+    allowFullScreen                                                                                                               
+  />                                                                                                                              
+</div> 
 Video: https://youtu.be/uouSdtcWXTQ?si=cm13L4T7DQUMXd0C
 
 ## Prerequisites

@@ -7,6 +7,15 @@ description: "Introduction and Foundations"
 
 In this first session of the AI Agent Dev School, we dive into the fundamentals of AI agent development using the Eliza framework. The session covers the history and evolution of JavaScript, TypeScript, and the Node.js ecosystem, providing a solid foundation for understanding the tools and technologies used in building AI agents with Eliza.
 
+<div className="responsive-iframe">                                                                                               
+  <iframe                                                                                                                         
+    src="https://www.youtube.com/embed/ArptLpQiKfI"                                                           
+    title="YouTube video player"                                                                                                  
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"                              
+    allowFullScreen                                                                                                               
+  />                                                                                                                              
+</div> 
+
 ## Origins and Ecosystem
 
 ### JavaScript and Its Evolution
@@ -34,6 +43,15 @@ In this first session of the AI Agent Dev School, we dive into the fundamentals 
 
 - Git is a distributed version control system that enables collaborative software development by tracking changes in code.
 - GitHub is a web-based hosting service built on top of Git, providing features like issue tracking, pull requests, and wikis for effective collaboration and project management.
+
+<div className="responsive-iframe">                                                                                               
+  <iframe                                                                                                                         
+    src="https://www.youtube.com/embed/AC3h_KzLARo"                                                           
+    title="YouTube video player"                                                                                                  
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"                              
+    allowFullScreen                                                                                                               
+  />                                                                                                                              
+</div> 
 
 ## Characters, Embeddings, and Discord Integration
 

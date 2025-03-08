@@ -159,6 +159,48 @@ pnpm install --include=optional sharp
 
 ---
 
+## Using Your Custom Plugins
+Plugins that are not in the official registry for ElizaOS can be used as well. Here's how:
+
+### Installation
+
+1. Upload the custom plugin to the packages folder:
+
+```
+packages/
+├─plugin-example/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── index.ts        # Main plugin entry
+│   ├── actions/        # Custom actions
+│   ├── providers/      # Data providers
+│   ├── types.ts        # Type definitions
+│   └── environment.ts  # Configuration
+├── README.md
+└── LICENSE
+```
+
+2. Add the custom plugin to your project's dependencies in the agent's package.json:
+
+```json
+{
+  "dependencies": {
+    "@elizaos/plugin-example": "workspace:*"
+  }
+}
+```
+
+3. Import the custom plugin to your agent's character.json
+
+```json
+  "plugins": [
+    "@elizaos/plugin-example",
+  ],
+```
+
+---
+
 ### Start Eliza with Gitpod
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
@@ -204,3 +246,58 @@ We now have a [paper](https://arxiv.org/pdf/2501.06781) you can cite for the Eli
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=elizaos/eliza&type=Date)](https://star-history.com/#elizaos/eliza&Date)
+
+## 🛠️ System Requirements
+
+### Minimum Requirements
+- CPU: Dual-core processor
+- RAM: 4GB
+- Storage: 1GB free space
+- Internet connection: Broadband (1 Mbps+)
+
+### Software Requirements
+- Python 2.7+ (3.8+ recommended)
+- Node.js 23+
+- pnpm
+- Git
+
+### Optional Requirements
+- GPU: For running local LLM models
+- Additional storage: For document storage and memory
+- Higher RAM: For running multiple agents
+
+## 📁 Project Structure
+```
+eliza/
+├── packages/
+│   ├── core/           # Core Eliza functionality
+│   ├── clients/        # Client implementations
+│   └── actions/        # Custom actions
+├── docs/              # Documentation
+├── scripts/           # Utility scripts
+└── examples/          # Example implementations
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+### Getting Started
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature/your-feature-name`
+3. Make your changes
+4. Run tests: `pnpm test`
+5. Submit a pull request
+
+### Types of Contributions
+- 🐛 Bug fixes
+- ✨ New features
+- 📚 Documentation improvements
+- 🌍 Translations
+- 🧪 Test improvements
+
+### Code Style
+- Follow the existing code style
+- Add comments for complex logic
+- Update documentation for changes
+- Add tests for new features

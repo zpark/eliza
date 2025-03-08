@@ -1,5 +1,5 @@
 import express from "express";
-import { Router } from 'express';
+import type { Router } from 'express';
 import bodyParser from "body-parser";
 import cors from "cors";
 import path from "path";
@@ -52,7 +52,7 @@ function validateUUIDParams(
 }
 
 export function createApiRouter(
-    agents: Map<string, AgentRuntime>,
+    agents: Map<string, IAgentRuntime>,
     directClient: DirectClient
 ):Router {
     const router = express.Router();
