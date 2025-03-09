@@ -12,7 +12,7 @@ const config = {
     organizationName: "elizaos",
     projectName: "eliza",
     deploymentBranch: "gh-pages",
-    trailingSlash: true,
+    trailingSlash: false,
     onBrokenLinks: "ignore",
     onBrokenMarkdownLinks: "warn",
 
@@ -165,16 +165,41 @@ const config = {
                 routeBasePath: "api",
             },
         ],
+        [
+          '@docusaurus/plugin-content-blog',
+          {
+            showReadingTime: true,
+	    onUntruncatedBlogPosts: 'ignore',
+            editUrl: "https://github.com/elizaos/eliza/tree/main/docs/blog/",
+            blogSidebarTitle: 'Recent posts',
+            blogSidebarCount: 'ALL',
+	    showLastUpdateAuthor: true,
+            feedOptions: {
+                type: 'all',
+                title: 'ElizaOS Updates',
+                description: 'Stay up to date with the latest from ElizaOS',
+          },
+            path: 'blog',
+            routeBasePath: 'blog',
+        },
+        ],
     ],
     presets: [
         [
             "classic",
             {
                 blog: {
+		    id: 'News',
+		    routeBasePath: 'news',
+		    onUntruncatedBlogPosts: 'ignore',
+                    blogTitle: 'AI News',
+                    blogDescription: 'Automated aggregating and summarization of elizaOS ecosystem updates',
                     showReadingTime: true,
-                    editUrl: "https://github.com/elizaos/eliza/tree/main/docs/blog/",
-                    blogSidebarTitle: 'Recent posts',
-                    blogSidebarCount: 10,
+                    editUrl: "https://github.com/elizaos/eliza/tree/main/docs/news",
+		    path: './news',
+                    blogSidebarTitle: 'All posts',
+                    blogSidebarCount: 'ALL',
+		    showLastUpdateAuthor: true,
                     feedOptions: {
                         type: 'all',
                         title: 'ElizaOS Updates',
@@ -263,6 +288,16 @@ const config = {
                     docId: "index",
                 },
                 {
+                    label: "RSS",
+                    position: "right",
+		    to: 'news',
+                    items: [
+                      { label: 'RSS (XML)', href: '/news/rss.xml' },
+                      { label: 'Atom', href: '/news/atom.xml' },
+                      { label: 'JSON Feed', href: '/news/feed.json' },
+                    ], 
+                },
+                {
                     href: "https://github.com/elizaos/eliza",
                     label: "GitHub",
                     position: "right",
@@ -290,7 +325,7 @@ const config = {
                         },
                         {
                             label: "Twitter",
-                            href: "https://twitter.com/ai16zdao",
+                            href: "https://twitter.com/elizaos",
                         },
                     ],
                 },
