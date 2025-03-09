@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkeliza_docs=self.webpackChunkeliza_docs||[]).push([[54266],{80792:e=>{e.exports=JSON.parse('{"blogBasePath":"/eliza/news","blogTitle":"AI News","authorsListPath":"/eliza/news/authors"}')}}]);

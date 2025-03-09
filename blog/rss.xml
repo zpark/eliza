@@ -2,19 +2,85 @@
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>ElizaOS Updates</title>
-        <link>https://elizaos.github.io/eliza/blog/</link>
+        <link>https://elizaos.github.io/eliza/blog</link>
         <description>Stay up to date with the latest from ElizaOS</description>
-        <lastBuildDate>Wed, 05 Mar 2025 23:48:58 GMT</lastBuildDate>
+        <lastBuildDate>Sat, 15 Mar 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
         <item>
-            <title><![CDATA[Hello, world!]]></title>
-            <link>https://elizaos.github.io/eliza/blog/helloworld/</link>
-            <guid>https://elizaos.github.io/eliza/blog/helloworld/</guid>
-            <pubDate>Wed, 05 Mar 2025 23:48:58 GMT</pubDate>
-            <description><![CDATA[Test]]></description>
+            <title><![CDATA[Monthly Changelog - March 2025]]></title>
+            <link>https://elizaos.github.io/eliza/blog/20250210_update</link>
+            <guid>https://elizaos.github.io/eliza/blog/20250210_update</guid>
+            <pubDate>Sat, 15 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Automatically generated monthly changelog for ElizaOS packages]]></description>
+            <content:encoded><![CDATA[<p>This changelog is automatically generated from GitHub releases and PRs across the ElizaOS ecosystem.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="core-updates">Core Updates<a href="https://elizaos.github.io/eliza/blog/20250210_update#core-updates" class="hash-link" aria-label="Direct link to Core Updates" title="Direct link to Core Updates">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaoscore-v130">@elizaos/core v1.3.0<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaoscore-v130" class="hash-link" aria-label="Direct link to @elizaos/core v1.3.0" title="Direct link to @elizaos/core v1.3.0">​</a></h3>
+<ul>
+<li><strong>Feature</strong>: Added support for custom memory providers</li>
+<li><strong>Feature</strong>: Improved context management with hierarchical storage</li>
+<li><strong>Fix</strong>: Resolved race condition in agent lifecycle events</li>
+<li><strong>Fix</strong>: Fixed memory leak in long-running processes</li>
+<li><strong>Performance</strong>: Reduced latency by 15% for message processing</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="client-updates">Client Updates<a href="https://elizaos.github.io/eliza/blog/20250210_update#client-updates" class="hash-link" aria-label="Direct link to Client Updates" title="Direct link to Client Updates">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaos-pluginsclient-discord-v212">@elizaos-plugins/client-discord v2.1.2<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaos-pluginsclient-discord-v212" class="hash-link" aria-label="Direct link to @elizaos-plugins/client-discord v2.1.2" title="Direct link to @elizaos-plugins/client-discord v2.1.2">​</a></h3>
+<ul>
+<li><strong>Feature</strong>: Added support for Discord's new forum channels</li>
+<li><strong>Feature</strong>: Implemented message component interactions</li>
+<li><strong>Fix</strong>: Fixed reconnection issues after network interruptions</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaos-pluginsclient-telegram-v060">@elizaos-plugins/client-telegram v0.6.0<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaos-pluginsclient-telegram-v060" class="hash-link" aria-label="Direct link to @elizaos-plugins/client-telegram v0.6.0" title="Direct link to @elizaos-plugins/client-telegram v0.6.0">​</a></h3>
+<ul>
+<li><strong>Feature</strong>: Added support for Telegram message reactions</li>
+<li><strong>Feature</strong>: Implemented seamless file transfers</li>
+<li><strong>Fix</strong>: Improved error handling for rate limits</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="adapter-updates">Adapter Updates<a href="https://elizaos.github.io/eliza/blog/20250210_update#adapter-updates" class="hash-link" aria-label="Direct link to Adapter Updates" title="Direct link to Adapter Updates">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaos-pluginsadapter-mongodb-v140">@elizaos-plugins/adapter-mongodb v1.4.0<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaos-pluginsadapter-mongodb-v140" class="hash-link" aria-label="Direct link to @elizaos-plugins/adapter-mongodb v1.4.0" title="Direct link to @elizaos-plugins/adapter-mongodb v1.4.0">​</a></h3>
+<ul>
+<li><strong>Feature</strong>: Added support for MongoDB 7.0 features</li>
+<li><strong>Feature</strong>: Implemented automatic indexing for better performance</li>
+<li><strong>Fix</strong>: Resolved connection pooling issues</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaos-pluginsadapter-qdrant-v085">@elizaos-plugins/adapter-qdrant v0.8.5<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaos-pluginsadapter-qdrant-v085" class="hash-link" aria-label="Direct link to @elizaos-plugins/adapter-qdrant v0.8.5" title="Direct link to @elizaos-plugins/adapter-qdrant v0.8.5">​</a></h3>
+<ul>
+<li><strong>Feature</strong>: Added batch vector operations for improved throughput</li>
+<li><strong>Performance</strong>: Optimized similarity search speed by 25%</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="plugin-updates">Plugin Updates<a href="https://elizaos.github.io/eliza/blog/20250210_update#plugin-updates" class="hash-link" aria-label="Direct link to Plugin Updates" title="Direct link to Plugin Updates">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaos-pluginsplugin-evm-v300">@elizaos-plugins/plugin-evm v3.0.0<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaos-pluginsplugin-evm-v300" class="hash-link" aria-label="Direct link to @elizaos-plugins/plugin-evm v3.0.0" title="Direct link to @elizaos-plugins/plugin-evm v3.0.0">​</a></h3>
+<ul>
+<li><strong>Breaking Change</strong>: Updated interfaces for better TypeScript support</li>
+<li><strong>Feature</strong>: Added support for EIP-4337 account abstraction</li>
+<li><strong>Feature</strong>: Implemented gas optimization strategies</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="elizaos-pluginsplugin-solana-v221">@elizaos-plugins/plugin-solana v2.2.1<a href="https://elizaos.github.io/eliza/blog/20250210_update#elizaos-pluginsplugin-solana-v221" class="hash-link" aria-label="Direct link to @elizaos-plugins/plugin-solana v2.2.1" title="Direct link to @elizaos-plugins/plugin-solana v2.2.1">​</a></h3>
+<ul>
+<li><strong>Feature</strong>: Added SPL token management utilities</li>
+<li><strong>Fix</strong>: Fixed transaction retry logic</li>
+<li><strong>Performance</strong>: Improved RPC batching</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="dependency-updates">Dependency Updates<a href="https://elizaos.github.io/eliza/blog/20250210_update#dependency-updates" class="hash-link" aria-label="Direct link to Dependency Updates" title="Direct link to Dependency Updates">​</a></h2>
+<ul>
+<li>Upgraded TypeScript to 5.4.0</li>
+<li>Updated all dependencies to latest compatible versions</li>
+<li>Migrated testing framework to Vitest</li>
+</ul>
+<p><em>This changelog was generated automatically by the ElizaOS CI system. Last updated: March 15, 2025 at 00:15 UTC.</em></p>]]></content:encoded>
+            <category>Automated Update</category>
+            <category>changelog</category>
+        </item>
+        <item>
+            <title><![CDATA[Hello World]]></title>
+            <link>https://elizaos.github.io/eliza/blog/helloworld</link>
+            <guid>https://elizaos.github.io/eliza/blog/helloworld</guid>
+            <pubDate>Sat, 08 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[An introduction to ElizaOS and its capabilities]]></description>
             <content:encoded><![CDATA[<p>Test</p>]]></content:encoded>
+            <category>Human-Edited</category>
+            <category>Feature</category>
         </item>
     </channel>
 </rss>
