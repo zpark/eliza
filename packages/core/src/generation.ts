@@ -2116,18 +2116,21 @@ export const generateImage = async (
             if (
                 targetSize !== "1024x1024" &&
                 targetSize !== "1792x1024" &&
-                targetSize !== "1024x1792"
+                targetSize !== "1024x1792" &&
+                targetSize !== "512x512" &&
+                targetSize !== "256x256"
             ) {
                 targetSize = "1024x1024";
             }
+            // NEAR AI uses OpenAI compatible API
             const openai = new OpenAI({
-                baseURL: settings.NEARAI_API_URL || "https://api.near.ai/v1",
+                baseURL: getEndpoint(ModelProviderName.NEARAI),
                 apiKey,
             });
             const response = await openai.images.generate({
                 model,
                 prompt: data.prompt,
-                size: targetSize as "1024x1024" | "1792x1024" | "1024x1792",
+                size: targetSize as "1024x1024" | "1792x1024" | "1024x1792" | "512x512" | "256x256",
                 n: data.count,
                 response_format: "b64_json",
             });
