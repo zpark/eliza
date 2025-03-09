@@ -102,4 +102,3 @@ Join us in building the future of autonomous AI agents with Eliza!
 
 - [Create Your First Agent](../quickstart)
 - [Understand Core Concepts](../core/agents)
-- [Explore Advanced Features](./guides/advanced.md)
