@@ -147,9 +147,10 @@ export function parseJSONObjectFromText(
 
     if (jsonBlockMatch) {
         text = cleanJsonResponse(text);
-        const parsingText = normalizeJsonString(text);
+        // see issue 3779
+        //const parsingText = normalizeJsonString(text);
         try {
-            jsonData = JSON.parse(parsingText);
+            jsonData = JSON.parse(text);
         } catch (e) {
             console.error("Error parsing JSON:", e);
             console.error("Text is not JSON", text);
@@ -161,9 +162,10 @@ export function parseJSONObjectFromText(
 
         if (objectMatch) {
             text = cleanJsonResponse(text);
-            const parsingText = normalizeJsonString(text);
+            // see issue 3779
+	    //const parsingText = normalizeJsonString(text);
             try {
-                jsonData = JSON.parse(parsingText);
+                jsonData = JSON.parse(text);
             } catch (e) {
                 console.error("Error parsing JSON:", e);
                 console.error("Text is not JSON", text);
