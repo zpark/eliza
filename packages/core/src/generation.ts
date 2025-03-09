@@ -2111,6 +2111,30 @@ export const generateImage = async (
                 console.error(error);
                 return { success: false, error: error };
             }
+        } else if (runtime.imageModelProvider === ModelProviderName.NEARAI) {
+            let targetSize = `${data.width}x${data.height}`;
+            if (
+                targetSize !== "1024x1024" &&
+                targetSize !== "1792x1024" &&
+                targetSize !== "1024x1792"
+            ) {
+                targetSize = "1024x1024";
+            }
+            const openai = new OpenAI({
+                baseURL: settings.NEARAI_API_URL || "https://api.near.ai/v1",
+                apiKey,
+            });
+            const response = await openai.images.generate({
+                model,
+                prompt: data.prompt,
+                size: targetSize as "1024x1024" | "1792x1024" | "1024x1792",
+                n: data.count,
+                response_format: "b64_json",
+            });
+            const base64s = response.data.map(
+                (image) => `data:image/png;base64,${image.b64_json}`
+            );
+            return { success: true, data: base64s };
         } else {
             let targetSize = `${data.width}x${data.height}`;
             if (
