@@ -56,7 +56,7 @@ type MemoryMetadata = {
     position?: number;
 };
 
-export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations> 
+export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     extends DatabaseAdapter<TDatabase>
 {
     protected readonly maxRetries: number = 3;
@@ -136,7 +136,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             await this.createAgent(agent);
         }
     }
-    
+
     async ensureEmbeddingDimension(dimension: number) {
         const existingMemory = await this.db
             .select({
@@ -184,7 +184,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             const result = await this.db
                 .select()
                 .from(agentTable);
-            
+
             return result;
         });
     }
@@ -197,7 +197,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                        ...agent,
                     });
                 });
-                
+
                 logger.debug("Agent created successfully:", {
                     agentId: agent.id
                 });
@@ -219,7 +219,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 if (!agent.id) {
                     throw new Error("Agent ID is required for update");
                 }
-                
+
                 await this.db.transaction(async (tx) => {
                     await tx
                         .update(agentTable)
@@ -229,7 +229,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         })
                         .where(eq(agentTable.id, agentId));
                 });
-                
+
                 logger.debug("Agent updated successfully:", {
                     agentId
                 });
@@ -265,7 +265,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 const result = await this.db
                     .select({ count: count() })
                     .from(agentTable);
-                
+
                 return result[0]?.count || 0;
             } catch (error) {
                 logger.error("Error counting agents:", {
@@ -353,10 +353,10 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
             // Group components by entity if includeComponents is true
             const entitiesByIdMap = new Map<UUID, Entity>();
-            
+
             for (const row of result) {
                 if (!row.entity) continue;
-                
+
                 const entityId = row.entity.id as UUID;
                 if (!entitiesByIdMap.has(entityId)) {
                     const entity: Entity = {
@@ -386,11 +386,11 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             try {
                 return await this.db.transaction(async (tx) => {
                     await tx.insert(entityTable).values(entity);
-    
+
                     logger.debug("Entity created successfully:", {
                         entity,
                     });
-    
+
                     return true;
                 });
             } catch (error) {
@@ -417,11 +417,11 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
         try {
             const existingEntity = await this.getEntityById(entity.id);
-            
+
             if (!existingEntity) {
                 return await this.createEntity(entity);
             }
-            
+
             return true;
         } catch (error) {
             logger.error("Error ensuring entity exists:", {
@@ -739,7 +739,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                             AND m.content->>${opts.query_field_sub_name} IS NOT NULL
                     ),
                     embedded_text AS (
-                        SELECT 
+                        SELECT
                             ct.content_text,
                             COALESCE(
                                 e.dim_384,
@@ -887,9 +887,9 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             if (params.unique) {
                 conditions.push(eq(memoryTable.unique, true));
             }
-            
+
             conditions.push(eq(memoryTable.agentId, this.agentId));
-            
+
             if (params.roomId) {
                 conditions.push(eq(memoryTable.roomId, params.roomId));
             }
@@ -1174,13 +1174,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async removeGoal(goalId: UUID): Promise<void> {
         if (!goalId) throw new Error("Goal ID is required");
-    
+
         return this.withDatabase(async () => {
             try {
                 await this.db.transaction(async (tx) => {
                     await tx.delete(goalTable).where(eq(goalTable.id, goalId));
                 });
-    
+
                 logger.debug("Goal removal attempt:", {
                     goalId,
                     removed: true,
@@ -1337,14 +1337,14 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                             )
                         ).returning();
                 });
-                
+
                 const removed = result.length > 0;
                 logger.debug(`Participant ${removed ? 'removed' : 'not found'}:`, {
                     userId,
                     roomId,
                     removed,
                 });
-                
+
                 return removed;
             } catch (error) {
                 logger.error("Failed to remove participant:", {
@@ -1540,7 +1540,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getRelationships(params: { 
+    async getRelationships(params: {
         userId: UUID;
         tags?: string[];
     }): Promise<Relationship[]> {
@@ -1681,7 +1681,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             return newWorldId;
         });
     }
-    
+
     async getWorld(id: UUID): Promise<WorldData | null> {
         return this.withDatabase(async () => {
             const result = await this.db.select().from(worldTable).where(eq(worldTable.id, id));
@@ -1718,7 +1718,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             return this.withDatabase(async () => {
                 const now = new Date();
                 const metadata = task.metadata || {};
-                
+
                 // Ensure updatedAt is set in metadata
                 if (!metadata.updatedAt) {
                     metadata.updatedAt = now.getTime();
@@ -1738,7 +1738,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 const result = await this.db.insert(taskTable)
                     .values(values)
                     .returning({ id: taskTable.id });
-                
+
                 return result[0].id;
             });
         });
@@ -1755,12 +1755,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 let query = this.db.select()
                     .from(taskTable)
                     .where(eq(taskTable.agentId, this.agentId));
-                
+
                 // Apply filters if provided
                 if (params.roomId) {
                     query = query.where(eq(taskTable.roomId, params.roomId));
                 }
-                
+
                 if (params.tags && params.tags.length > 0) {
                     // Filter by tags - find tasks that have ALL of the specified tags
                     // Using @> operator which checks if left array contains all elements from right array
@@ -1769,9 +1769,9 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         sql`${taskTable.tags} @> ARRAY[${sql.raw(tagParams)}]::text[]`
                     );
                 }
-                
+
                 const result = await query;
-                
+
                 return result.map(row => ({
                     id: row.id,
                     name: row.name,
@@ -1801,7 +1801,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                             eq(taskTable.agentId, this.agentId)
                         )
                     )
-                
+
                 return result.map(row => ({
                     id: row.id,
                     name: row.name,
@@ -1814,7 +1814,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             });
         });
     }
-    
+
 
     /**
      * Retrieves a specific task by its ID.
@@ -1833,11 +1833,11 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         )
                     )
                     .limit(1);
-                
+
                 if (result.length === 0) {
                     return null;
                 }
-                
+
                 const row = result[0];
                 return {
                     id: row.id,
@@ -1863,16 +1863,16 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             await this.withDatabase(async () => {
                 console.log("updating task", id, task);
                 const updateValues : Partial<Task> & { updatedAt?: number } = {
-                    updatedAt: Date.now()
+                    updatedAt: new Date
                 };
-                
+
                 // Add fields to update if they exist in the partial task object
                 if (task.name !== undefined) updateValues.name = task.name;
                 if (task.description !== undefined) updateValues.description = task.description;
                 if (task.roomId !== undefined) updateValues.roomId = task.roomId;
                 if (task.worldId !== undefined) updateValues.worldId = task.worldId;
                 if (task.tags !== undefined) updateValues.tags = task.tags;
-                
+
                 // Handle metadata updates
                 if (task.metadata) {
                     // Get current task to merge metadata
@@ -1882,17 +1882,17 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         const newMetadata = {
                             ...currentMetadata,
                             ...task.metadata,
-                            updatedAt: Date.now()
+                            updatedAt: new Date
                         };
                         updateValues.metadata = newMetadata;
                     } else {
                         updateValues.metadata = {
                             ...task.metadata,
-                            updatedAt: Date.now()
+                            updatedAt: new Date
                         };
                     }
                 }
-                
+
                 await this.db.update(taskTable)
                     .set(updateValues)
                     .where(
