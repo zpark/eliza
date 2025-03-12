@@ -113,6 +113,11 @@ const sidebars = {
                 },
                 {
                     type: "doc",
+                    id: "core/knowledge",
+                    label: "RAG Knowledge",
+                },
+                {
+                    type: "doc",
                     id: "core/actions",
                     label: "Actions",
                 },
@@ -142,11 +147,6 @@ const sidebars = {
                     type: "doc",
                     id: "guides/remote-deployment",
                     label: "Deployment",
-                },
-                {
-                    type: "doc",
-                    id: "guides/knowledge",
-                    label: "RAG Knowledge",
                 },
                 {
                     type: "doc",
