@@ -161,7 +161,7 @@ We welcome community feedback and contributions to help prioritize these enhance
 
 ## Contributing
 
-Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
+Contributions are welcome! Please see the CONTRIBUTING.md file for more information.
 
 ## Credits
 
