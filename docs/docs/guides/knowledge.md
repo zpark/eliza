@@ -26,7 +26,7 @@ characters/
 1. Create a `characters/knowledge` directory in your project root if it doesn't exist
 2. Create subdirectories for:
    - `shared/`: Documents accessible to all agents
-   - `{agent-name}/`: Agent-specific documents (replace {agent-name} with your agent's name)
+   - `{agent-name}/`: Agent-specific documents (replace `{agent-name}` with your agent's name)
 
 ### 2. Configuration
 
@@ -342,14 +342,12 @@ Adds new knowledge to the database.
   - `item`: A RAGKnowledgeItem containing:
     - `id`: UUID
     - `agentId`: UUID
-    - `content`: {
+    - `content`:
       - `text`: string
-      - `metadata`: {
+      - `metadata`: 
         - `source`: string
         - `type`: "pdf" | "md" | "txt"
         - `isShared`: boolean
-      }
-    }
     - `embedding`: Float32Array
     - `createdAt`: number
 
@@ -382,12 +380,11 @@ Clears knowledge entries.
 ##### `processFile(file): Promise<void>`
 Processes a new knowledge file.
 - Parameters:
-  - `file`: {
+  - `file`:
     - `path`: string - File path
     - `content`: string - File contents
     - `type`: "pdf" | "md" | "txt" - File type
     - `isShared?`: boolean - Whether the knowledge is shared
-  }
 - Returns: Promise that resolves when processing completes
 
 ##### `listAllKnowledge(agentId: UUID): Promise<RAGKnowledgeItem[]>`
