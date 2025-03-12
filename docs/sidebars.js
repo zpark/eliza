@@ -146,8 +146,13 @@ const sidebars = {
                 },
                 {
                     type: "doc",
+                    id: "guides/knowledge",
+                    label: "RAG Knowledge",
+                },
+                {
+                    type: "doc",
                     id: "guides/fine-tuning",
-                    label: "Fine-tuning",
+                    label: "Fine Tuning",
                 },
                 {
                     type: "doc",
