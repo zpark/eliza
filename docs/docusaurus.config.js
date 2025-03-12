@@ -195,7 +195,6 @@ const config = {
           blogDescription: 'Automated aggregating and summarization of elizaOS ecosystem updates',
           showReadingTime: true,
           editUrl: "https://github.com/elizaos/eliza/tree/main/docs/news",
-          path: './news',
           blogSidebarTitle: 'All posts',
           blogSidebarCount: 'ALL',
           showLastUpdateAuthor: true,
@@ -204,6 +203,8 @@ const config = {
             title: 'ElizaOS Updates',
             description: 'Stay up to date with the latest from ElizaOS',
           },
+          path: 'news',
+	  routeBasePath: 'news',
         },
         docs: {
           sidebarPath: "./sidebars.js",
@@ -301,11 +302,11 @@ const config = {
         {
           label: "RSS",
           position: "right",
-          to: 'news',
+          to: '/eliza/news',
           items: [
-            { label: 'RSS (XML)', href: '/news/rss.xml' },
-            { label: 'Atom', href: '/news/atom.xml' },
-            { label: 'JSON Feed', href: '/news/feed.json' },
+            { label: 'RSS (XML)', href: '/eliza/news/rss.xml', target: '_blank' },
+            { label: 'Atom', href: '/eliza/news/atom.xml', target: '_blank' },
+            { label: 'JSON Feed', href: '/eliza/news/feed.json', target: '_blank' },
           ], 
         },
         {
