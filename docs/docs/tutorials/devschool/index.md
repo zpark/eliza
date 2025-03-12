@@ -1,6 +1,5 @@
 ---
-Title: AI Agent Dev School
-slug: /
+title: AI Agent Dev School
 ---
 
 # AI Agent Dev School

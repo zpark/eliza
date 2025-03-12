@@ -32,29 +32,28 @@ const sidebars = {
                         {
                             type: "category",
                             label: "AI Agent Dev School",
+                            link: { 
+                              type: 'doc', 
+                              id: 'tutorials/devschool/index' 
+                            },
+                            collapsed: false,
                             items: [
                                 {
                                     type: "doc",
-                                    id: "tutorials/index",
-                                    label: "Overview",
-                                },                            
-                                {
-                                    type: "doc",
-                                    id: "tutorials/part1",
+                                    id: "tutorials/devschool/part1",
                                     label: "Part 1",
                                 },
                                 {
                                     type: "doc",
-                                    id: "tutorials/part2",
+                                    id: "tutorials/devschool/part2",
                                     label: "Part 2",
                                 },
                                 {
                                     type: "doc",
-                                    id: "tutorials/part3",
+                                    id: "tutorials/devschool/part3",
                                     label: "Part 3",
                                 },
                             ],
-                            collapsed: true, // Expand by default
                         },
                         {
                             type: "doc",
