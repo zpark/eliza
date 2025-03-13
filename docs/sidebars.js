@@ -20,11 +20,6 @@ const sidebars = {
                     id: "faq",
                     label: "❓ FAQ",
                 },
-                {
-                    type: "doc",
-                    id: "changelog",
-                    label: "CHANGELOG",
-                },
 		{
 		    type: "category",
 		    label: "Tutorials",
@@ -196,6 +191,16 @@ const sidebars = {
                     label: "Verified Inference",
                 },
             ],
+        },
+        {
+            type: "doc",
+            id: "awesome-eliza",
+            label: "Awesome elizaOS",
+        },
+        {
+            type: "doc",
+            id: "changelog",
+            label: "CHANGELOG",
         },
     ],
 };
