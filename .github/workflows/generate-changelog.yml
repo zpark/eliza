@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Generate changelog
-        run: python3 docs/scripts/get-changelog.py --output docs/changelog.md
+        run: python3 docs/scripts/get-changelog.py --output docs/docs/changelog.md
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGELOG_GITHUB_TOKEN }}
 
