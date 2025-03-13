@@ -1,5 +1,7 @@
-import { themes as prismThemes } from "prism-react-renderer";
 import dotenv from "dotenv";
+import * as Plugin from "@docusaurus/types/src/plugin";
+import type * as OpenApiPlugin from "docusaurus-plugin-openapi-docs";
+
 
 dotenv.config();
 
@@ -22,8 +24,13 @@ const config = {
   },
   markdown: {
     mermaid: true,
+    mdx1Compat: {
+      comments: false,
+      admonitions: false,
+      headingIds: false,
+    },
   },
-  themes: ["@docusaurus/theme-mermaid"],
+  themes: ["@docusaurus/theme-mermaid", "docusaurus-theme-openapi-docs"],
   plugins: [
     [
       "@docusaurus/plugin-content-docs",
@@ -165,6 +172,22 @@ const config = {
       },
     ],
     [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: "rest-api",
+        docsPluginId: "classic",
+        config: {
+          eliza_api: {
+            specPath: "./src/openapi/eliza-api.yaml",
+            outputDir: "docs/rest",
+            sidebarOptions: {
+              groupPathsBy: "tag",
+            }            
+          }
+        }
+      },
+    ],
+    [
       '@docusaurus/plugin-content-blog',
       {
         showReadingTime: true,
@@ -204,12 +227,12 @@ const config = {
             description: 'Stay up to date with the latest from ElizaOS',
           },
           path: 'news',
-	  routeBasePath: 'news',
+          routeBasePath: 'news',
         },
         docs: {
-          sidebarPath: "./sidebars.js",
+          docItemComponent: "@theme/ApiItem",
+          sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/elizaos/eliza/tree/main/docs/",
-          routeBasePath: "docs",
           exclude: ["**/_media/**"],
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
@@ -231,6 +254,7 @@ const config = {
         },
       },
     ],
+    // Removed duplicate OpenAPI plugin from presets
   ],
   themeConfig: {
     mermaid: {
@@ -250,7 +274,6 @@ const config = {
       }
     },
     colorMode: {
-      defaultMode: "dark",
       disableSwitch: false,
       respectPrefersColorScheme: true,
     },
@@ -264,7 +287,8 @@ const config = {
       title: "eliza",
       logo: {
         alt: "Eliza Logo",
-        src: "img/favicon.ico",
+	src: "img/eliza-os_dark.svg",
+        srcDark: "img/eliza-os_light.svg",
       },
       items: [
         {
@@ -351,10 +375,6 @@ const config = {
           ],
         },
       ],
-    },
-    prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
     },
   },
   customFields: {
