@@ -23,7 +23,6 @@ WALLET_SECRET_SALT= "<your-secret-salt>"            # ONLY define if you want to
 
 VLOG="true"
 ```
-For detailed configuration of plugin-tee, see the documentation.[docs/docs/advanced/eliza-in-tee.md](/docs/docs/advanced/eliza-in-tee.md)
 
 ## Test 
 

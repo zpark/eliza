@@ -133,4 +133,4 @@ import {
     }
 ```
 
-After configuring the logging for the action, you can run the Eliza and see the logs through the client-direct REST API. See more details in the [Client-Direct REST API](../client-direct/src/README.md) documentation.
+After configuring the logging for the action, you can run the Eliza and see the logs through the client-direct REST API. 
