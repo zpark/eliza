@@ -458,7 +458,7 @@ export function agentRouter(
 				};
 
 				// Reuse the message endpoint logic
-				await this.post("/:agentId/messages")(messageRequest, res);
+				await this.post("/:agentId/message")(messageRequest, res);
 			} catch (error) {
 				logger.error("[AUDIO MESSAGE] Error processing audio:", error);
 				res.status(500).json({
