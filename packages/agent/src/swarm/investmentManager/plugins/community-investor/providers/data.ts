@@ -1,4 +1,5 @@
 import {
+    elizaLogger,
     formatMessages,
     type IAgentRuntime,
     type Memory,
@@ -225,6 +226,7 @@ function extractActions(text: string) {
 }
 
 function jsonFormatter(_key: any, value: any) {
+    console.log('DEBUG: jsonFormatter', value)
     if (value instanceof Date) return value.toISOString();
     return value;
 }

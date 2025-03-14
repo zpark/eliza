@@ -863,7 +863,7 @@ export class DegenTradingService extends Service {
             signal.tokenAddress,
             tradeAmount
           );
-          
+
           logger.info(`Attempting to get quote (attempt ${i + 1}):`, {
             inputMint: "So11111111111111111111111111111111111111112",
             outputMint: signal.tokenAddress,
@@ -943,7 +943,7 @@ export class DegenTradingService extends Service {
           signature: extendedResult.signature,
           outAmount: extendedResult.outAmount || "unknown"
         });
-        
+
         // Track this trade for position management
         if (extendedResult.outAmount) {
           await this.trackPosition({
@@ -986,14 +986,14 @@ export class DegenTradingService extends Service {
   private async executeSellTask(options: any) {
     try {
       logger.info("Execute sell task", options);
-      
+
       const { signal } = options;
-      
+
       if (!signal) {
         logger.error("No signal data in sell task");
         return { success: false, error: "Missing signal data" };
       }
-      
+
       // Validate amounts before executing sell
       if (!signal.amount || Number(signal.amount) <= 0) {
         logger.warn("Invalid sell amount:", {
@@ -1002,7 +1002,7 @@ export class DegenTradingService extends Service {
         });
         return { success: false, error: "Invalid sell amount" };
       }
-      
+
       // Verify we have enough balance
       if (signal.currentBalance && Number(signal.amount) > Number(signal.currentBalance)) {
         logger.warn("Insufficient balance for sell:", {
@@ -1020,7 +1020,7 @@ export class DegenTradingService extends Service {
           signature: result.signature,
           receivedAmount: result.receivedAmount
         });
-        
+
         // Track slippage impact if we have expected and actual amounts
         if (result.receivedAmount && options.expectedReceiveAmount) {
           await this.trackSlippageImpact(
@@ -1199,7 +1199,7 @@ export class DegenTradingService extends Service {
         tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           updatedAt: Date.now(),
-          updateInterval: 900000, // Check every 15 minutes
+          updateInterval: 15 * 60 * 1000, // Check every 15 minutes
           repeat: true,
         },
       });
@@ -1214,7 +1214,7 @@ export class DegenTradingService extends Service {
         tags: ["queue", "repeat", ServiceTypes.DEGEN_TRADING],
         metadata: {
           updatedAt: Date.now(),
-          updateInterval: 300000, // Check every 5 minutes
+          updateInterval: 5 * 60 * 1000, // Check every 5 minutes
           repeat: true,
         },
       });
@@ -1239,6 +1239,7 @@ export class DegenTradingService extends Service {
     }
 
     try {
+
       // Validate configuration
       this.validateConfiguration();
 
@@ -3386,11 +3387,14 @@ export class DegenTradingService extends Service {
       const solData = await this.getTokenMarketData(
         "So11111111111111111111111111111111111111112"
       );
+      console.log('checkCircuitBreaker - 1')
 
       if (!solData.priceHistory || solData.priceHistory.length < 24) {
         logger.warn("Insufficient price history for circuit breaker check");
         return;
       }
+
+      console.log('checkCircuitBreaker - 2')
 
       // Calculate 1h price change
       const currentPrice = solData.price;
@@ -3398,8 +3402,12 @@ export class DegenTradingService extends Service {
       const priceChangePercent =
         ((currentPrice - priorPrice) / priorPrice) * 100;
 
+      console.log('checkCircuitBreaker - 3')
+
       // Calculate volatility
       const volatility = this.calculateVolatility(solData.priceHistory);
+
+      console.log('checkCircuitBreaker - 4')
 
       // Log market conditions
       logger.info("Market conditions", {
@@ -3443,6 +3451,7 @@ export class DegenTradingService extends Service {
         });
       }
     } catch (error) {
+      console.error('err', error)
       logger.error("Error checking circuit breaker conditions:", error);
     }
   }
@@ -3462,23 +3471,23 @@ export class DegenTradingService extends Service {
     try {
       // Get token market data
       const tokenData = await this.getTokenPrice(tokenAddress);
-      
+
       // Start with base slippage from config
       let slippage = this.tradingConfig.slippageSettings.baseSlippage;
-      
+
       // Calculate relative trade size as percentage of token liquidity
       const tradeValue = isSell
         ? tradeAmount * tokenData.price  // For selling, convert token amount to SOL value
         : tradeAmount;                    // For buying, already in SOL
-        
+
       const liquidityPercentage = (tradeValue / tokenData.liquidity) * 100;
-      
+
       // Liquidity adjustment: Increase slippage as trade size approaches significant % of liquidity
       if (liquidityPercentage > 0.1) {
         // If trade is more than 0.1% of liquidity, start increasing slippage
         const liquidityFactor = liquidityPercentage ** 1.5 * this.tradingConfig.slippageSettings.liquidityMultiplier;
         slippage += liquidityFactor * 0.01; // Scale appropriately
-        
+
         logger.info('Liquidity-based slippage adjustment', {
           tokenAddress,
           liquidityPercentage: `${liquidityPercentage.toFixed(2)}%`,
@@ -3486,14 +3495,14 @@ export class DegenTradingService extends Service {
           adjustedSlippage: slippage
         });
       }
-      
+
       // Volume adjustment: Lower slippage for tokens with higher volume relative to market cap
       const volumeToMcapRatio = tokenData.volume24h / tokenData.marketCap;
       if (volumeToMcapRatio > 0.05) {
         // High volume tokens can handle lower slippage
         const volumeDiscount = Math.min(volumeToMcapRatio * 5, 0.5) * this.tradingConfig.slippageSettings.volumeMultiplier;
         slippage = Math.max(slippage - volumeDiscount, this.tradingConfig.slippageSettings.baseSlippage * 0.5);
-        
+
         logger.info('Volume-based slippage adjustment', {
           tokenAddress,
           volumeToMcapRatio,
@@ -3501,26 +3510,26 @@ export class DegenTradingService extends Service {
           adjustedSlippage: slippage
         });
       }
-      
+
       // Apply token-specific adjustments for known tokens with special characteristics
       if (await this.hasSpecialSlippageRequirement(tokenAddress)) {
         // Some tokens need special handling due to specific tokenomics (e.g., tax tokens)
         const specialAdjustment = await this.getSpecialSlippageAdjustment(tokenAddress);
         slippage += specialAdjustment;
-        
+
         logger.info('Special token slippage adjustment', {
           tokenAddress,
           specialAdjustment,
           adjustedSlippage: slippage
         });
       }
-      
+
       // Cap slippage at maximum allowed value
       const finalSlippage = Math.min(slippage, this.tradingConfig.slippageSettings.maxSlippage);
-      
+
       // Convert percentage to basis points
       const slippageBps = Math.floor(finalSlippage * 100);
-      
+
       logger.info('Calculated dynamic slippage', {
         tokenAddress,
         tradeAmount,
@@ -3530,19 +3539,19 @@ export class DegenTradingService extends Service {
         finalSlippage,
         slippageBps
       });
-      
+
       return slippageBps;
     } catch (error) {
       logger.error('Error calculating dynamic slippage', {
         tokenAddress,
         error: error instanceof Error ? error.message : String(error)
       });
-      
+
       // Fall back to a safe default slippage in case of error
       return 100; // 1% as fallback
     }
   }
-  
+
   /**
    * Check if token has special slippage requirements
    */
@@ -3551,7 +3560,7 @@ export class DegenTradingService extends Service {
     const specialTokens = await this.runtime.databaseAdapter.getCache<string[]>('special_slippage_tokens') || [];
     return specialTokens.includes(tokenAddress);
   }
-  
+
   /**
    * Get special slippage adjustment for a token with unique characteristics
    */
@@ -3562,18 +3571,18 @@ export class DegenTradingService extends Service {
         slippageAdjustment: number;
         reason: string;
       }>(`token_slippage:${tokenAddress}`);
-      
+
       if (tokenData) {
         return tokenData.slippageAdjustment;
       }
-      
+
       // For tax tokens, you might need higher slippage
       // This would require knowledge of token tax rates from external sources
       const taxInfo = await this.fetchTokenTaxInfo(tokenAddress);
       if (taxInfo?.hasTax) {
         return taxInfo.taxPercentage * 1.5; // Add buffer above tax rate
       }
-      
+
       return 0;
     } catch (error) {
       logger.error('Error getting special slippage adjustment', {
@@ -3583,7 +3592,7 @@ export class DegenTradingService extends Service {
       return 0;
     }
   }
-  
+
   /**
    * Fetch information about token taxes
    */
@@ -3594,16 +3603,16 @@ export class DegenTradingService extends Service {
     try {
       // This would typically call an external API or service that tracks token taxes
       // For now, we'll implement a simple cache-based approach
-      
+
       const cachedInfo = await this.runtime.databaseAdapter.getCache<{
         hasTax: boolean;
         taxPercentage: number;
       }>(`token_tax:${tokenAddress}`);
-      
+
       if (cachedInfo) {
         return cachedInfo;
       }
-      
+
       // Default to no tax if we don't have data
       return { hasTax: false, taxPercentage: 0 };
     } catch (error) {
@@ -3620,7 +3629,7 @@ export class DegenTradingService extends Service {
    */
   private async trackSlippageImpact(
     tokenAddress: string,
-    expectedAmount: string, 
+    expectedAmount: string,
     actualAmount: string,
     slippageBpsUsed: number,
     isSell: boolean
@@ -3629,7 +3638,7 @@ export class DegenTradingService extends Service {
       // Convert amounts to numbers for calculation
       const expected = Number(expectedAmount);
       const actual = Number(actualAmount);
-      
+
       if (expected <= 0 || actual <= 0) {
         logger.warn('Invalid amounts for slippage tracking', {
           tokenAddress,
@@ -3638,16 +3647,16 @@ export class DegenTradingService extends Service {
         });
         return;
       }
-      
+
       // Calculate actual slippage as percentage
       // For buys: (expected - actual) / expected
       // For sells: (expected - actual) / expected
       const actualSlippage = ((expected - actual) / expected) * 100;
       const actualSlippageBps = Math.floor(actualSlippage * 100);
-      
+
       // Get token data for context
       const tokenData = await this.getTokenPrice(tokenAddress);
-      
+
       // Store slippage data for this trade
       await this.runtime.databaseAdapter.setCache(`slippage_impact:${tokenAddress}:${Date.now()}`, {
         tokenAddress,
@@ -3661,7 +3670,7 @@ export class DegenTradingService extends Service {
         liquidity: tokenData.liquidity,
         volume24h: tokenData.volume24h
       });
-      
+
       // Log slippage impact
       logger.info('Trade slippage impact', {
         tokenAddress,
@@ -3670,7 +3679,7 @@ export class DegenTradingService extends Service {
         slippageEfficiency: actualSlippageBps / slippageBpsUsed,
         isSell
       });
-      
+
       // Periodically optimize slippage parameters based on historical data
       await this.maybeOptimizeSlippageParameters();
     } catch (error) {
@@ -3680,7 +3689,7 @@ export class DegenTradingService extends Service {
       });
     }
   }
-  
+
   /**
    * Optimize slippage parameters based on historical trade data
    */
@@ -3689,20 +3698,20 @@ export class DegenTradingService extends Service {
       // Only run this occasionally to avoid excessive processing
       const lastOptimizationTime = await this.runtime.databaseAdapter.getCache<number>('last_slippage_optimization');
       const now = Date.now();
-      
+
       if (lastOptimizationTime && now - lastOptimizationTime < 24 * 60 * 60 * 1000) {
         // Don't optimize more than once per day
         return;
       }
-      
+
       // Get all slippage impact records from the last 7 days
       const cutoffTime = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
-      
+
       // Get all keys with the slippage_impact prefix
       // Note: This assumes the database adapter has a method to get keys by prefix
       // If not available, we can use a different approach like storing an index of all slippage records
       const slippageKeys = await this.runtime.databaseAdapter.getCache<string[]>('slippage_impact_keys') || [];
-      
+
       // Get all records
       const allRecords: Array<{key: string, value: any}> = [];
       for (const key of slippageKeys) {
@@ -3711,33 +3720,33 @@ export class DegenTradingService extends Service {
           allRecords.push({ key, value });
         }
       }
-      
+
       if (allRecords.length < 10) {
         // Need more data for meaningful optimization
         return;
       }
-      
+
       // Filter recent records
       const recentRecords = allRecords.filter(record => {
         const data = record.value;
         return data.timestamp >= cutoffTime;
       });
-      
+
       if (recentRecords.length < 10) {
         return;
       }
-      
+
       // Analyze records to find optimal parameters
       const liquidityBuckets: Record<string, Array<any>> = {
         'low': [],    // Low liquidity tokens
         'medium': [], // Medium liquidity tokens
         'high': []    // High liquidity tokens
       };
-      
+
       // Group records by liquidity level
       for (const record of recentRecords) {
         const data = record.value;
-        
+
         if (data.liquidity < 10000) {
           liquidityBuckets.low.push(data);
         } else if (data.liquidity < 100000) {
@@ -3746,7 +3755,7 @@ export class DegenTradingService extends Service {
           liquidityBuckets.high.push(data);
         }
       }
-      
+
       // Calculate optimal slippage multipliers for each bucket
       const optimizedSettings = {
         baseSlippage: this.tradingConfig.slippageSettings.baseSlippage,
@@ -3754,11 +3763,11 @@ export class DegenTradingService extends Service {
         liquidityMultiplier: this.tradingConfig.slippageSettings.liquidityMultiplier,
         volumeMultiplier: this.tradingConfig.slippageSettings.volumeMultiplier
       };
-      
+
       // Adjust liquidity multiplier based on low liquidity token performance
       if (liquidityBuckets.low.length >= 5) {
         const lowLiquidityEfficiency = this.calculateAverageSlippageEfficiency(liquidityBuckets.low);
-        
+
         if (lowLiquidityEfficiency > 0.9) {
           // We're using too much slippage, can decrease
           optimizedSettings.liquidityMultiplier = Math.max(0.5, optimizedSettings.liquidityMultiplier * 0.9);
@@ -3767,16 +3776,16 @@ export class DegenTradingService extends Service {
           optimizedSettings.liquidityMultiplier = Math.min(2.0, optimizedSettings.liquidityMultiplier * 1.1);
         }
       }
-      
+
       // Adjust volume multiplier based on high volume token performance
       const highVolumeRecords = recentRecords.filter(record => {
         const data = record.value;
         return data.volume24h / data.liquidity > 0.3; // High volume relative to liquidity
       });
-      
+
       if (highVolumeRecords.length >= 5) {
         const highVolumeEfficiency = this.calculateAverageSlippageEfficiency(highVolumeRecords);
-        
+
         if (highVolumeEfficiency > 0.9) {
           // We're using too much slippage for high volume tokens
           optimizedSettings.volumeMultiplier = Math.max(0.5, optimizedSettings.volumeMultiplier * 0.9);
@@ -3785,17 +3794,17 @@ export class DegenTradingService extends Service {
           optimizedSettings.volumeMultiplier = Math.min(2.0, optimizedSettings.volumeMultiplier * 1.1);
         }
       }
-      
+
       // Update slippage settings if changed
       if (
         optimizedSettings.liquidityMultiplier !== this.tradingConfig.slippageSettings.liquidityMultiplier ||
         optimizedSettings.volumeMultiplier !== this.tradingConfig.slippageSettings.volumeMultiplier
       ) {
         this.tradingConfig.slippageSettings = optimizedSettings;
-        
+
         // Store updated settings
         await this.runtime.databaseAdapter.setCache('slippage_settings', optimizedSettings);
-        
+
         logger.info('Optimized slippage parameters', {
           previousSettings: {
             liquidityMultiplier: this.tradingConfig.slippageSettings.liquidityMultiplier,
@@ -3804,7 +3813,7 @@ export class DegenTradingService extends Service {
           optimizedSettings
         });
       }
-      
+
       // Update last optimization time
       await this.runtime.databaseAdapter.setCache('last_slippage_optimization', now);
     } catch (error) {
@@ -3813,19 +3822,19 @@ export class DegenTradingService extends Service {
       });
     }
   }
-  
+
   /**
    * Calculate average slippage efficiency for a set of trade records
    */
   private calculateAverageSlippageEfficiency(records: any[]): number {
     if (records.length === 0) return 0;
-    
+
     const efficiencies = records.map(record => {
       // Efficiency = actual slippage / configured slippage
       // Lower value is better (used less of allowed slippage)
       return record.actualSlippageBps / record.slippageBpsUsed;
     });
-    
+
     // Remove outliers
     const sortedEfficiencies = [...efficiencies].sort((a, b) => a - b);
     const q1Index = Math.floor(sortedEfficiencies.length * 0.25);
@@ -3835,9 +3844,9 @@ export class DegenTradingService extends Service {
     const iqr = q3 - q1;
     const lowerBound = q1 - 1.5 * iqr;
     const upperBound = q3 + 1.5 * iqr;
-    
+
     const filteredEfficiencies = efficiencies.filter(e => e >= lowerBound && e <= upperBound);
-    
+
     // Calculate average of non-outlier values
     return filteredEfficiencies.reduce((sum, val) => sum + val, 0) / filteredEfficiencies.length;
   }
@@ -3854,7 +3863,7 @@ export class DegenTradingService extends Service {
         logger.error("No private key available for wallet");
         return null;
       }
-      
+
       // Create and return wallet instance
       // This is a placeholder - actual implementation would depend on your wallet structure
       return {
@@ -3868,7 +3877,7 @@ export class DegenTradingService extends Service {
               dex: "jupiter",
               action: "BUY",
             });
-            
+
             return result;
           } catch (error) {
             logger.error("Error executing buy in wallet", error);
@@ -3885,7 +3894,7 @@ export class DegenTradingService extends Service {
               dex: "jupiter",
               action: "SELL",
             });
-            
+
             return result;
           } catch (error) {
             logger.error("Error executing sell in wallet", error);
@@ -3898,7 +3907,7 @@ export class DegenTradingService extends Service {
       return null;
     }
   }
-  
+
   /**
    * Tracks a position for later management
    */
@@ -3926,7 +3935,7 @@ export class DegenTradingService extends Service {
         },
         "positions"
       );
-      
+
       logger.info("Position tracked successfully", { positionId: position.positionId });
       return true;
     } catch (error) {
@@ -3941,8 +3950,8 @@ export class DegenTradingService extends Service {
   async handleSellSignal(
     signal: SellSignalMessage
   ): Promise<{
-    success: boolean; 
-    signature?: string; 
+    success: boolean;
+    signature?: string;
     error?: string;
     receivedAmount?: string;
     receivedValue?: string;
@@ -3966,20 +3975,20 @@ export class DegenTradingService extends Service {
 
         // Convert token amount to number for calculations
         const sellAmountNum = Number(sellAmount);
-        
+
         // Calculate dynamic slippage based on token metrics and trade size
         const slippageBps = Number(await this.calculateDynamicSlippage(
           tokenAddress,
           sellAmountNum
         ));
-        
+
         logger.info("Getting quote for sell with dynamic slippage", {
           tokenAddress,
           inputAmount: sellAmount,
           slippageBps,
           dynamicSlippageApplied: true
         });
-        
+
         // Get quote
         const _quoteResponse = await this.getQuote({
           inputMint: tokenAddress,
@@ -4016,7 +4025,7 @@ export class DegenTradingService extends Service {
             signature: result.signature,
             receivedAmount: result.receivedAmount || "unknown"
           });
-          
+
           return {
             success: true,
             signature: result.signature,
@@ -4054,7 +4063,7 @@ export class DegenTradingService extends Service {
 
       // Add expected out amount based on quote
       let expectedOutAmount = null;
-      
+
       // Only try to get expected amount if we have a trade amount
       if (tradeAmount) {
         try {
@@ -4064,7 +4073,7 @@ export class DegenTradingService extends Service {
               signal.tokenAddress
             }&amount=${Math.round(tradeAmount * 1e9)}&slippageBps=0`
           );
-          
+
           if (quoteResponse.ok) {
             const quoteData = await quoteResponse.json();
             expectedOutAmount = quoteData.outAmount;
@@ -4086,7 +4095,7 @@ export class DegenTradingService extends Service {
           signal,
           tradeAmount,
           expectedOutAmount,
-          updatedAt: Date.now(),
+          updatedAt: new Date().toISOString(),
         },
       });
 
@@ -4102,14 +4111,14 @@ export class DegenTradingService extends Service {
   private async executeBuyTask(options: any) {
     try {
       logger.info("Execute buy task", options);
-      
+
       const { signal, tradeAmount } = options;
-      
+
       if (!signal) {
         logger.error("No signal data in buy task");
         return { success: false, error: "Missing signal data" };
       }
-      
+
       // Create a complete buy signal with the trade amount
       const buySignal = {
         ...signal,
@@ -4133,7 +4142,7 @@ export class DegenTradingService extends Service {
           signature: result.signature,
           outAmount: result.outAmount
         });
-        
+
         // Track slippage impact if we have expected and actual amounts
         if (result.outAmount && options.expectedOutAmount) {
           await this.trackSlippageImpact(
@@ -4156,18 +4165,18 @@ export class DegenTradingService extends Service {
       return { success: false, error: error.message };
     }
   }
-  
+
   /**
    * Creates a task for selling
    */
   async createSellTask(signal: SellSignalMessage) {
     try {
-      logger.info("Creating sell task", { 
+      logger.info("Creating sell task", {
         tokenAddress: signal.tokenAddress,
         amount: signal.amount,
         currentBalance: signal.currentBalance
       });
-      
+
       // Fetch expected receive amount (USDC) for this sell
       let expectedReceiveAmount = "0";
       try {
@@ -4175,10 +4184,10 @@ export class DegenTradingService extends Service {
         const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${signal.tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=${Math.round(Number(signal.amount) * 1e9)}&slippageBps=0`;
         const quoteResponse = await fetch(quoteUrl);
         const quoteData = await quoteResponse.json();
-        
+
         if (quoteData?.outAmount) {
           expectedReceiveAmount = quoteData.outAmount;
-          logger.info("Expected receive amount for sell", { 
+          logger.info("Expected receive amount for sell", {
             expectedReceiveAmount,
             tokenAddress: signal.tokenAddress
           });
@@ -4186,10 +4195,10 @@ export class DegenTradingService extends Service {
       } catch (error) {
         logger.warn("Failed to fetch expected receive amount for sell", error);
       }
-      
+
       // Calculate slippage synchronously
       const slippage = await this.calculateDynamicSlippage(signal.tokenAddress, Number(signal.amount));
-      
+
       const taskId = uuidv4() as UUID;
       await this.runtime.databaseAdapter.createTask({
         id: taskId,
@@ -4202,7 +4211,7 @@ export class DegenTradingService extends Service {
           slippageBps: Number(slippage)
         },
       });
-      
+
       logger.info("Sell task created", { taskId });
       return { success: true, taskId };
     } catch (error) {

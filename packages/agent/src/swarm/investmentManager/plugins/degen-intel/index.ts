@@ -4,10 +4,10 @@ import { registerTasks } from "./tasks";
 
 // create a new plugin
 export const degenIntelPlugin: Plugin = {
-	name: "degen-intel",
+  name: "degen-intel",
     description: "Degen Intel plugin",
-	routes,
-	init: async (_, runtime: IAgentRuntime) => {
-		await registerTasks(runtime);
-	}
+  routes,
+  init: async (_, runtime: IAgentRuntime) => {
+    await registerTasks(runtime);
+  }
 };

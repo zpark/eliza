@@ -1,8 +1,7 @@
-import { type IAgentRuntime, logger, ModelTypes } from "@elizaos/core";
+import { parseJSONObjectFromText, type IAgentRuntime, logger, ModelTypes } from "@elizaos/core";
 import type { Sentiment } from "../schemas";
 import type { IToken } from "../types";
 
-const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
 const rolePrompt = "You are a buy signal analyzer.";
 const template = `
 
@@ -29,115 +28,130 @@ buy_amount: "number, for example: 0.1"
 }`;
 
 interface IBuySignalOutput {
-	recommended_buy: string;
-	recommend_buy_address: string;
-	marketcap: number;
-	reason: string;
-	buy_amount: string;
+  recommended_buy: string;
+  recommend_buy_address: string;
+  marketcap: number;
+  reason: string;
+  buy_amount: string;
 }
 
 export default class BuySignal {
-	apiKey: string;
-	runtime: IAgentRuntime;
-	constructor(runtime: IAgentRuntime) {
-		this.runtime = runtime;
-	}
+  apiKey: string;
+  runtime: IAgentRuntime;
+  constructor(runtime: IAgentRuntime) {
+    this.runtime = runtime;
+  }
 
-	async generateSignal(): Promise<boolean> {
-		logger.info("Updating latest buy signal");
-		/** Get all sentiments */
-		const sentimentsData = await this.runtime.databaseAdapter.getCache<Sentiment[]>("sentiments") || [];
-		let sentiments = "";
+  async generateSignal(): Promise<boolean> {
+    logger.info("buy-signal::generateSignal - Updating latest buy signal");
+    // Get all sentiments (TwitterParser fillTimeframe)
+    const sentimentsData = await this.runtime.databaseAdapter.getCache<Sentiment[]>("sentiments") || [];
+    console.log('sentimentsData', sentimentsData)
+    let sentiments = "";
 
-		let idx = 1;
-		for (const sentiment of sentimentsData) {
-			if (!sentiment?.occuringTokens?.length) continue;
-			sentiments += `ENTRY ${idx}\nTIME: ${sentiment.timeslot}\nTOKEN ANALYSIS:\n`;
-			for (const token of sentiment.occuringTokens) {
-				sentiments += `${token.token} - Sentiment: ${token.sentiment}\n${token.reason}\n`;
-			}
+    let idx = 1;
+    for (const sentiment of sentimentsData) {
+      if (!sentiment?.occuringTokens?.length) continue;
+      sentiments += `ENTRY ${idx}\nTIME: ${sentiment.timeslot}\nTOKEN ANALYSIS:\n`;
+      for (const token of sentiment.occuringTokens) {
+        sentiments += `${token.token} - Sentiment: ${token.sentiment}\n${token.reason}\n`;
+      }
 
-			sentiments += "\n-------------------\n";
-			idx++;
-		}
-		const prompt = template.replace("{{sentiment}}", sentiments);
+      sentiments += "\n-------------------\n";
+      idx++;
+    }
+    const prompt = template.replace("{{sentiment}}", sentiments);
 
-		/** Get all trending tokens */
-		const trendingData = await this.runtime.databaseAdapter.getCache<IToken[]>("tokens") || [];
-		let tokens = "";
-		let index = 1;
-		for (const token of trendingData) {
-			tokens += `ENTRY ${index}\n\nTOKEN SYMBOL: ${token.name}\nTOKEN ADDRESS: ${token.address}\nPRICE: ${token.price}\n24H CHANGE: ${token.price24hChangePercent}\nLIQUIDITY: ${token.liquidity}`;
-			tokens += "\n-------------------\n";
-			index++;
-		}
+    // Get all trending tokens
+    const trendingData = await this.runtime.databaseAdapter.getCache<IToken[]>("tokens") || [];
+    console.log('trendingData', trendingData)
+    let tokens = "";
+    let index = 1;
+    for (const token of trendingData) {
+      tokens += `ENTRY ${index}\n\nTOKEN SYMBOL: ${token.name}\nTOKEN ADDRESS: ${token.address}\nPRICE: ${token.price}\n24H CHANGE: ${token.price24hChangePercent}\nLIQUIDITY: ${token.liquidity}`;
+      tokens += "\n-------------------\n";
+      index++;
+    }
 
-		const solanaBalance = await this.getBalance();
+    const solanaBalance = await this.getBalance();
 
-		const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
+    const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
 
-		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-			context: finalPrompt,
-			system: rolePrompt,
-			temperature: 0.2,
-			maxTokens: 4096,
-			object: true
-		});
+    //console.log('rolePrompt', rolePrompt)
+    //console.log('context', finalPrompt)
 
-		// Parse the JSON response
-		const json = JSON.parse(response || "{}") as IBuySignalOutput;
+    const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
+      context: finalPrompt,
+      system: rolePrompt,
+      temperature: 0.2,
+      maxTokens: 4096,
+      object: true
+    });
 
-		/** Fetch the recommended buys current marketcap */
-		const options = {
-			method: "GET",
-			headers: {
-				accept: "application/json",
-				"x-chain": "solana",
-				"X-API-KEY": this.runtime.getSetting("BIRDEYE_API_KEY"),
-			},
-		};
+    //console.log('response', response)
 
-		const res = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${json.recommend_buy_address}`, options);
-		if (!res.ok) throw new Error("Birdeye marketcap request failed");
+    // Parse the JSON response
+    const json: IBuySignalOutput = parseJSONObjectFromText(response)
+    //const json = JSON.parse(response || "{}") as IBuySignalOutput;
+    //console.log('buysignal', json)
 
-		const resJson = await res.json();
-		const marketcap = resJson?.data?.realMc;
+    if (!json.recommend_buy_address) {
+      console.warn('buy-signal::generateSignal - no buy recommendation')
+      return false;
+    }
 
-		const data = {
-			...json,
-			marketcap: Number(marketcap),
-		};
+    // Fetch the recommended buys current marketcap
+    const options = {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        "x-chain": "solana",
+        "X-API-KEY": this.runtime.getSetting("BIRDEYE_API_KEY"),
+      },
+    };
 
-		await this.runtime.databaseAdapter.setCache<any>("buy_signals", {
-			key: "BUY_SIGNAL",
-			data
-		});
+    const res = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${json.recommend_buy_address}`, options);
+    if (!res.ok) throw new Error("Birdeye marketcap request failed");
 
-		return true;
-	}
+    const resJson = await res.json();
+    const marketcap = resJson?.data?.realMc;
 
-	async getBalance() {
-		const url = "https://zondra-wil7oz-fast-mainnet.helius-rpc.com";
-		const headers = {
-			"Content-Type": "application/json",
-		};
+    const data = {
+      ...json,
+      marketcap: Number(marketcap),
+    };
 
-		const data = {
-			jsonrpc: "2.0",
-			id: 1,
-			method: "getBalance",
-			params: [DEGEN_WALLET],
-		};
-		const response = await fetch(url, {
-			method: "POST",
-			headers: headers,
-			body: JSON.stringify(data),
-		});
+    await this.runtime.databaseAdapter.setCache<any>("buy_signals", {
+      key: "BUY_SIGNAL",
+      data
+    });
 
-		const result = await response.json();
+    return true;
+  }
 
-		const lamportsBalance = result?.result?.value;
+  async getBalance() {
+    // this.runtime.getSetting("BIRDEYE_API_KEY")
+    const url = "https://zondra-wil7oz-fast-mainnet.helius-rpc.com";
+    const headers = {
+      "Content-Type": "application/json",
+    };
 
-		return lamportsBalance / 1000000000;
-	}
+    const data = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBalance",
+      params: [this.runtime.getSetting("SOLANA_PUBLIC_KEY")],
+    };
+    const response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    const lamportsBalance = result?.result?.value;
+
+    return lamportsBalance / 1000000000;
+  }
 }

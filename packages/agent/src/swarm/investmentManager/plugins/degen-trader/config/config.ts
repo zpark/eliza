@@ -62,7 +62,36 @@ export const ZEROEX_CONFIG = {
 
 // Add required settings configuration
 export const REQUIRED_SETTINGS = {
-  SOLANA_PUBLIC_KEY: "Public key of the trading wallet"
+  SOLANA_RPC_URL: "Solana RPC endpoint URL",
+  SOLANA_PRIVATE_KEY: "Private key for trading wallet",
+  BIRDEYE_API_KEY: "API key for Birdeye data",
+  TRADER_SELL_KUMA: "Webhook URL for sell notifications",
+  // Add other required settings here
+};
+
+export const DEFAULT_CONFIG = {
+  intervals: {
+    priceCheck: 60000, // 1 minute
+    walletSync: 600000, // 10 minutes
+    performanceMonitor: 3600000, // 1 hour
+  },
+  thresholds: {
+    minLiquidity: 50000, // $50k minimum liquidity
+    minVolume: 100000, // $100k minimum 24h volume
+    minScore: 60, // Minimum token score
+  },
+  riskLimits: {
+    maxPositionSize: 0.2, // 20% of wallet
+    maxDrawdown: 0.1, // 10% maximum drawdown
+    stopLossPercentage: 0.05, // 5% stop loss
+    takeProfitPercentage: 0.2, // 20% take profit
+  },
+  slippageSettings: {
+    baseSlippage: 0.5, // 0.5% base slippage
+    maxSlippage: 1.0, // 1% maximum slippage
+    liquidityMultiplier: 1.0,
+    volumeMultiplier: 1.0,
+  },
 };
 
 export const SAFETY_LIMITS = {
