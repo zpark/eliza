@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / IIrysService
+[@elizaos/core v0.25.9](../index.md) / IIrysService
 
 # Interface: IIrysService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1279](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1279)
+[packages/core/src/types.ts:1280](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1280)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1284](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1284)
+[packages/core/src/types.ts:1285](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1285)
 
 ***
 
@@ -70,7 +70,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1489](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1489)
+[packages/core/src/types.ts:1490](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1490)
 
 ***
 
@@ -104,7 +104,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1494](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1494)
+[packages/core/src/types.ts:1495](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1495)
 
 ***
 
@@ -128,4 +128,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1505](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1505)
+[packages/core/src/types.ts:1506](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1506)

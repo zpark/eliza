@@ -158,6 +158,9 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@swc/core@1.11.4(@swc/helpers@0.5.15))(@types/node@22.13.5)(typescript@5.8.2)
+      undici:
+        specifier: ^7.4.0
+        version: 7.4.0
       yargs:
         specifier: 17.7.2
         version: 17.7.2
@@ -367,6 +370,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      lucide-react:
+        specifier: ^0.477.0
+        version: 0.477.0(react@18.3.1)
       lunr:
         specifier: 2.3.9
         version: 2.3.9
@@ -435,6 +441,9 @@ importers:
 
   packages/cli:
     dependencies:
+      axios:
+        specifier: ^1.8.1
+        version: 1.8.1
       commander:
         specifier: ^13.1.0
         version: 13.1.0
@@ -8296,6 +8305,11 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  lucide-react@0.477.0:
+    resolution: {integrity: sha512-yCf7aYxerFZAbd8jHJxjwe1j7jEMPptjnaOqdYeirFnEy85cNR3/L+o0I875CYFYya+eEVzZSbNuRk8BZPDpVw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   lunr-languages@1.14.0:
     resolution: {integrity: sha512-hWUAb2KqM3L7J5bcrngszzISY4BxrXn/Xhbb9TTCJYEGqlR1nG67/M14sp09+PTIRklobrn57IAxcdcO/ZFyNA==}
 
@@ -11516,6 +11530,10 @@ packages:
 
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+
+  undici@7.4.0:
+    resolution: {integrity: sha512-PUQM3/es3noM24oUn10u3kNNap0AbxESOmnssmW+dOi9yGwlUSi5nTNYl3bNbTkWOF8YZDkx2tCmj9OtQ3iGGw==}
+    engines: {node: '>=20.18.1'}
 
   unicode-9.0.0@0.7.0:
     resolution: {integrity: sha512-aqL0GQ3LB2nC3ZEKBZ93hfn7QY80sVGk+OT9Sc6lTxl4wRiwzUBRlAjJB9Fe4+5XydXOV+tb8udp5oRBoED5Tw==}
@@ -22432,6 +22450,10 @@ snapshots:
     dependencies:
       react: 19.0.0
 
+  lucide-react@0.477.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
   lunr-languages@1.14.0: {}
 
   lunr@2.3.9: {}
@@ -26478,6 +26500,8 @@ snapshots:
   undici-types@6.19.8: {}
 
   undici-types@6.20.0: {}
+
+  undici@7.4.0: {}
 
   unicode-9.0.0@0.7.0: {}
 
