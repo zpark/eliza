@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / getRelationship
+[@elizaos/core v0.25.9](../index.md) / getRelationship
 
 # Function: getRelationship()
 

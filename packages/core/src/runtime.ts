@@ -365,10 +365,10 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.imageModelProvider =
             this.character.imageModelProvider ?? this.modelProvider;
-        
+
         this.imageVisionModelProvider =
             this.character.imageVisionModelProvider ?? this.modelProvider;
-            
+
         elizaLogger.info(
           `${this.character.name}(${this.agentId}) - Selected model provider:`,
           this.modelProvider
@@ -493,7 +493,7 @@ export class AgentRuntime implements IAgentRuntime {
             elizaLogger.info(
                 `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge ? true : false}`,
             );
-            elizaLogger.info(
+            elizaLogger.debug(
                 `[RAG Check] Knowledge items:`,
                 this.character.knowledge,
             );
@@ -607,28 +607,42 @@ export class AgentRuntime implements IAgentRuntime {
      * @param knowledge An array of knowledge items containing id, path, and content.
      */
     private async processCharacterKnowledge(items: string[]) {
-        for (const item of items) {
-            const knowledgeId = stringToUuid(item);
-            const existingDocument =
-                await this.documentsManager.getMemoryById(knowledgeId);
-            if (existingDocument) {
-                continue;
+        const ids = items.map(i => stringToUuid(i));
+        const exists = await this.documentsManager.getMemoriesByIds(ids);
+        const toAdd = [];
+        for(const i in items) {
+          const exist = exists[i];
+          if (!exist) {
+            toAdd.push([items[i], ids[i]]);
+          }
+        }
+        if (!toAdd.length) return;
+        elizaLogger.info('discovered ' + toAdd.length + ' new knowledge items')
+        const chunkSize = 512;
+        const ps = [];
+        for (const a of toAdd) {
+            const item = a[0];
+            const knowledgeId = a[1];
+
+            if (item.length > chunkSize) {
+              // these are just slower
+              elizaLogger.info(
+                  this.character.name,
+                  " knowledge item over 512 characters, splitting - ",
+                  item.slice(0, 100),
+              );
             }
 
-            elizaLogger.info(
-                "Processing knowledge for ",
-                this.character.name,
-                " - ",
-                item.slice(0, 100),
-            );
-
-            await knowledge.set(this, {
+            ps.push(knowledge.set(this, {
                 id: knowledgeId,
                 content: {
                     text: item,
                 },
-            });
+            }));
         }
+        // wait for it all to be added
+        await Promise.all(ps);
+        elizaLogger.success(this.character.name, 'knowledge is synchronized');
     }
 
     /**
@@ -1796,12 +1810,12 @@ const formatKnowledge = (knowledge: KnowledgeItem[]) => {
     return knowledge.map(item => {
         // Get the main content text
         const text = item.content.text;
-        
+
         // Clean up formatting but maintain natural text flow
         const cleanedText = text
             .trim()
             .replace(/\n{3,}/g, '\n\n'); // Replace excessive newlines
-            
+
         return cleanedText;
     }).join('\n\n'); // Separate distinct pieces with double newlines
 };

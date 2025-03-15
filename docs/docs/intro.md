@@ -12,7 +12,7 @@ _As seen powering [@DegenSpartanAI](https://x.com/degenspartanai) and [@aixvc_ag
 Eliza is a powerful multi-agent simulation framework designed to create, deploy, and manage autonomous AI agents. Built with TypeScript, it provides a flexible and extensible platform for developing intelligent agents that can interact across multiple platforms while maintaining consistent personalities and knowledge.
 
 - [Technical Report (Whitepaper)](https://arxiv.org/pdf/2501.06781)
-- [Examples (Awesome Eliza)](https://github.com/thejoven/awesome-eliza)
+- [Examples (Awesome Eliza)](https://github.com/elizaos/awesome-eliza)
 
 ## Key Features
 
@@ -94,7 +94,7 @@ Eliza is backed by an active community of developers and users:
 
 - [**Open Source**](https://github.com/elizaos/eliza): Contribute to the project on GitHub
 - [**Examples**](https://github.com/elizaos/characters): Ready-to-use character templates and implementations
-- [**Support**](https://discord.gg/elizaos): Active communityfor troubleshooting and discussion
+- [**Support**](https://discord.gg/elizaos): Active community for troubleshooting and discussion
 
 Join us in building the future of autonomous AI agents with Eliza!
 
@@ -102,4 +102,3 @@ Join us in building the future of autonomous AI agents with Eliza!
 
 - [Create Your First Agent](../quickstart)
 - [Understand Core Concepts](../core/agents)
-- [Explore Advanced Features](./guides/advanced.md)
