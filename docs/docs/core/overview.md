@@ -4,16 +4,30 @@ sidebar_position: 1
 
 # Overview
 
+
 Eliza is a framework for creating AI agents that can interact across multiple platforms.
 
  **Features**
 - **Modular Design**: Plugins and services allow for flexible customization.
-- **Scalable Knowledge**: Supports both RAG-based and direct knowledge processing.
+- **Knowledge**: Supports both RAG-based and direct knowledge processing.
 - **Stateful Interactions**: Maintains context across conversations.
 - **Multi-Agent Support**: Supports running multiple agents with distinct configurations.
 - **Multi-Platform Support**: Integrates with various clients (e.g., Discord, Telegram).
 
-This document provides a high-level overview of the system architecture and how components work together.
+Eliza consists of these core components:
+- **Agents (Runtime)**: AI personalities that interact with users and platforms
+- **Actions**: Executable behaviors that agents can perform in response to messages
+- **Clients**: Platform connectors for services like Discord, Twitter, and Telegram 
+- **Plugins**: Modular extensions that add new features and capabilities
+- **Providers**: Services that supply contextual information to agents
+- **Evaluators**: Modules that analyze conversations and track agent goals
+- **Character Files**: JSON configurations that define agent personalities
+- **Memory System**: Database that stores and manages agent information using vector embeddings
+
+Here's an overview of how eliza works from user input to response generation:
+![](/img/overview.png)
+Source: https://x.com/gelatonetwork/status/1894408632915169618
+
 
 ---
 

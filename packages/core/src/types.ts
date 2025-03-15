@@ -1191,6 +1191,7 @@ export interface IMemoryManager {
         content: string,
     ): Promise<{ embedding: number[]; levenshtein_score: number }[]>;
 
+    getMemoriesByIds(ids: UUID[]): Promise<Memory[]>;
     getMemoryById(id: UUID): Promise<Memory | null>;
     getMemoriesByRoomIds(params: {
         roomIds: UUID[];

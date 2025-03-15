@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / IrysTimestamp
+[@elizaos/core v0.25.9](../index.md) / IrysTimestamp
 
 # Interface: IrysTimestamp
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1484](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1484)
+[packages/core/src/types.ts:1485](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1485)
 
 ***
 
@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1485](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1485)
+[packages/core/src/types.ts:1486](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1486)

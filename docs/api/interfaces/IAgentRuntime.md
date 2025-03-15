@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / IAgentRuntime
+[@elizaos/core v0.25.9](../index.md) / IAgentRuntime
 
 # Interface: IAgentRuntime
 
@@ -12,7 +12,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1289](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1289)
+[packages/core/src/types.ts:1290](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1290)
 
 ***
 
@@ -22,7 +22,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1290](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1290)
+[packages/core/src/types.ts:1291](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1291)
 
 ***
 
@@ -32,7 +32,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1291](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1291)
+[packages/core/src/types.ts:1292](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1292)
 
 ***
 
@@ -42,7 +42,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1292](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1292)
+[packages/core/src/types.ts:1293](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1293)
 
 ***
 
@@ -52,7 +52,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1293](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1293)
+[packages/core/src/types.ts:1294](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1294)
 
 ***
 
@@ -62,7 +62,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1294](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1294)
+[packages/core/src/types.ts:1295](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1295)
 
 ***
 
@@ -72,7 +72,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1295](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1295)
+[packages/core/src/types.ts:1296](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1296)
 
 ***
 
@@ -82,7 +82,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1296](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1296)
+[packages/core/src/types.ts:1297](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1297)
 
 ***
 
@@ -92,7 +92,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1297](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1297)
+[packages/core/src/types.ts:1298](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1298)
 
 ***
 
@@ -102,7 +102,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1298](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1298)
+[packages/core/src/types.ts:1299](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1299)
 
 ***
 
@@ -112,7 +112,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1299](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1299)
+[packages/core/src/types.ts:1300](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1300)
 
 ***
 
@@ -122,13 +122,13 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1300](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1300)
+[packages/core/src/types.ts:1301](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1301)
 
 ***
 
 ### fetch()?
 
-> `optional` **fetch**: (`input`, `init`?) => `Promise`\<`Response`\>(`input`, `init`?) => `Promise`\<`Response`\>
+> `optional` **fetch**: (`input`, `init`?) => `Promise`\<`Response`\>
 
 [MDN Reference](https://developer.mozilla.org/docs/Web/API/fetch)
 
@@ -142,19 +142,9 @@ Properties
 
 `Promise`\<`Response`\>
 
-#### Parameters
-
-• **input**: `string` \| `Request` \| `URL`
-
-• **init?**: `RequestInit`
-
-#### Returns
-
-`Promise`\<`Response`\>
-
 #### Defined in
 
-[packages/core/src/types.ts:1302](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1302)
+[packages/core/src/types.ts:1303](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1303)
 
 ***
 
@@ -164,7 +154,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1304](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1304)
+[packages/core/src/types.ts:1305](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1305)
 
 ***
 
@@ -174,7 +164,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1305](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1305)
+[packages/core/src/types.ts:1306](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1306)
 
 ***
 
@@ -184,7 +174,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1306](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1306)
+[packages/core/src/types.ts:1307](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1307)
 
 ***
 
@@ -194,7 +184,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1307](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1307)
+[packages/core/src/types.ts:1308](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1308)
 
 ***
 
@@ -204,7 +194,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1308](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1308)
+[packages/core/src/types.ts:1309](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1309)
 
 ***
 
@@ -214,7 +204,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1309](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1309)
+[packages/core/src/types.ts:1310](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1310)
 
 ***
 
@@ -224,7 +214,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1311](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1311)
+[packages/core/src/types.ts:1312](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1312)
 
 ***
 
@@ -234,7 +224,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1313](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1313)
+[packages/core/src/types.ts:1314](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1314)
 
 ***
 
@@ -244,7 +234,7 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1314](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1314)
+[packages/core/src/types.ts:1315](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1315)
 
 ## Methods
 
@@ -260,7 +250,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/types.ts:1318](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1318)
+[packages/core/src/types.ts:1319](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1319)
 
 ***
 
@@ -278,7 +268,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/types.ts:1320](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1320)
+[packages/core/src/types.ts:1321](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1321)
 
 ***
 
@@ -296,7 +286,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/types.ts:1322](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1322)
+[packages/core/src/types.ts:1323](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1323)
 
 ***
 
@@ -318,7 +308,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/types.ts:1324](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1324)
+[packages/core/src/types.ts:1325](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1325)
 
 ***
 
@@ -336,7 +326,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/types.ts:1326](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1326)
+[packages/core/src/types.ts:1327](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1327)
 
 ***
 
@@ -354,7 +344,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/types.ts:1328](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1328)
+[packages/core/src/types.ts:1329](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1329)
 
 ***
 
@@ -370,7 +360,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1331](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1331)
+[packages/core/src/types.ts:1332](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1332)
 
 ***
 
@@ -394,7 +384,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1333](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1333)
+[packages/core/src/types.ts:1334](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1334)
 
 ***
 
@@ -418,7 +408,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1340](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1340)
+[packages/core/src/types.ts:1341](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1341)
 
 ***
 
@@ -438,7 +428,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1347](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1347)
+[packages/core/src/types.ts:1348](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1348)
 
 ***
 
@@ -462,7 +452,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1349](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1349)
+[packages/core/src/types.ts:1350](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1350)
 
 ***
 
@@ -480,7 +470,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1356](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1356)
+[packages/core/src/types.ts:1357](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1357)
 
 ***
 
@@ -506,7 +496,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1358](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1358)
+[packages/core/src/types.ts:1359](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1359)
 
 ***
 
@@ -526,7 +516,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1366](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1366)
+[packages/core/src/types.ts:1367](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1367)
 
 ***
 
@@ -544,7 +534,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1368](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1368)
+[packages/core/src/types.ts:1369](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1369)
 
 ***
 
@@ -564,7 +554,7 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1370](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1370)
+[packages/core/src/types.ts:1371](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1371)
 
 ***
 
@@ -582,4 +572,4 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1375](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1375)
+[packages/core/src/types.ts:1376](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1376)

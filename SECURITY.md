@@ -48,13 +48,13 @@ We take the security of Eliza seriously. If you believe you have found a securit
 3. **Code Review**
     - All code changes must go through pull request review
     - Security-sensitive changes require additional review
-    - Enable branch protection on main branches
+    - Enable branch protection for main branches
 
 ### For Users
 
 1. **Environment Setup**
 
-    - Follow our [secrets management guide](docs/guides/secrets-management.md) for secure configuration
+    - Follow our [secrets management guide](docs/docs/guides/secrets-management.md) for secure configuration
     - Use separate API keys for development and production
     - Regularly rotate credentials
 

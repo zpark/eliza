@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / Character
+[@elizaos/core v0.25.9](../index.md) / Character
 
 # Type Alias: Character
 
