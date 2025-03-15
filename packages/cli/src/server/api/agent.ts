@@ -1132,20 +1132,21 @@ export function agentRouter(
 		}
 
 		try {
-			const { name, worldId, roomId, entityId } = req.body;
+			const { name, worldId, source } = req.body;
+			const roomId = createUniqueUuid(runtime, name);
 			const roomName = name || `Chat ${new Date().toLocaleString()}`;
 
 			await runtime.ensureRoomExists({
 				id: roomId,
 				name: roomName,
-				source: "client",
+				source,
 				type: ChannelType.API,
 				worldId,
 			});
 
 			await runtime.addParticipant(runtime.agentId, roomName);
-			await runtime.ensureParticipantInRoom(entityId, roomId);
-			await runtime.setParticipantUserState(roomId, entityId, "FOLLOWED");
+			await runtime.ensureParticipantInRoom(runtime.agentId, roomId);
+			await runtime.setParticipantUserState(roomId, runtime.agentId, "FOLLOWED");
 
 			res.status(201).json({
 				success: true,

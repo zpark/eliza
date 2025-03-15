@@ -1,15 +1,14 @@
-import type { Agent, UUID } from "@elizaos/core";
 import { Card, CardContent } from "./ui/card";
 import { formatAgentName } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch-button";
-// import { apiClient } from "@/lib/api";
-import { v4 as uuidv4 } from "uuid";
+import { apiClient } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
+import { type Agent, AgentStatus } from "@elizaos/core";
 
 interface GroupPanel {
     agents: Agent[] | undefined;
@@ -59,7 +58,7 @@ export default function GroupPanel({ onClose, agents }: GroupPanel) {
                                     <div className="font-light">Invite Agents</div>
                                     <div className="overflow-scroll">
                                         <div className="flex flex-col gap-4 pt-3">
-                                            {agents?.map((agent) => {
+                                            {agents?.filter((agent) => agent.status === AgentStatus.ACTIVE).map((agent) => {
                                                 return <div key={agent.id} className="bg-muted rounded-sm h-16">
                                                     <div className="flex w-full h-full justify-between items-center">
                                                         <div className="flex gap-2 items-center h-full w-full p-4">
@@ -100,24 +99,26 @@ export default function GroupPanel({ onClose, agents }: GroupPanel) {
                                 className={`w-[90%]`}
                                 onClick={async () => {
                                     setCreating(true);
-                                    const roomId = uuidv4() as UUID;
                                     try {
-                                        // await apiClient.createRoom(
-                                        //     agent.id,
-                                        //     chatName,
-                                        //     roomId
-                                        // );
-                                        // const selectedAgentIds = Object.keys(selectedAgents).filter(agentId => selectedAgents[agentId]);
+                                        const selectedAgentIds = Object.keys(selectedAgents).filter(agentId => selectedAgents[agentId]);
                                         
-                                        // if (selectedAgentIds.length > 0) {
-                                        //     await apiClient.createParticipants(roomId, selectedAgentIds);
-                                        // }
+                                        if (selectedAgentIds.length > 0) {
+                                            await Promise.all(
+                                                selectedAgentIds.map(async (agentId) => {
+                                                    await apiClient.createRoom(
+                                                        agentId, 
+                                                        chatName, 
+                                                        "client_group_chat"
+                                                    );
+                                                })
+                                            );
+                                        }
                                         // queryClient.invalidateQueries({ queryKey: ["rooms"] });
                                     } catch(error) {
                                         console.error("Failed to create room", error);
                                     } finally {
                                         setCreating(false);
-                                        navigate(`/room/${roomId}`)
+                                        navigate(`/room/?roomname=${chatName}`)
                                     }
                                 }}
                                 size={"default"}
