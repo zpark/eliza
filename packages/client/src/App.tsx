@@ -15,6 +15,7 @@ import Chat from "./routes/chat";
 import AgentCreatorRoute from "./routes/createAgent";
 import Home from "./routes/home";
 import Settings from "./routes/settings";
+import Room from "./routes/room";
 
 // Create a query client with optimized settings
 const queryClient = new QueryClient({
@@ -86,6 +87,7 @@ function App() {
 									<Route path="agents/new" element={<AgentCreatorRoute />} />
 									<Route path="/create" element={<AgentCreator />} />
 									<Route path="/logs" element={<LogViewer />} />
+									<Route path="room" element={<Room />} />
 								</Routes>
 							</SidebarInset>
 						</SidebarProvider>
