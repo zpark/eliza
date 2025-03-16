@@ -8,7 +8,7 @@ export class WebSocketRouter {
     private agents: Map<UUID, IAgentRuntime>;
     private server: AgentServer;
     private rooms: Map<UUID, UUID[]>;
-    private connections: Map<WebSocket, UUID>;
+    private connections: Map<WebSocket, {agentId: UUID, roomId: UUID}>;
 
     constructor(agents: Map<UUID, IAgentRuntime>, server: AgentServer) {
         this.agents = agents;
@@ -53,7 +53,7 @@ export class WebSocketRouter {
         const roomAgents = this.rooms.get(roomId);
         if (roomAgents && !roomAgents.includes(agentId)) {
             roomAgents.push(agentId);
-            this.connections.set(ws, agentId); // Track which WebSocket belongs to which agent
+            this.connections.set(ws, {agentId, roomId}); // Track which WebSocket belongs to which agent
             ws.send(JSON.stringify({ message: `Agent ${agentId} joined room ${roomId}.` }));
         } else {
             ws.send(JSON.stringify({ error: `Agent ${agentId} is already in room ${roomId}.` }));
@@ -74,9 +74,15 @@ export class WebSocketRouter {
         if (!roomAgents) {
             ws.send(JSON.stringify({ error: `No agents found.` }));
         }
+
         // Broadcast the message to all agents in the room except the sender and save it to memory.
-        for (const [clientWs, agentId] of this.connections.entries()) {
-            if (roomAgents.includes(agentId) && agentId !== senderId) {
+        for (const [clientWs, connection] of this.connections.entries()) {
+            const agentId = connection.agentId
+            if (
+                roomAgents.includes(agentId) && 
+                agentId !== senderId && 
+                connection.roomId === roomId
+            ) {
                 logger.info("[WebSocket server] Creating new message");
                 
                 // Retrieve the runtime instance
@@ -148,7 +154,7 @@ export class WebSocketRouter {
                     const userMessage = {
                         content,
                         entityId,
-                        roomId,
+                        roomId: uniqueRoomId,
                         agentId: runtime.agentId,
                     };
 
@@ -157,7 +163,7 @@ export class WebSocketRouter {
                         ...userMessage,
                         agentId: runtime.agentId,
                         entityId,
-                        roomId,
+                        roomId: uniqueRoomId,
                         content,
                         createdAt: Date.now(),
                     };
@@ -165,7 +171,8 @@ export class WebSocketRouter {
                     await runtime.addEmbeddingToMemory(memory);
                     logger.info("added embedding to memory");
                     await runtime.createMemory(memory, "messages");
-                    logger.info("created memory");
+                    console.log("created memory");
+                    
                 } catch (error) {
                     logger.error("Error processing message:", error.message);
                     ws.send(JSON.stringify({ error: `[WebSocket server] Error processing message` }));
@@ -184,23 +191,24 @@ export class WebSocketRouter {
     }
 
     handleClose(ws: WebSocket) {
-        const agentId = this.connections.get(ws);
+        const agentId = this.connections.get(ws).agentId;
+        const roomId = this.connections.get(ws).roomId;
         if (!agentId) return;
 
         this.connections.delete(ws); // Remove from active connections
 
         // Remove the agent from all rooms
-        for (const [roomId, agents] of this.rooms.entries()) {
-            const index = agents.indexOf(agentId);
-            if (index !== -1) {
-                agents.splice(index, 1);
-                logger.info(`[WebSocket Server] Agent ${agentId} removed from room ${roomId}`);
+        const roomAgents = this.rooms.get(roomId);
+        
+        const index = roomAgents.indexOf(agentId);
+        if (index !== -1) {
+            roomAgents.splice(index, 1);
+            logger.info(`[WebSocket Server] Agent ${agentId} removed from room ${roomId}`);
 
-                // If the room is now empty, delete it
-                if (agents.length === 0) {
-                    this.rooms.delete(roomId);
-                    logger.info(`[WebSocket Server] Room ${roomId} is now empty and deleted.`);
-                }
+            // If the room is now empty, delete it
+            if (roomAgents.length === 0) {
+                this.rooms.delete(roomId);
+                logger.info(`[WebSocket Server] Room ${roomId} is now empty and deleted.`);
             }
         }
 

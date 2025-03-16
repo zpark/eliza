@@ -7,7 +7,7 @@ import {
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { USER_NAME } from "@/constants";
-import { useAgent, useMessages } from "@/hooks/use-query-hooks";
+import { useAgent, useAgents, useMessages, useRooms } from "@/hooks/use-query-hooks";
 import { cn, getUserId, moment } from "@/lib/utils";
 import WebSocketsManager from "@/lib/websocket-manager";
 import { WorldManager } from "@/lib/world-manager";
@@ -112,32 +112,78 @@ function MessageContent({
   );
 }
 
-export default function Page({ agentId, roomName }: { agentId: UUID, roomName: string | null }) {
+export default function Page({ roomName }: { roomName: string | null }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [input, setInput] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [detailsTab, setDetailsTab] = useState<"actions" | "logs">("actions");
+
+  const [roomId, setRoomId] = useState<UUID | null>(null);
+  const [activeRoomIds, setActiveRoomIds] = useState<UUID[]>([]);
+  const [agentId, setAgentId] = useState<UUID | null>(null);
+  // const [messages, setMessages] = useState<Memory>([]);
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const queryClient = useQueryClient();
   const worldId = WorldManager.getWorldId();
 
-  const agentData = useAgent(agentId)?.data?.data;
+  // const agentId = "test";
+  // const agentData = useAgent(agentId)?.data?.data;
   const userId = getUserId();
-  const roomId = agentId;
+  // const roomId = agentId;
+  const { data: roomsData } = useRooms();
+  const {
+    data: { data: agentsData } = {},
+    isLoading,
+    isError,
+  } = useAgents();
+  const agents = agentsData?.agents || [];
+
 
   const { data: messages = [] } = useMessages(agentId, roomId);
 
   const wsManager = WebSocketsManager.getInstance();
 
-  useEffect(() => {
-    wsManager.connect(agentId, roomId);
-    wsManager.connect(userId, roomId);
 
+  useEffect(() => {
+    if (isLoading || isError || !agents || !agents.length || !roomsData) {
+      return;
+    }
+
+    console.log("Setting up agent-room mapping...");
+    let activeAgentId: UUID | null = null;
+    let activeRoomId: UUID | null = null;
+
+    if (roomsData) {
+      roomsData.forEach((data, name) => {
+        console.log(name, data)
+        if (name === roomName) {
+          data.forEach((roomData) => {
+            
+
+            const agentData = agents.find((agent) => agent.id === roomData.agentId);
+            if (agentData.status === AgentStatus.ACTIVE) {
+              setAgentId(roomData.agentId);
+              setRoomId(roomData.id);
+              setActiveRoomIds((prev) => [...prev, roomData.id]);
+              activeAgentId = roomData.agentId;
+              activeRoomId = roomData.id;
+
+              console.log("agent active", agentData.name, userId, roomData.id);
+
+              wsManager.connect(roomData.agentId, roomName);
+            }
+          })
+        }
+      });
+      wsManager.connect(userId, roomName as string);
+    }
+    
     const handleMessageBroadcasting = (data: ContentWithUser) => {
       queryClient.setQueryData(
-        ["messages", agentId, roomId, worldId],
+        ["messages", activeAgentId, activeRoomId, worldId],
         (old: ContentWithUser[] = []) => [
           ...old,
           { ...data, name: data.senderName },
@@ -150,7 +196,7 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
       wsManager.disconnectAll();
       wsManager.off("messageBroadcast", handleMessageBroadcasting);
     };
-  }, [roomId]);
+  }, [roomName]);
 
   const getMessageVariant = (role: string) =>
     role !== USER_NAME ? "received" : "sent";
@@ -180,14 +226,16 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
     e.preventDefault();
     if (!input) return;
 
-    wsManager.handleBroadcastMessage(
-      userId,
-      USER_NAME,
-      input,
-      roomId,
-      SOURCE_NAME
-    );
-
+    // activeRoomIds.forEach((roomId) => {
+      wsManager.handleBroadcastMessage(
+        userId,
+        USER_NAME,
+        input,
+        roomName as string,
+        SOURCE_NAME
+      );
+    // })
+    
     setSelectedFile(null);
     setInput("");
     formRef.current?.reset();
@@ -213,7 +261,7 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
   return (
     <div className="flex flex-col w-full h-screen p-4">
       {/* Agent Header */}
-      <div className="flex items-center justify-between mb-4 p-3 bg-card rounded-lg border">
+      {/* <div className="flex items-center justify-between mb-4 p-3 bg-card rounded-lg border">
         <div className="flex items-center gap-3">
           <Avatar className="size-10 border rounded-full">
             <AvatarImage
@@ -267,7 +315,7 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
         >
           <MenuIcon className="size-4" />
         </Button>
-      </div>
+      </div> */}
 
       <div className="flex flex-row w-full overflow-y-auto grow gap-4">
         {/* Main Chat Area */}
@@ -301,7 +349,7 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
                     }`}
                   >
                     <Avatar className="size-8 border rounded-full select-none">
-                      <AvatarImage
+                      {/* <AvatarImage
                         src={
                           isUser
                             ? "/user-icon.png"
@@ -309,7 +357,7 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
                             ? agentData?.settings?.avatar
                             : "/elizaos-icon.png"
                         }
-                      />
+                      /> */}
 
                       {isUser && <AvatarFallback>U</AvatarFallback>}
                     </Avatar>
@@ -430,10 +478,10 @@ export default function Page({ agentId, roomName }: { agentId: UUID, roomName: s
               </div>
 
               <TabsContent value="actions" className="overflow-y-scroll">
-                <AgentActionViewer agentId={agentId} roomId={roomId} />
+                {/* <AgentActionViewer agentId={agentId} roomId={roomId} /> */}
               </TabsContent>
               <TabsContent value="logs">
-                <LogViewer agentName={agentData?.name} level="all" hideTitle />
+                {/* <LogViewer agentName={agentData?.name} level="all" hideTitle /> */}
               </TabsContent>
             </Tabs>
           </div>

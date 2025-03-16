@@ -1509,16 +1509,19 @@ export function agentRouter(
 			state = await runtime.composeState(responseMessage, ["RECENT_MESSAGES"]);
 
 			const replyHandler = async (message: Content) => {
-				res.status(201).json({
-					success: true,
-					data: {
-						message,
-						messageId,
-						name: runtime.character.name,
-            			roomId: req.body.roomId,
-            			source,
-					},
-				});
+				if (!res.headersSent) {
+					res.status(201).json({
+						success: true,
+						data: {
+							message,
+							messageId,
+							name: runtime.character.name,
+							roomId: req.body.roomId,
+							source,
+						},
+					});
+				}
+				
 				return [memory];
 			};
 

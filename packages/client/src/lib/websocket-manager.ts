@@ -28,22 +28,28 @@ class WebSocketsManager extends EventEmitter {
     return WebSocketsManager.instance;
   }
 
+  public getSocketId (agentId: string, roomId: string) {
+    return `${agentId}:${roomId}`;
+  }
+
   connect(agentId: string, roomId: string): void {
-    if (this.sockets.has(agentId)) {
-      console.warn(`[WebSocket Client] WebSocket for agent ${agentId} already exists.`);
+    const socketId = this.getSocketId(agentId, roomId);
+
+    if (this.sockets.has(socketId)) {
+      console.warn(`[WebSocket Client] WebSocket for socket ${socketId} already exists.`);
       return;
     }
 
     const socket = new WebSocket(BASE_URL);
 
     const readyPromise = new Promise<void>((resolve) => {
-      this.resolveReadyMap.set(agentId, resolve);
+      this.resolveReadyMap.set(socketId, resolve);
     });
-    this.readyPromises.set(agentId, readyPromise);
+    this.readyPromises.set(socketId, readyPromise);
 
     socket.onopen = () => {
-      console.log(`[WebSocket Client] WebSocket connected for agent ${agentId}`);
-      this.resolveReadyMap.get(agentId)?.();
+      console.log(`[WebSocket Client] WebSocket connected for socket ${socketId}`);
+      this.resolveReadyMap.get(socketId)?.();
       const data = {
         type: SOCKET_MESSAGE_TYPE.ROOM_JOINING,
         payload: {
@@ -51,7 +57,7 @@ class WebSocketsManager extends EventEmitter {
           roomId,
         }
       };
-      this.sendMessage(agentId, data);
+      this.sendMessage(socketId, data);
     };
 
     socket.onmessage = async (event: MessageEvent) => {
@@ -82,34 +88,34 @@ class WebSocketsManager extends EventEmitter {
     };
 
     socket.onerror = (error: Event) => {
-      console.error(`[WebSocket Client] WebSocket error for agent ${agentId}:`, error);
+      console.error(`[WebSocket Client] WebSocket error for socket ${socketId}:`, error);
     };
 
     socket.onclose = (event: CloseEvent) => {
-      console.log(`[WebSocket Client] WebSocket closed for agent ${agentId}. Reason:`, event.reason);
+      console.log(`[WebSocket Client] WebSocket closed for socket ${socketId}. Reason:`, event.reason);
 
-      if (this.sockets.has(agentId)) {
-        console.warn(`[WebSocket Client] Unexpected WebSocket closure for agent ${agentId}, attempting to reconnect...`);
-        this.cleanupWebSocket(agentId);
+      if (this.sockets.has(socketId)) {
+        console.warn(`[WebSocket Client] Unexpected WebSocket closure for socket ${socketId}, attempting to reconnect...`);
+        this.cleanupWebSocket(socketId);
 
         setTimeout(() => {
-          this.connect(agentId, roomId);
+          this.connect(socketId, roomId);
         }, 3000);
         
       } else {
-        this.cleanupWebSocket(agentId);
+        this.cleanupWebSocket(socketId);
       }
     };
 
-    this.sockets.set(agentId, socket);
+    this.sockets.set(socketId, socket);
   }
 
-  async sendMessage(agentId: string, message: MessagePayload): Promise<void> {
-    const socket = this.sockets.get(agentId);
-    const readyPromise = this.readyPromises.get(agentId);
+  async sendMessage(socketId: string, message: MessagePayload): Promise<void> {
+    const socket = this.sockets.get(socketId);
+    const readyPromise = this.readyPromises.get(socketId);
 
     if (!socket) {
-      console.warn(`[WebSocket Client] Cannot send message, WebSocket for agent ${agentId} does not exist.`);
+      console.warn(`[WebSocket Client] Cannot send message, WebSocket for socket ${socketId} does not exist.`);
       return;
     }
 
@@ -118,21 +124,23 @@ class WebSocketsManager extends EventEmitter {
     if (socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(message));
     } else {
-      console.warn(`[WebSocket Client] WebSocket for agent ${agentId} is not open.`);
+      console.warn(`[WebSocket Client] WebSocket for socket ${socketId} is not open.`);
     }
   }
 
-  private cleanupWebSocket(agentId: string): void {
-    this.sockets.delete(agentId);
-    this.readyPromises.delete(agentId);
-    this.resolveReadyMap.delete(agentId);
+  private cleanupWebSocket(socketId: string): void {
+    this.sockets.delete(socketId);
+    this.readyPromises.delete(socketId);
+    this.resolveReadyMap.delete(socketId);
   }
 
   handleBroadcastMessage(senderId: string, senderName: string, text: string, roomId: string, source: string) {
     console.log(`[WebSocket Client] broadcast: ${senderId} broadcast ${text} to ${roomId}`)
     
     this.emit("messageBroadcast", { senderId, senderName, text, roomId, createdAt: Date.now(), source});
-    this.sendMessage(senderId, {
+    
+    const socketId = this.getSocketId(senderId, roomId);
+    this.sendMessage(socketId, {
       type: SOCKET_MESSAGE_TYPE.SEND_MESSAGE,
       payload: {
         senderId,
@@ -146,29 +154,29 @@ class WebSocketsManager extends EventEmitter {
 
   }
 
-  disconnect(agentId: string): void {
-    const socket = this.sockets.get(agentId);
+  disconnect(socketId: string): void {
+    const socket = this.sockets.get(socketId);
     if (socket) {
       socket.close();
-      this.sockets.delete(agentId);
-      this.readyPromises.delete(agentId);
-      this.resolveReadyMap.delete(agentId);
-      console.log(`[WebSocket Client] WebSocket for agent ${agentId} disconnected.`);
+      this.sockets.delete(socketId);
+      this.readyPromises.delete(socketId);
+      this.resolveReadyMap.delete(socketId);
+      console.log(`[WebSocket Client] WebSocket for socket ${socketId} disconnected.`);
     } else {
-      console.warn(`[WebSocket Client] No WebSocket found for agent ${agentId}.`);
+      console.warn(`[WebSocket Client] No WebSocket found for socket ${socketId}.`);
     }
   }
 
   disconnectAll(): void {
-    this.sockets.forEach((socket, agentId) => {
-      console.log(`[WebSocket Client] Closing WebSocket for agent ${agentId}`);
+    this.sockets.forEach((socket, socketId) => {
+      console.log(`[WebSocket Client] Closing WebSocket for socket ${socketId}`);
       
       if (socket.readyState === WebSocket.OPEN) {
-        this.cleanupWebSocket(agentId);
+        this.cleanupWebSocket(socketId);
         socket.close();
       } else {
-        this.cleanupWebSocket(agentId);
-        console.warn(`[WebSocket Client] WebSocket for agent ${agentId} is already closed or closing.`);
+        this.cleanupWebSocket(socketId);
+        console.warn(`[WebSocket Client] WebSocket for socket ${socketId} is already closed or closing.`);
       }
     });
   }

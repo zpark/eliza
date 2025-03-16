@@ -295,6 +295,9 @@ export function useMessages(
 	hasOlderMessages: boolean;
 	isLoadingMore: boolean;
 } {
+
+	console.log("get memeory from", agentId, roomId)
+
 	const queryClient = useQueryClient();
 	const worldId = WorldManager.getWorldId();
 	const [oldestMessageTimestamp, setOldestMessageTimestamp] = useState<
@@ -308,6 +311,7 @@ export function useMessages(
 		queryKey: ["messages", agentId, roomId, worldId],
 		queryFn: async () => {
 			const result = await apiClient.getMemories(agentId, roomId);
+			console.log("mesage resuttltlt", result);
 			return result.data.memories.map((memory: Memory) => ({
 			  text: memory.content.text,
 			  roomId: memory.roomId,
