@@ -493,9 +493,20 @@ export function useDeleteLog() {
 export function useRooms(options = {}) {
 	const network = useNetworkStatus();
 	
-	return useQuery<{ data: Room[] }>({
+	return useQuery<Map<string, Room[]>>({
 	  queryKey: ['rooms'],
-	  queryFn: () => apiClient.getRooms(),
+	  queryFn: async () => {
+		const rooms = await apiClient.getRooms();
+		const worldRooms = rooms.data.filter((room: Room) => room.worldId === WorldManager.getWorldId());
+
+		const roomMap: Map<string, Room[]> = new Map();
+		worldRooms.forEach((room: Room) => {
+			const { name, ...rest } = room;
+			roomMap.set(name, [...(roomMap.get(name) || []), { name, ...rest }]);
+		});
+	
+		return roomMap;
+	  },
 	  staleTime: STALE_TIMES.FREQUENT, 
 	  refetchInterval: !network.isOffline 
 		? STALE_TIMES.FREQUENT 
