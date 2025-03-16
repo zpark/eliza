@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import { useAgents } from "@/hooks/use-query-hooks";
+import { useAgents, useRooms } from "@/hooks/use-query-hooks";
 import info from "@/lib/info.json";
 import { formatAgentName } from "@/lib/utils";
 import { type Agent, AgentStatus } from "@elizaos/core";
@@ -26,6 +26,7 @@ export function AppSidebar() {
   const { data: { data: agentsData } = {}, isPending: isAgentsPending } =
     useAgents();
   const [isGroupPanelOpen, setIsGroupPanelOpen] = useState(false);
+  const { data: roomsData } = useRooms();
 
   return (
     <>
@@ -138,7 +139,7 @@ export function AppSidebar() {
                                         )}
                                       </div>
                                     </div>
-                                    <span className="text-base">
+                                    <span className="text-base truncate max-w-24">
                                       {agent.name}
                                     </span>
                                   </div>
@@ -191,16 +192,15 @@ export function AppSidebar() {
                             </SidebarMenuItem>
                           ))}
 
-                          {/* Render inactive section */}
-                          {inactiveAgents.length > 0 && (
-                            <div className="px-4 py-1 mt-8">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  Rooms
-                                </span>
-                              </div>
+                          
+                          <div className="px-4 py-1 mt-8">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                Rooms
+                              </span>
                             </div>
-                          )}
+                          </div>
+                          
 
                           <SidebarMenuItem>
                             <SidebarMenuButton
@@ -220,6 +220,30 @@ export function AppSidebar() {
                                 </span>
                               </div>
                             </SidebarMenuButton>
+                            {roomsData && Array.from(roomsData.keys()).map((roomName) => (
+                              <SidebarMenuItem key={roomName}>
+                                <NavLink to={`/room/?roomname=${roomName}`}>
+                                  <SidebarMenuButton
+                                    className="transition-colors px-4 my-4 rounded-md"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 flex justify-center items-center">
+                                        <div className="relative bg-muted rounded-full w-full h-full">
+                                          {roomName && (
+                                            <div className="text-sm rounded-full h-full w-full flex justify-center items-center overflow-hidden">
+                                              {formatAgentName(roomName)}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <span className="text-base truncate max-w-24">
+                                        {roomName}
+                                      </span>
+                                    </div>
+                                  </SidebarMenuButton>
+                                </NavLink>
+                              </SidebarMenuItem>
+                            ))}
                           </SidebarMenuItem>
                         </>
                       );
