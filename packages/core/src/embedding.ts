@@ -20,6 +20,7 @@ export const EmbeddingProvider = {
     GaiaNet: "GaiaNet",
     Heurist: "Heurist",
     BGE: "BGE",
+    Custom: "Custom",
 } as const;
 
 export type EmbeddingProviderType =
@@ -31,40 +32,63 @@ export type EmbeddingConfig = {
     readonly provider: EmbeddingProviderType;
 };
 
-export const getEmbeddingConfig = (): EmbeddingConfig => ({
-    dimensions:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? getEmbeddingModelSettings(ModelProviderName.OPENAI).dimensions
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).dimensions
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
-                ? getEmbeddingModelSettings(ModelProviderName.GAIANET)
-                      .dimensions
-                : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST)
-                        .dimensions
-                  : 384, // BGE
-    model:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
-                ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
-                : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
-                  : "BGE-small-en-v1.5",
-    provider:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? "OpenAI"
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? "Ollama"
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
-                ? "GaiaNet"
-                : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? "Heurist"
-                  : "BGE",
-});
+export const getEmbeddingConfig = (): EmbeddingConfig => {
+    // Check for custom embedding configuration first
+    if (settings.USE_CUSTOM_EMBEDDING?.toLowerCase() === "true") {
+        // Ensure all custom embedding settings are provided
+        if (!settings.CUSTOM_EMBEDDING_DIMENSIONS || !settings.CUSTOM_EMBEDDING_MODEL || 
+            !settings.CUSTOM_EMBEDDING_ENDPOINT || !settings.CUSTOM_EMBEDDING_API_KEY) {
+            elizaLogger.error("Custom embedding configuration error", {
+                dimensions: settings.CUSTOM_EMBEDDING_DIMENSIONS,
+                model: settings.CUSTOM_EMBEDDING_MODEL,
+                endpoint: settings.CUSTOM_EMBEDDING_ENDPOINT,
+                apiKey: settings.CUSTOM_EMBEDDING_API_KEY
+            });
+            throw new Error('Custom embedding enabled but missing required settings');
+        }
+        
+        return {
+            dimensions: Number(settings.CUSTOM_EMBEDDING_DIMENSIONS),
+            model: settings.CUSTOM_EMBEDDING_MODEL,
+            provider: EmbeddingProvider.Custom,
+        };
+    }
+
+    return {
+        dimensions:
+            settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OPENAI).dimensions
+                : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                  ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).dimensions
+                  : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+                    ? getEmbeddingModelSettings(ModelProviderName.GAIANET)
+                          .dimensions
+                    : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
+                      ? getEmbeddingModelSettings(ModelProviderName.HEURIST)
+                            .dimensions
+                      : 384, // BGE
+        model:
+            settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
+                : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                  ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
+                  : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+                    ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
+                    : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
+                      ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
+                      : "BGE-small-en-v1.5",
+        provider:
+            settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+                ? "OpenAI"
+                : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                  ? "Ollama"
+                  : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+                    ? "GaiaNet"
+                    : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
+                      ? "Heurist"
+                      : "BGE",
+    };
+};
 
 async function getRemoteEmbedding(
     input: string,
@@ -206,6 +230,15 @@ export async function embed(runtime: IAgentRuntime, input: string) {
 
     const config = getEmbeddingConfig();
     const isNode = typeof process !== "undefined" && process.versions?.node;
+  
+    if (config.provider === EmbeddingProvider.Custom) {
+      return await getRemoteEmbedding(input, {
+        model: config.model,
+        endpoint: settings.CUSTOM_EMBEDDING_ENDPOINT,
+        apiKey: settings.CUSTOM_EMBEDDING_API_KEY,
+        dimensions: config.dimensions,
+      });
+    }
 
     // Determine which embedding path to use
     if (config.provider === EmbeddingProvider.OpenAI) {
