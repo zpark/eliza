@@ -58,8 +58,8 @@ import {
 	type Media,
 	type Memory,
 	type MessagePayload,
+	ModelType,
 	type MessageReceivedHandlerParams,
-	ModelTypes,
 	type Plugin,
 	type WorldPayload,
 	asUUID
@@ -120,6 +120,7 @@ const messageReceivedHandler = async ({
 	message,
 	callback,
 }: MessageReceivedHandlerParams): Promise<void> => {
+	console.log('*** messageReceivedHandler for ' + runtime.character.name + ' ***', message)
 	// Generate a new response ID
 	const responseId = v4();
 	// Get or create the agent-specific map
@@ -214,7 +215,7 @@ const messageReceivedHandler = async ({
 				shouldRespondPrompt,
 			);
 
-			const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
+			const response = await runtime.useModel(ModelType.TEXT_SMALL, {
 				prompt: shouldRespondPrompt,
 			});
 
@@ -253,7 +254,7 @@ const messageReceivedHandler = async ({
 						!responseContent?.plan ||
 						!responseContent?.actions)
 				) {
-					const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
+					const response = await runtime.useModel(ModelType.TEXT_SMALL, {
 						prompt,
 					});
 
@@ -448,7 +449,7 @@ const postGeneratedHandler = async ({
 		template: runtime.character.templates?.postCreationTemplate || postCreationTemplate,
 	});
 	
-	const jsonResponse = await runtime.useModel(ModelTypes.OBJECT_LARGE, {
+	const jsonResponse = await runtime.useModel(ModelType.OBJECT_LARGE, {
 		prompt: tweetPrompt,
 		output: "no-schema",
 	});
@@ -474,7 +475,7 @@ const postGeneratedHandler = async ({
 	// Prepare media if included
 	// const mediaData: MediaData[] = [];
 	// if (jsonResponse.imagePrompt) {
-	// 	const images = await runtime.useModel(ModelTypes.IMAGE, {
+	// 	const images = await runtime.useModel(ModelType.IMAGE, {
 	// 		prompt: jsonResponse.imagePrompt,
 	// 		output: "no-schema",
 	// 	});

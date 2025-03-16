@@ -1,8 +1,15 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import type { GenerateTextParams, ObjectGenerationParams, Plugin } from "@elizaos/core";
-import { ModelTypes, logger } from "@elizaos/core";
+import type {
+	IAgentRuntime,
+	ObjectGenerationParams,
+	GenerateTextParams,
+	Plugin
+} from "@elizaos/core";
+import {
+	ModelType,
+	logger
+} from "@elizaos/core";
 import { generateText } from "ai";
-import { z } from "zod";
 
 // Define a configuration schema for the Anthropics plugin.
 // const configSchema = z.object({
@@ -65,7 +72,7 @@ export const anthropicPlugin: Plugin = {
 		}
 	},
 	models: {
-		[ModelTypes.TEXT_SMALL]: async (
+		[ModelType.TEXT_SMALL]: async (
 			runtime,
 			{ prompt, stopSequences = [] }: GenerateTextParams,
 		) => {
@@ -88,7 +95,7 @@ export const anthropicPlugin: Plugin = {
 		},
 
 		// TEXT_LARGE generation using Anthropics (e.g. using a "claude-3" model).
-		[ModelTypes.TEXT_LARGE]: async (
+		[ModelType.TEXT_LARGE]: async (
 			runtime,
 			{
 				prompt,
@@ -116,7 +123,7 @@ export const anthropicPlugin: Plugin = {
 			return text;
 		},
 
-		[ModelTypes.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
+		[ModelType.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
 			const smallModel = runtime.getSetting("ANTHROPIC_SMALL_MODEL") ?? "claude-3-5-haiku-latest";
 			try {
 				// Check if this is a reflection schema request (has specific format)
@@ -447,7 +454,7 @@ export const anthropicPlugin: Plugin = {
 					name: "anthropic_test_text_small",
 					fn: async (runtime) => {
 						try {
-							const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
+							const text = await runtime.useModel(ModelType.TEXT_SMALL, {
 								prompt: "What is the nature of reality in 10 words?",
 							});
 							if (text.length === 0) {
@@ -464,7 +471,7 @@ export const anthropicPlugin: Plugin = {
 					name: "anthropic_test_text_large",
 					fn: async (runtime) => {
 						try {
-							const text = await runtime.useModel(ModelTypes.TEXT_LARGE, {
+							const text = await runtime.useModel(ModelType.TEXT_LARGE, {
 								prompt: "What is the nature of reality in 10 words?",
 							});
 							if (text.length === 0) {

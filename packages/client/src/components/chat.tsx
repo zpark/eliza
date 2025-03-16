@@ -8,14 +8,14 @@ import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { USER_NAME } from "@/constants";
 import { useAgent, useMessages } from "@/hooks/use-query-hooks";
-import { cn, getUserId, moment } from "@/lib/utils";
-import WebSocketsManager from "@/lib/websocket-manager";
+import { cn, getEntityId, moment } from "@/lib/utils";
+import SocketIOManager from "@/lib/socketio-manager";
 import { WorldManager } from "@/lib/world-manager";
 import type { IAttachment } from "@/types";
-import type { Content, Memory, UUID } from "@elizaos/core";
+import type { Content, UUID } from "@elizaos/core";
 import { AgentStatus } from "@elizaos/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { Activity, MenuIcon, Paperclip, Send, Terminal, X } from "lucide-react";
+import { Activity, Database, PanelRight, Paperclip, Send, Terminal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AIWriter from "react-aiwriter";
 import { AgentActionViewer } from "./action-viewer";
@@ -28,6 +28,7 @@ import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { AgentMemoryViewer } from "./memory-viewer";
 
 const SOURCE_NAME = "client_chat";
 
@@ -42,9 +43,11 @@ type ContentWithUser = Content & ExtraContentFields;
 function MessageContent({
   message,
   agentId,
+  isLastMessage,
 }: {
   message: ContentWithUser;
   agentId: UUID;
+  isLastMessage: boolean;
 }) {
   return (
     <div className="flex flex-col">
@@ -52,11 +55,12 @@ function MessageContent({
         isLoading={message.isLoading}
         {...(message.name === USER_NAME ? { variant: "sent" } : {})}
       >
-        {message.name === USER_NAME ? (
-          message.text
-        ) : (
-          <AIWriter>{message.text}</AIWriter>
-        )}
+        {message.name === USER_NAME ? 
+          message.text :
+          (isLastMessage && message.name !== USER_NAME) ? 
+            <AIWriter>{message.text}</AIWriter> : 
+            message.text
+        }
         {/* Attachments */}
         <div>
           {message.attachments?.map((attachment: IAttachment) => (
@@ -98,9 +102,6 @@ function MessageContent({
           {message.plan ? (
             <Badge variant="outline">{message.plan}</Badge>
           ) : null}
-          {message.actions ? (
-            <Badge variant="outline">{message.actions.join(", ")}</Badge>
-          ) : null}
           {message.createdAt ? (
             <ChatBubbleTimestamp
               timestamp={moment(message.createdAt).format("LT")}
@@ -116,7 +117,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [input, setInput] = useState("");
   const [showDetails, setShowDetails] = useState(false);
-  const [detailsTab, setDetailsTab] = useState<"actions" | "logs">("actions");
+  const [detailsTab, setDetailsTab] = useState<"actions" | "logs" | "memories">("actions");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -124,16 +125,16 @@ export default function Page({ agentId }: { agentId: UUID }) {
   const worldId = WorldManager.getWorldId();
 
   const agentData = useAgent(agentId)?.data?.data;
-  const userId = getUserId();
+  const entityId = getEntityId();
   const roomId = agentId;
 
   const { data: messages = [] } = useMessages(agentId, roomId);
 
-  const wsManager = WebSocketsManager.getInstance();
+  const socketIOManager = SocketIOManager.getInstance();
 
   useEffect(() => {
-    wsManager.connect(agentId, roomId);
-    wsManager.connect(userId, roomId);
+    socketIOManager.connect(agentId, roomId);
+    socketIOManager.connect(entityId, roomId);
 
     const handleMessageBroadcasting = (data: ContentWithUser) => {
       queryClient.setQueryData(
@@ -144,16 +145,16 @@ export default function Page({ agentId }: { agentId: UUID }) {
         ]
       );
     };
-    wsManager.on("messageBroadcast", handleMessageBroadcasting);
+    socketIOManager.on("messageBroadcast", handleMessageBroadcasting);
 
     return () => {
-      wsManager.disconnectAll();
-      wsManager.off("messageBroadcast", handleMessageBroadcasting);
+      socketIOManager.disconnectAll();
+      socketIOManager.off("messageBroadcast", handleMessageBroadcasting);
     };
   }, [roomId]);
 
-  const getMessageVariant = (role: string) =>
-    role !== USER_NAME ? "received" : "sent";
+  const getMessageVariant = (id: UUID) =>
+    id !== entityId ? "received" : "sent";
 
   const { scrollRef, isAtBottom, scrollToBottom, disableAutoScroll } =
     useAutoScroll({
@@ -162,7 +163,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [queryClient.getQueryData(["messages", agentId, roomId, worldId])]);
+  }, [messages!.length]);
 
   useEffect(() => {
     scrollToBottom();
@@ -180,8 +181,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
     e.preventDefault();
     if (!input) return;
 
-    wsManager.handleBroadcastMessage(
-      userId,
+    socketIOManager.handleBroadcastMessage(
+      entityId,
       USER_NAME,
       input,
       roomId,
@@ -265,7 +266,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
           onClick={toggleDetails}
           className={cn("gap-1.5", showDetails && "bg-secondary")}
         >
-          <MenuIcon className="size-4" />
+          <PanelRight className="size-4" />
         </Button>
       </div>
 
@@ -284,18 +285,18 @@ export default function Page({ agentId }: { agentId: UUID }) {
             scrollToBottom={scrollToBottom}
             disableAutoScroll={disableAutoScroll}
           >
-            {messages.map((message: Memory) => {
+            {messages.map((message: ContentWithUser, index: number) => {
               const isUser = message.name === USER_NAME;
 
               return (
                 <div
-                  key={message.name + message.createdAt}
+                  key={`${message.id as string}-${message.createdAt}`}
                   className={`flex flex-column gap-1 p-1 ${
                     isUser ? "justify-end" : ""
                   }`}
                 >
                   <ChatBubble
-                    variant={getMessageVariant(message.name)}
+                    variant={getMessageVariant(isUser ? entityId : agentId)}
                     className={`flex flex-row items-center gap-2 ${
                       isUser ? "flex-row-reverse" : ""
                     }`}
@@ -313,7 +314,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
                       {isUser && <AvatarFallback>U</AvatarFallback>}
                     </Avatar>
-                    <MessageContent message={message} agentId={agentId} />
+                    <MessageContent message={message} agentId={agentId} isLastMessage={index === messages.length - 1}/>
                   </ChatBubble>
                 </div>
               );
@@ -407,11 +408,11 @@ export default function Page({ agentId }: { agentId: UUID }) {
             <Tabs
               defaultValue="actions"
               value={detailsTab}
-              onValueChange={(v) => setDetailsTab(v as "actions" | "logs")}
+              onValueChange={(v) => setDetailsTab(v as "actions" | "logs" | "memories")}
               className="flex flex-col h-full"
             >
               <div className="border-b px-4 py-2">
-                <TabsList className="grid grid-cols-2">
+                <TabsList className="grid grid-cols-3">
                   <TabsTrigger
                     value="actions"
                     className="flex items-center gap-1.5"
@@ -426,6 +427,13 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     <Terminal className="h-4 w-4" />
                     <span>Logs</span>
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="memories"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Database className="h-4 w-4" />
+                    <span>Memories</span>
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -434,6 +442,9 @@ export default function Page({ agentId }: { agentId: UUID }) {
               </TabsContent>
               <TabsContent value="logs">
                 <LogViewer agentName={agentData?.name} level="all" hideTitle />
+              </TabsContent>
+              <TabsContent value="memories">
+                <AgentMemoryViewer agentId={agentId} />
               </TabsContent>
             </Tabs>
           </div>

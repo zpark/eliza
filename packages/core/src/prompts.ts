@@ -10,7 +10,7 @@ import type {
 	State,
 	TemplateType,
 } from "./types";
-import { ModelTypes } from "./types";
+import { ModelType } from "./types";
 
 /**
  * Composes a context string by replacing placeholders in a template with corresponding values from the state.
@@ -745,7 +745,7 @@ export async function trimTokens(
 	if (maxTokens <= 0) throw new Error("maxTokens must be positive");
 
 	try {
-		const tokens = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_ENCODE, {
+		const tokens = await runtime.useModel(ModelType.TEXT_TOKENIZER_ENCODE, {
 			prompt,
 		});
 
@@ -758,7 +758,7 @@ export async function trimTokens(
 		const truncatedTokens = tokens.slice(-maxTokens);
 
 		// Decode back to text
-		return await runtime.useModel(ModelTypes.TEXT_TOKENIZER_DECODE, {
+		return await runtime.useModel(ModelType.TEXT_TOKENIZER_DECODE, {
 			tokens: truncatedTokens,
 		});
 	} catch (error) {

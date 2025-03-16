@@ -1,15 +1,16 @@
-import EventEmitter from 'eventemitter3';
 import { SOCKET_MESSAGE_TYPE } from "@elizaos/core";
+import EventEmitter from 'eventemitter3';
+import { io, type Socket } from 'socket.io-client';
 import { apiClient } from "./api";
 import { WorldManager } from "./world-manager";
 
-const BASE_URL = `ws://localhost:${import.meta.env.VITE_SERVER_PORT}`;
+const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
 
 type MessagePayload = Record<string, any>;
 
-class WebSocketsManager extends EventEmitter {
-  private static instance: WebSocketsManager | null = null;
-  private sockets: Map<string, WebSocket>;
+class SocketIOManager extends EventEmitter {
+  private static instance: SocketIOManager | null = null;
+  private sockets: Map<string, Socket>;
   private readyPromises: Map<string, Promise<void>>;
   private resolveReadyMap: Map<string, () => void>;
   
@@ -18,14 +19,13 @@ class WebSocketsManager extends EventEmitter {
     this.sockets = new Map();
     this.readyPromises = new Map();
     this.resolveReadyMap = new Map();
-    
   }
 
-  public static getInstance(): WebSocketsManager {
-    if (!WebSocketsManager.instance) {
-      WebSocketsManager.instance = new WebSocketsManager();
+  public static getInstance(): SocketIOManager {
+    if (!SocketIOManager.instance) {
+      SocketIOManager.instance = new SocketIOManager();
     }
-    return WebSocketsManager.instance;
+    return SocketIOManager.instance;
   }
 
   public getSocketId (agentId: string, roomId: string) {
@@ -33,22 +33,31 @@ class WebSocketsManager extends EventEmitter {
   }
 
   connect(agentId: string, roomId: string): void {
+
     const socketId = this.getSocketId(agentId, roomId);
 
     if (this.sockets.has(socketId)) {
-      console.warn(`[WebSocket Client] WebSocket for socket ${socketId} already exists.`);
+      console.warn(`[SocketIO] Socket for socket ${socketId} already exists.`);
       return;
     }
 
-    const socket = new WebSocket(BASE_URL);
+    const socket = io(BASE_URL, {
+      query: {
+        agentId,
+        roomId
+      },
+      autoConnect: true,
+      reconnection: true
+    });
 
     const readyPromise = new Promise<void>((resolve) => {
       this.resolveReadyMap.set(socketId, resolve);
     });
     this.readyPromises.set(socketId, readyPromise);
 
-    socket.onopen = () => {
-      console.log(`[WebSocket Client] WebSocket connected for socket ${socketId}`);
+
+    socket.on('connect', () => {
+      console.log(`[SocketIO] Connected for socket ${socketId}`);
       this.resolveReadyMap.get(socketId)?.();
       const data = {
         type: SOCKET_MESSAGE_TYPE.ROOM_JOINING,
@@ -58,11 +67,10 @@ class WebSocketsManager extends EventEmitter {
         }
       };
       this.sendMessage(socketId, data);
-    };
+    });
 
-    socket.onmessage = async (event: MessageEvent) => {
-      const messageData = JSON.parse(event.data);
-      console.log(`[WebSocket Client] Message for agent ${agentId}:`, messageData, messageData.type);
+    socket.on('message', async (messageData) => {
+      console.log(`[SocketIO] Message for agent ${agentId}:`, messageData, messageData.type);
 
       const payload = messageData.payload;
 
@@ -85,27 +93,19 @@ class WebSocketsManager extends EventEmitter {
           );
         }
       }
-    };
+    });
 
-    socket.onerror = (error: Event) => {
-      console.error(`[WebSocket Client] WebSocket error for socket ${socketId}:`, error);
-    };
+    socket.on('connect_error', (error) => {
+      console.error(`[SocketIO] Connection error for agent ${socketId}:`, error);
+    });
 
-    socket.onclose = (event: CloseEvent) => {
-      console.log(`[WebSocket Client] WebSocket closed for socket ${socketId}. Reason:`, event.reason);
-
-      if (this.sockets.has(socketId)) {
-        console.warn(`[WebSocket Client] Unexpected WebSocket closure for socket ${socketId}, attempting to reconnect...`);
-        this.cleanupWebSocket(socketId);
-
-        setTimeout(() => {
-          this.connect(socketId, roomId);
-        }, 3000);
-        
-      } else {
-        this.cleanupWebSocket(socketId);
+    socket.on('disconnect', (reason) => {
+      console.log(`[SocketIO] Disconnected for agent ${socketId}. Reason:`, reason);
+      
+      if (reason === 'io server disconnect') {
+        socket.connect();
       }
-    };
+    });
 
     this.sockets.set(socketId, socket);
   }
@@ -115,27 +115,27 @@ class WebSocketsManager extends EventEmitter {
     const readyPromise = this.readyPromises.get(socketId);
 
     if (!socket) {
-      console.warn(`[WebSocket Client] Cannot send message, WebSocket for socket ${socketId} does not exist.`);
+      console.warn(`[SocketIO] Cannot send message, Socket for socket ${socketId} does not exist.`);
       return;
     }
 
     await readyPromise;
 
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message));
+    if (socket.connected) {
+      socket.emit('message', message);
     } else {
-      console.warn(`[WebSocket Client] WebSocket for socket ${socketId} is not open.`);
+      console.warn(`[SocketIO] Socket for socket ${socketId} is not connected.`);
     }
   }
 
-  private cleanupWebSocket(socketId: string): void {
+  private cleanupSocket(socketId: string): void {
     this.sockets.delete(socketId);
     this.readyPromises.delete(socketId);
     this.resolveReadyMap.delete(socketId);
   }
 
   handleBroadcastMessage(senderId: string, senderName: string, text: string, roomId: string, source: string) {
-    console.log(`[WebSocket Client] broadcast: ${senderId} broadcast ${text} to ${roomId}`)
+    console.log(`[SocketIO] Broadcasting: ${senderId} sent "${text}" to room ${roomId}`)
     
     this.emit("messageBroadcast", { senderId, senderName, text, roomId, createdAt: Date.now(), source});
     
@@ -151,37 +151,32 @@ class WebSocketsManager extends EventEmitter {
         source,
       }
     })
-
   }
 
   disconnect(socketId: string): void {
     const socket = this.sockets.get(socketId);
     if (socket) {
-      socket.close();
-      this.sockets.delete(socketId);
-      this.readyPromises.delete(socketId);
-      this.resolveReadyMap.delete(socketId);
-      console.log(`[WebSocket Client] WebSocket for socket ${socketId} disconnected.`);
+      socket.disconnect();
+      this.cleanupSocket(socketId);
+      console.log(`[SocketIO] Socket for socket ${socketId} disconnected.`);
     } else {
-      console.warn(`[WebSocket Client] No WebSocket found for socket ${socketId}.`);
+      console.warn(`[SocketIO] No Socket found for socket ${socketId}.`);
     }
   }
 
   disconnectAll(): void {
     this.sockets.forEach((socket, socketId) => {
-      console.log(`[WebSocket Client] Closing WebSocket for socket ${socketId}`);
+      console.log(`[SocketIO] Closing Socket for socket ${socketId}`);
       
-      if (socket.readyState === WebSocket.OPEN) {
-        this.cleanupWebSocket(socketId);
-        socket.close();
+      if (socket.connected) {
+        socket.disconnect();
+        this.cleanupSocket(socketId);
       } else {
-        this.cleanupWebSocket(socketId);
-        console.warn(`[WebSocket Client] WebSocket for socket ${socketId} is already closed or closing.`);
+        this.cleanupSocket(socketId);
+        console.warn(`[SocketIO] Socket for socket ${socketId} is already disconnected.`);
       }
     });
   }
-  
-  
 }
 
-export default WebSocketsManager;
+export default SocketIOManager;

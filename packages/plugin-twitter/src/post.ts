@@ -6,6 +6,7 @@ import {
 	type IAgentRuntime,
 	type InvokePayload,
 	type Memory,
+	ModelType,
 	type UUID,
 	createUniqueUuid,
 	logger,

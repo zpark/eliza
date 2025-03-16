@@ -1,7 +1,7 @@
 import { logger } from "@elizaos/core";
 import { config } from "dotenv";
-import { PGliteClientManager } from "./pg-lite/manager.js";
 import { PostgresConnectionManager } from "./pg/manager.js";
+import { PGliteClientManager } from "./pglite/manager.js";
 
 config({ path: "../../.env" });
 

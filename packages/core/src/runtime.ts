@@ -6,7 +6,7 @@ import { handlePluginImporting } from "./index";
 import logger from "./logger";
 import { splitChunks } from "./prompts";
 // Import enums and values that are used as values
-import { ChannelType, MemoryType, ModelTypes } from "./types";
+import { ChannelType, MemoryType, ModelType } from "./types";
 // Import types with the 'type' keyword
 import type {
   Action,
@@ -21,9 +21,10 @@ import type {
   KnowledgeItem,
   Log,
   Memory,
+  MemoryMetadata,
   ModelParamsMap,
   ModelResultMap,
-  ModelType,
+  ModelTypeName,
   Participant,
   Plugin,
   Provider,
@@ -31,7 +32,7 @@ import type {
   Room,
   Route,
   Service,
-  ServiceType,
+  ServiceTypeName,
   State,
   Task,
   TaskWorker,
@@ -107,7 +108,7 @@ export class AgentRuntime implements IAgentRuntime {
   >();
 
   readonly fetch = fetch;
-  services = new Map<ServiceType, Service>();
+  services = new Map<ServiceTypeName, Service>();
   models = new Map<
     string,
     Array<(runtime: IAgentRuntime, params: any) => Promise<any>>
@@ -143,6 +144,10 @@ export class AgentRuntime implements IAgentRuntime {
       agentName: this.character?.name,
       agentId: this.agentId,
     });
+
+    this.runtimeLogger.debug(
+      `[AgentRuntime] Process working directory: ${process.cwd()}`
+    );
 
     this.#conversationLength =
       opts.conversationLength ?? this.#conversationLength;
@@ -255,7 +260,7 @@ export class AgentRuntime implements IAgentRuntime {
     if (plugin.models) {
       for (const [modelType, handler] of Object.entries(plugin.models)) {
         this.registerModel(
-          modelType as ModelType,
+          modelType as ModelTypeName,
           handler as (params: any) => Promise<any>
         );
       }
@@ -285,7 +290,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  getAllServices(): Map<ServiceType, Service> {
+  getAllServices(): Map<ServiceTypeName, Service> {
     return this.services;
   }
 
@@ -429,7 +434,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     // Check if TEXT_EMBEDDING model is registered
-    const embeddingModel = this.getModel(ModelTypes.TEXT_EMBEDDING);
+    const embeddingModel = this.getModel(ModelType.TEXT_EMBEDDING);
     if (!embeddingModel) {
       this.runtimeLogger.warn(
         `[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered. Skipping embedding dimension setup.`
@@ -478,7 +483,7 @@ export class AgentRuntime implements IAgentRuntime {
       return [];
     }
 
-    const embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, {
+    const embedding = await this.useModel(ModelType.TEXT_EMBEDDING, {
       text: message?.content?.text,
     });
     const fragments = await this.searchMemories({
@@ -532,8 +537,6 @@ export class AgentRuntime implements IAgentRuntime {
 
     await this.createMemory(documentMemory, "documents");
 
-    console.log("Chunking and storing document...");
-
     // Create fragments using splitChunks
     const fragments = await splitChunks(
       item.content.text,
@@ -544,7 +547,7 @@ export class AgentRuntime implements IAgentRuntime {
     // Store each fragment with link to source document
     for (let i = 0; i < fragments.length; i++) {
       const embedding = await this.useModel(
-        ModelTypes.TEXT_EMBEDDING,
+        ModelType.TEXT_EMBEDDING,
         fragments[i]
       );
       const fragmentMemory: Memory = {
@@ -1006,32 +1009,33 @@ export class AgentRuntime implements IAgentRuntime {
    * Ensure the existence of a world.
    */
   async ensureWorldExists({ id, name, serverId, metadata }: World) {
-    try {
-      const world = await this.adapter.getWorld(id);
-      if (!world) {
-        this.runtimeLogger.info("Creating world:", {
-          id,
-          name,
-          serverId,
-          agentId: this.agentId,
-        });
-        await this.adapter.createWorld({
-          id,
-          name,
-          agentId: this.agentId,
-          serverId: serverId || "default",
-          metadata,
-        });
-        this.runtimeLogger.info(`World ${id} created successfully.`);
-      }
-    } catch (error) {
-      this.runtimeLogger.error(
-        `Failed to ensure world exists: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-      throw error;
+    console.trace("ensureWorldExists");
+    // try {
+    const world = await this.getWorld(id);
+    if (!world) {
+      this.runtimeLogger.info("Creating world:", {
+        id,
+        name,
+        serverId,
+        agentId: this.agentId,
+      });
+      await this.adapter.createWorld({
+        id,
+        name,
+        agentId: this.agentId,
+        serverId: serverId || "default",
+        metadata,
+      });
+      this.runtimeLogger.info(`World ${id} created successfully.`);
     }
+    // } catch (error) {
+    //   this.runtimeLogger.error(
+    //     `Failed to ensure world exists: ${
+    //       error instanceof Error ? error.message : String(error)
+    //     }`
+    //   );
+    //   throw error;
+    // }
   }
 
   /**
@@ -1191,7 +1195,7 @@ export class AgentRuntime implements IAgentRuntime {
     return newState;
   }
 
-  getService<T extends Service>(service: ServiceType): T | null {
+  getService<T extends Service>(service: ServiceTypeName): T | null {
     const serviceInstance = this.services.get(service);
     if (!serviceInstance) {
       this.runtimeLogger.warn(`Service ${service} not found`);
@@ -1201,7 +1205,7 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async registerService(service: typeof Service): Promise<void> {
-    const serviceType = service.serviceType as ServiceType;
+    const serviceType = service.serviceType as ServiceTypeName;
     if (!serviceType) {
       return;
     }
@@ -1226,9 +1230,12 @@ export class AgentRuntime implements IAgentRuntime {
     );
   }
 
-  registerModel(modelType: ModelType, handler: (params: any) => Promise<any>) {
+  registerModel(
+    modelType: ModelTypeName,
+    handler: (params: any) => Promise<any>
+  ) {
     const modelKey =
-      typeof modelType === "string" ? modelType : ModelTypes[modelType];
+      typeof modelType === "string" ? modelType : ModelType[modelType];
     if (!this.models.has(modelKey)) {
       this.models.set(modelKey, []);
     }
@@ -1236,10 +1243,10 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   getModel(
-    modelType: ModelType
+    modelType: ModelTypeName
   ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined {
     const modelKey =
-      typeof modelType === "string" ? modelType : ModelTypes[modelType];
+      typeof modelType === "string" ? modelType : ModelType[modelType];
     const models = this.models.get(modelKey);
     if (!models?.length) {
       return undefined;
@@ -1255,12 +1262,12 @@ export class AgentRuntime implements IAgentRuntime {
    * @param {ModelParamsMap[T] | any} params - The parameters for the model, typed based on model type
    * @returns {Promise<R>} - The model result, typed based on the provided generic type parameter
    */
-  async useModel<T extends ModelType, R = ModelResultMap[T]>(
+  async useModel<T extends ModelTypeName, R = ModelResultMap[T]>(
     modelType: T,
     params: Omit<ModelParamsMap[T], "runtime"> | any
   ): Promise<R> {
     const modelKey =
-      typeof modelType === "string" ? modelType : ModelTypes[modelType];
+      typeof modelType === "string" ? modelType : ModelType[modelType];
     const model = this.getModel(modelKey);
     if (!model) {
       throw new Error(`No handler found for delegate type: ${modelKey}`);
@@ -1378,7 +1385,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     try {
-      const model = this.getModel(ModelTypes.TEXT_EMBEDDING);
+      const model = this.getModel(ModelType.TEXT_EMBEDDING);
       if (!model) {
         throw new Error(
           `[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered`
@@ -1388,7 +1395,7 @@ export class AgentRuntime implements IAgentRuntime {
       this.runtimeLogger.debug(
         `[AgentRuntime][${this.character.name}] Getting embedding dimensions`
       );
-      const embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, null);
+      const embedding = await this.useModel(ModelType.TEXT_EMBEDDING, null);
 
       if (!embedding || !embedding.length) {
         throw new Error(
@@ -1439,7 +1446,6 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async close(): Promise<void> {
-    console.log("Closing adapter");
     await this.adapter.close();
   }
 
@@ -1535,20 +1541,22 @@ export class AgentRuntime implements IAgentRuntime {
 
     try {
       // Generate embedding from text content
-      memory.embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, {
+      memory.embedding = await this.useModel(ModelType.TEXT_EMBEDDING, {
         text: memoryText,
       });
     } catch (error) {
       logger.error("Failed to generate embedding:", error);
       // Fallback to zero vector if embedding fails
-      memory.embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, null);
+      memory.embedding = await this.useModel(ModelType.TEXT_EMBEDDING, null);
     }
 
     return memory;
   }
 
   async getMemories(params: {
-    roomId: UUID;
+    entityId?: UUID;
+    agentId?: UUID;
+    roomId?: UUID;
     count?: number;
     unique?: boolean;
     tableName: string;
@@ -1613,6 +1621,10 @@ export class AgentRuntime implements IAgentRuntime {
     return await this.adapter.createMemory(memory, tableName, unique);
   }
 
+  async updateMemory(memory: Partial<Memory> & { id: UUID, metadata?: MemoryMetadata }): Promise<boolean> {
+    return await this.adapter.updateMemory(memory);
+  }
+  
   async deleteMemory(memoryId: UUID): Promise<void> {
     await this.adapter.deleteMemory(memoryId);
   }
