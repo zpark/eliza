@@ -191,19 +191,12 @@ export function getEmbeddingZeroVector(): number[] {
 /**
  * Gets embeddings from a remote API endpoint.  Falls back to local BGE/384
  *
- * @param {string} input - The text to generate embeddings for
- * @param {EmbeddingOptions} options - Configuration options including:
- *   - model: The model name to use
- *   - endpoint: Base API endpoint URL
- *   - apiKey: Optional API key for authentication
- *   - isOllama: Whether this is an Ollama endpoint
- *   - dimensions: Desired embedding dimensions
  * @param {IAgentRuntime} runtime - The agent runtime context
+ * @param {string} input - The text to generate embeddings for
  * @returns {Promise<number[]>} Array of embedding values
  * @throws {Error} If the API request fails
  */
-
-export async function embed(runtime: IAgentRuntime, input: string) {
+export async function embed(runtime: IAgentRuntime, input: string): Promise<number[]> {
     elizaLogger.debug("Embedding request:", {
         modelProvider: runtime.character.modelProvider,
         useOpenAI: process.env.USE_OPENAI_EMBEDDING,
