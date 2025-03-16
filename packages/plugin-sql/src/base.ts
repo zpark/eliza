@@ -1354,7 +1354,6 @@ export abstract class BaseDrizzleAdapter<
 				.where(
 					and(
 						eq(participantTable.roomId, roomId),
-						eq(participantTable.agentId, this.agentId),
 					),
 				);
 
