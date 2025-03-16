@@ -76,7 +76,7 @@ export default function Home() {
                     key={agent.id}
                     title={
                       <div className="flex gap-2 items-center">
-                        <div className="">{agent.name}</div>
+                        <div className="truncate max-w-24">{agent.name}</div>
                         {agent?.status === AgentStatus.ACTIVE ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
