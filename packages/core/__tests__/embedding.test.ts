@@ -1,12 +1,12 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest"
 import {
-    embed,
-    getEmbeddingConfig,
-    getEmbeddingType,
-    getEmbeddingZeroVector,
-} from "../src/embedding.ts";
-import { type IAgentRuntime, ModelProviderName } from "../src/types.ts";
+  embed,
+  getEmbeddingConfig,
+  getEmbeddingType,
+  getEmbeddingZeroVector,
+} from "../src/embedding.ts"
 import settings from "../src/settings.ts";
+import { type IAgentRuntime, ModelProviderName } from "../src/types.ts";
 
 // Mock environment-related settings
 vi.mock("../settings", () => ({
@@ -14,6 +14,11 @@ vi.mock("../settings", () => ({
         USE_OPENAI_EMBEDDING: "false",
         USE_OLLAMA_EMBEDDING: "false",
         USE_GAIANET_EMBEDDING: "false",
+        USE_CUSTOM_EMBEDDING: "false",
+        CUSTOM_EMBEDDING_DIMENSIONS: "768",
+        CUSTOM_EMBEDDING_MODEL: "custom-model",
+        CUSTOM_EMBEDDING_ENDPOINT: "https://custom-api.example.com",
+        CUSTOM_EMBEDDING_API_KEY: "custom-api-key",
         OPENAI_API_KEY: "mock-openai-key",
         OPENAI_API_URL: "https://api.openai.com/v1",
         GAIANET_API_KEY: "mock-gaianet-key",
@@ -74,6 +79,22 @@ describe("Embedding Module", () => {
             expect(config.dimensions).toBe(1536);
             expect(config.model).toBe("text-embedding-3-small");
             expect(config.provider).toBe("OpenAI");
+        });
+
+        test("should return Custom config when USE_CUSTOM_EMBEDDING is true", () => {
+            vi.mocked(settings).USE_CUSTOM_EMBEDDING = "true";
+            const config = getEmbeddingConfig();
+            expect(config.dimensions).toBe(768);
+            expect(config.model).toBe("custom-model");
+            expect(config.provider).toBe("Custom");
+        });
+
+        test("should throw error when custom embedding is enabled but settings are missing", () => {
+            vi.mocked(settings).USE_CUSTOM_EMBEDDING = "true";
+            vi.mocked(settings).CUSTOM_EMBEDDING_DIMENSIONS = undefined;
+            expect(() => getEmbeddingConfig()).toThrow(
+                "Custom embedding enabled but missing required settings"
+            );
         });
     });
 
@@ -196,6 +217,41 @@ describe("Embedding Module", () => {
                 .fill(null)
                 .map(() => embed(mockRuntime, "concurrent test"));
             await expect(Promise.all(promises)).resolves.toBeDefined();
+        });
+
+        test("should use custom embedding provider when enabled", async () => {
+            vi.mocked(settings).USE_CUSTOM_EMBEDDING = "true";
+            const customDimensions = 768;
+            const mockCustomEmbedding = new Array(customDimensions).fill(0.2);
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    data: [{ embedding: mockCustomEmbedding }]
+                    }),
+            });
+            const result = await embed(mockRuntime, "test input");
+            expect(result).toHaveLength(customDimensions);
+            expect(mockFetch).toHaveBeenCalledWith(
+                "https://custom-api.example.com/embeddings",
+                expect.objectContaining({
+                    method: "POST",
+                    headers: expect.objectContaining({
+                        "Authorization": "Bearer custom-api-key"
+                    }),
+                    body: expect.stringContaining("custom-model"),
+                })
+            );
+        });
+
+        test("should handle custom embedding API errors gracefully", async () => {
+            vi.mocked(settings).USE_CUSTOM_EMBEDDING = "true";
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+                statusText: "Internal Server Error",
+                text: () => Promise.resolve("Custom API Error"),
+            });
+            await expect(embed(mockRuntime, "test input")).rejects.toThrow("Embedding API Error");
         });
     });
 });

@@ -49,7 +49,7 @@ Note: It's recommended for devs to keep working with v1, v2 will be mostly backw
 - For Windows users: WSL2 (Windows Subsystem for Linux)
 
 ### How do I get started with Eliza?
-1. Follow the [quick start guide](docs/quickstart.md) in the README
+1. Follow the [quick start guide](/docs/quickstart.md) in the README
 3. Watch the AI Agent Dev School videos on YouTube for step-by-step guidance
 4. Join the Discord community for support
 

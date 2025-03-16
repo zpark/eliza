@@ -54,7 +54,7 @@ We take the security of Eliza seriously. If you believe you have found a securit
 
 1. **Environment Setup**
 
-    - Follow our [secrets management guide](docs/guides/secrets-management.md) for secure configuration
+    - Follow our [secrets management guide](docs/docs/guides/secrets-management.md) for secure configuration
     - Use separate API keys for development and production
     - Regularly rotate credentials
 

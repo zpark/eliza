@@ -208,7 +208,7 @@ pnpm test:watch
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+See CONTRIBUTING.md for contribution guidelines.
 
 ## Credits
 

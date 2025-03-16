@@ -6,7 +6,7 @@ This plugin provides actions and utilities for interacting with Cosmos-compatibl
 
 ## Development
 
-Prepare Eliza according to [README](../../README.md)
+Prepare Eliza according to README
 Add variables required for `@elizaos/plugin-cosmos` :
 
 ```

@@ -235,7 +235,7 @@ When submitting a plugin to the [elizaOS Registry](https://github.com/elizaos-pl
    - [ ] Tests are passing
    - [ ] Demo evidence is provided
 
-Visit the [Elizaos Plugin Development Guide]([https://github.com/elizaos-plugins/plugin-image](https://github.com/elizaOS/eliza/blob/main/docs/docs/packages/plugins.md) for detailed information on creating new plugins.
+Visit the [Elizaos Plugin Development Guide]([https://github.com/elizaos-plugins/plugin-image](https://github.com/elizaOS/eliza/blob/main/docs/notes/packages/plugins.md) for detailed information on creating new plugins.
 
 ### Plugin Branding and Images
 
