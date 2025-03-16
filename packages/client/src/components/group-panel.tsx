@@ -16,7 +16,7 @@ interface GroupPanel {
 }
 
 export default function GroupPanel({ onClose, agents }: GroupPanel) {
-    const [chatName, setChatName] = useState(`New Group Chat`);
+    const [chatName, setChatName] = useState(``);
     const [selectedAgents, setSelectedAgents] = useState<{ [key: string]: boolean }>({});
     const [creating, setCreating] = useState(false);
 
@@ -53,6 +53,7 @@ export default function GroupPanel({ onClose, agents }: GroupPanel) {
                                             value={chatName}
                                             onChange={(e) => setChatName(e.target.value)}
                                             className="w-full"
+                                            placeholder="Enter room name"
                                         />
                                     </div>
                                     <div className="font-light">Invite Agents</div>
@@ -98,6 +99,9 @@ export default function GroupPanel({ onClose, agents }: GroupPanel) {
                                 variant={"default"}
                                 className={`w-[90%]`}
                                 onClick={async () => {
+                                    if (!chatName || !chatName.length) {
+                                        return;
+                                    }
                                     setCreating(true);
                                     try {
                                         const selectedAgentIds = Object.keys(selectedAgents).filter(agentId => selectedAgents[agentId]);
@@ -122,7 +126,7 @@ export default function GroupPanel({ onClose, agents }: GroupPanel) {
                                     }
                                 }}
                                 size={"default"}
-                                disabled= {!chatName.length}
+                                disabled={!chatName.length || Object.keys(selectedAgents).length === 0}
                             >
                                 {creating ? <Loader2 className="animate-spin" /> : "Create Chat"}
                             </Button>
