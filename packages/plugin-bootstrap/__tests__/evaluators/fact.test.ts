@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { factEvaluator, formatFacts } from '../../src/evaluators/fact';
-import { composeContext, generateObjectArray, MemoryManager, ModelClass } from '@elizaos/core';
+import { composeContext, generateObjectArray, MemoryManager, ModelClass, type Memory } from '@elizaos/core';
 
 vi.mock('@elizaos/core', () => ({
     composeContext: vi.fn(),
@@ -12,13 +12,19 @@ vi.mock('@elizaos/core', () => ({
             id: 'test-memory-id',
             content: {
                 text: 'Test memory content'
-            }
+            },
+            userId: 'test-user',
+            agentId: 'test-agent',
+            roomId: 'test-room'
         }),
         createMemory: vi.fn().mockResolvedValue({
             id: 'test-memory-id',
             content: {
                 text: 'Test memory content'
-            }
+            },
+            userId: 'test-user',
+            agentId: 'test-agent',
+            roomId: 'test-room'
         })
     })),
     ModelClass: {
@@ -60,7 +66,10 @@ describe('factEvaluator', () => {
         mockMemoryManager = {
             addEmbeddingToMemory: vi.fn().mockResolvedValue({
                 id: 'test-memory-id',
-                content: { text: 'Test fact' }
+                content: { text: 'Test fact' },
+                userId: 'test-user',
+                agentId: 'test-agent',
+                roomId: 'test-room'
             }),
             createMemory: vi.fn().mockResolvedValue(true)
         };
@@ -287,7 +296,7 @@ describe('factEvaluator', () => {
         });
 
         it('should handle empty response from generateObjectArray', async () => {
-            vi.mocked(generateObjectArray).mockResolvedValue(null);
+            vi.mocked(generateObjectArray).mockResolvedValue([]);
 
             const result = await factEvaluator.handler(mockRuntime, mockMessage);
 
@@ -301,15 +310,24 @@ describe('factEvaluator', () => {
         it('should format facts correctly', () => {
             const mockFacts = [
                 {
-                    content: { text: 'Fact 1' }
+                    content: { text: 'Fact 1' },
+                    userId: 'test-user',
+                    agentId: 'test-agent',
+                    roomId: 'test-room'
                 },
                 {
-                    content: { text: 'Fact 2' }
+                    content: { text: 'Fact 2' },
+                    userId: 'test-user',
+                    agentId: 'test-agent',
+                    roomId: 'test-room'
                 },
                 {
-                    content: { text: 'Fact 3' }
+                    content: { text: 'Fact 3' },
+                    userId: 'test-user',
+                    agentId: 'test-agent',
+                    roomId: 'test-room'
                 }
-            ];
+            ] as Memory[];
 
             const result = formatFacts(mockFacts);
             expect(result).toBe('Fact 3\nFact 2\nFact 1');
