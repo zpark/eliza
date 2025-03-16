@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / truncateToCompleteSentence
+[@elizaos/core v0.25.9](../index.md) / truncateToCompleteSentence
 
 # Function: truncateToCompleteSentence()
 

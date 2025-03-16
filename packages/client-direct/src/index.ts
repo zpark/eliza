@@ -10,7 +10,6 @@ import {
     ModelClass,
     settings,
     stringToUuid,
-    type AgentRuntime,
     type Client,
     type Content,
     type IAgentRuntime,
@@ -28,6 +27,12 @@ import * as path from "path";
 import { z } from "zod";
 import { createApiRouter } from "./api.ts";
 import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
+
+export type Middleware = (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+) => void;
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -460,13 +465,13 @@ export class DirectClient {
                                       nearby.map((item) => z.literal(item)) as [
                                           z.ZodLiteral<string>,
                                           z.ZodLiteral<string>,
-                                          ...z.ZodLiteral<string>[],
+                                          ...z.ZodLiteral<string>[]
                                       ]
                                   )
                                   .nullable()
                             : nearby.length === 1
-                              ? z.literal(nearby[0]).nullable()
-                              : z.null(); // Fallback for empty array
+                            ? z.literal(nearby[0]).nullable()
+                            : z.null(); // Fallback for empty array
 
                     const emoteSchema =
                         availableEmotes.length > 1
@@ -477,13 +482,13 @@ export class DirectClient {
                                       ) as [
                                           z.ZodLiteral<string>,
                                           z.ZodLiteral<string>,
-                                          ...z.ZodLiteral<string>[],
+                                          ...z.ZodLiteral<string>[]
                                       ]
                                   )
                                   .nullable()
                             : availableEmotes.length === 1
-                              ? z.literal(availableEmotes[0]).nullable()
-                              : z.null(); // Fallback for empty array
+                            ? z.literal(availableEmotes[0]).nullable()
+                            : z.null(); // Fallback for empty array
 
                     return z.object({
                         lookAt: lookAtSchema,
@@ -684,7 +689,9 @@ export class DirectClient {
 
                     if (!fileResponse.ok) {
                         throw new Error(
-                            `API responded with status ${fileResponse.status}: ${await fileResponse.text()}`
+                            `API responded with status ${
+                                fileResponse.status
+                            }: ${await fileResponse.text()}`
                         );
                     }
 
@@ -704,7 +711,10 @@ export class DirectClient {
                     const filePath = path.join(downloadDir, fileName);
                     elizaLogger.log("Full file path:", filePath);
 
-                    await fs.promises.writeFile(filePath, new Uint8Array(buffer));
+                    await fs.promises.writeFile(
+                        filePath,
+                        new Uint8Array(buffer)
+                    );
 
                     // Verify file was written
                     const stats = await fs.promises.stat(filePath);
@@ -993,6 +1003,10 @@ export class DirectClient {
         this.agents.delete(runtime.agentId);
     }
 
+    public registerMiddleware(middleware: Middleware) {
+        this.app.use(middleware);
+    }
+
     public start(port: number) {
         this.server = this.app.listen(port, () => {
             elizaLogger.success(
@@ -1032,7 +1046,7 @@ export class DirectClient {
 }
 
 export const DirectClientInterface: Client = {
-    name: 'direct',
+    name: "direct",
     config: {},
     start: async (_runtime: IAgentRuntime) => {
         elizaLogger.log("DirectClientInterface start");

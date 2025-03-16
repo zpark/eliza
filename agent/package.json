@@ -24,6 +24,7 @@
         "@types/node": "^22.13.5",
         "json5": "2.2.3",
         "ts-node": "^10.9.2",
+        "undici": "^7.4.0",
         "yargs": "17.7.2"
     },
     "devDependencies": {

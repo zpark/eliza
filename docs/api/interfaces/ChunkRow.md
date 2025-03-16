@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / ChunkRow
+[@elizaos/core v0.25.9](../index.md) / ChunkRow
 
 # Interface: ChunkRow
 
@@ -10,4 +10,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1619](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1619)
+[packages/core/src/types.ts:1620](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1620)

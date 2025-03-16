@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / LoggingLevel
+[@elizaos/core v0.25.9](../index.md) / LoggingLevel
 
 # Enumeration: LoggingLevel
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1546](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1546)
+[packages/core/src/types.ts:1547](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1547)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1547](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1547)
+[packages/core/src/types.ts:1548](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1548)
 
 ***
 
@@ -30,4 +30,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1548](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1548)
+[packages/core/src/types.ts:1549](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1549)

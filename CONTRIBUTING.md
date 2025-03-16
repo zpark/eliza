@@ -1,10 +1,10 @@
-# Contributing to Eliza
+# Contributing to eliza
 
-First off, thank you for considering contributing to Eliza! We welcome contributions from everyone, regardless of experience level.
+First off, thank you for considering contributing to eliza! We welcome contributions from everyone, regardless of experience level.
 
 ## Contribution License Agreement
 
-By contributing to Eliza, you agree that your contributions will be licensed under the MIT License. This means:
+By contributing to eliza, you agree that your contributions will be licensed under the MIT License. This means:
 
 1. You grant us (and everyone else) a perpetual, worldwide, non-exclusive, royalty-free license to use your contributions.
 2. Your contributions are and will be available as Free and Open Source Software (FOSS).
@@ -20,11 +20,13 @@ We believe in the power of the OODA Loop - a decision-making framework that emph
 - **Decide**: Choose a course of action based on your analysis. This could be proposing a new feature, fixing a bug, or creating content.
 - **Act**: Execute your decision and share your work with the community.
 
+---
+
 ## How to Contribute
 
 ### For Developers
 
-1. **Extend Eliza's Capabilities**
+1. **Extend eliza's Capabilities**
 
     - Develop new actions, evaluators, and providers
     - Improve existing components and modules
@@ -43,6 +45,60 @@ We believe in the power of the OODA Loop - a decision-making framework that emph
 5. Ensure the test suite passes.
 6. Make sure your code lints.
 7. Issue that pull request!
+
+### For Designers
+
+1. **Improve User Experience**
+
+    - Conduct user research and usability testing
+    - Design intuitive user interfaces and interactions
+    - Create high-fidelity mockups and prototypes
+
+2. **Enhance Visual Design**
+    - Develop a consistent visual language and style guide
+    - Create engaging illustrations, icons, and graphics
+    - Optimize designs for accessibility and inclusivity
+
+### For Writers and Storytellers
+
+1. **Craft Compelling Narratives**
+
+    - Write blog posts, articles, and stories that communicate our vision
+    - Develop characters and scenarios that showcase the potential of AI agents
+    - Collaborate with artists to create immersive, multimedia experiences
+
+2. **Improve Documentation**
+    - Write clear, concise, and accessible documentation
+    - Create tutorials, guides, and FAQs to help users get started
+    - Provide examples and use cases to demonstrate eliza's capabilities
+
+### For Artists and Creators
+
+1. **Illustrate the Future**
+
+    - Create concept art, illustrations, and infographics that bring our vision to life
+    - Design characters, avatars, and virtual environments for AI agents
+    - Experiment with new mediums and formats to communicate ideas
+
+2. **Produce Multimedia Content**
+    - Create videos, animations, and interactive experiences
+    - Develop podcasts, interviews, and audio content
+    - Collaborate with writers and developers to create integrated campaigns
+
+### For Community Builders
+
+1. **Foster Engagement**
+
+    - Moderate forums, chat rooms, and social media channels
+    - Organize events, meetups, and hackathons
+    - Facilitate discussions and collaborations among contributors
+
+2. **Provide Support**
+    - Answer questions and provide guidance to new contributors
+    - Triage issues and help prioritize bug fixes and feature requests
+    - Act as a liaison between the community and the core development team
+
+---
 
 ## Styleguides
 
@@ -84,13 +140,13 @@ This section lists the labels we use to help us track and manage issues and pull
 
 ## Additional Resources
 
-- [Local Development Guide](docs/docs/guides/local-development.md)
+- [Local Development Guide](docs/notes/local-development.md)
 - [Configuration Guide](docs/docs/guides/configuration.md)
 - [API Documentation](docs/api)
 
 ## Contributor Guide
 
-Welcome to the Eliza contributor guide! This document is designed to help you understand how you can be part of building the future of autonomous AI agents, regardless of your technical background.
+Welcome to the eliza contributor guide! This document is designed to help you understand how you can be part of building the future of autonomous AI agents, regardless of your technical background.
 
 ### Code of Conduct
 
@@ -126,4 +182,4 @@ Project maintainers have the right and responsibility to remove, edit, or reject
 
 This Code of Conduct applies both within project spaces and in public spaces when an individual is representing the project or its community. Examples of representing a project or community include using an official project e-mail address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
 
-Thank you for contributing to Eliza and helping build the future of autonomous AI agents! 🎉
+Thank you for contributing to eliza and helping build the future of autonomous AI agents! 🎉

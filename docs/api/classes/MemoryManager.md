@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / MemoryManager
+[@elizaos/core v0.25.9](../index.md) / MemoryManager
 
 # Class: MemoryManager
 
@@ -278,6 +278,28 @@ A Promise that resolves when the operation completes.
 
 ***
 
+### getMemoriesByIds()
+
+> **getMemoriesByIds**(`ids`): `Promise`\<[`Memory`](../interfaces/Memory.md)[]\>
+
+#### Parameters
+
+• **ids**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`[]
+
+#### Returns
+
+`Promise`\<[`Memory`](../interfaces/Memory.md)[]\>
+
+#### Implementation of
+
+[`IMemoryManager`](../interfaces/IMemoryManager.md).[`getMemoriesByIds`](../interfaces/IMemoryManager.md#getMemoriesByIds)
+
+#### Defined in
+
+[packages/core/src/memory.ts:201](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L201)
+
+***
+
 ### getMemoryById()
 
 > **getMemoryById**(`id`): `Promise`\<[`Memory`](../interfaces/Memory.md)\>
@@ -296,7 +318,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:201](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L201)
+[packages/core/src/memory.ts:205](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L205)
 
 ***
 
@@ -324,7 +346,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:212](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L212)
+[packages/core/src/memory.ts:216](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L216)
 
 ***
 
@@ -352,7 +374,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:224](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L224)
+[packages/core/src/memory.ts:228](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L228)
 
 ***
 
@@ -384,4 +406,4 @@ A Promise resolving to the count of memories.
 
 #### Defined in
 
-[packages/core/src/memory.ts:237](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L237)
+[packages/core/src/memory.ts:241](https://github.com/elizaOS/eliza/blob/main/packages/core/src/memory.ts#L241)

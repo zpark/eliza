@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / ITeeLogService
+[@elizaos/core v0.25.9](../index.md) / ITeeLogService
 
 # Interface: ITeeLogService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1279](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1279)
+[packages/core/src/types.ts:1280](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1280)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1284](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1284)
+[packages/core/src/types.ts:1285](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1285)
 
 ***
 
@@ -62,7 +62,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1514](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1514)
+[packages/core/src/types.ts:1515](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1515)
 
 ***
 
@@ -88,4 +88,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1515](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1515)
+[packages/core/src/types.ts:1516](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1516)

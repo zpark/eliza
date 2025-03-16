@@ -6,6 +6,7 @@ const fs = require('fs')
 const { Command } = require('commander')
 const program = new Command()
 const { version } = require('./package.json')
+const axios = require('axios')
 
 
 const pluginPkgPath = (pluginRepo) => {
@@ -31,8 +32,8 @@ const pluginsCmd = new Command()
   .description('manage elizaOS plugins')
 
 async function getPlugins() {
-  const resp = await fetch('https://raw.githubusercontent.com/elizaos-plugins/registry/refs/heads/main/index.json')
-  return await resp.json();
+  const resp = await axios.get('https://raw.githubusercontent.com/elizaos-plugins/registry/refs/heads/main/index.json')
+  return resp.data;
 }
 
 

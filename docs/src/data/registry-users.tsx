@@ -638,16 +638,6 @@ export const registryUsers: User[] = [
     ]
   },
   {
-    "title": "LensNetwork",
-    "description": "Integrates with Lens Protocol for social networking features.",
-    "preview": "/eliza/logos/lens.jpg",
-    "website": "https://github.com/elizaos-plugins/plugin-lensNetwork",
-    "source": "https://github.com/elizaos-plugins/plugin-lensNetwork",
-    "tags": [
-      "plugin"
-    ]
-  },
-  {
     "title": "Letzai",
     "description": "Enables image generation using LetzAI's API and models.",
     "preview": "/eliza/logos/letzai.jpg",
@@ -1125,6 +1115,666 @@ export const registryUsers: User[] = [
     "preview": "/eliza/logos/para.png",
     "website": "https://github.com/aipop-fun/plugin-para",
     "source": "https://github.com/aipop-fun/plugin-para",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "cache Redis",
+    "description": "Unmaintained cache plugin that originally lived in @elizaos/core and needs a maintainer.",
+    "preview": "/eliza/logos/redis.jpg",
+    "website": "https://github.com/elizaos-plugins/cache-redis",
+    "source": "https://github.com/elizaos-plugins/cache-redis",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Alexa",
+    "description": "Provides integration with Amazon Alexa devices for voice-controlled agent interactions.",
+    "preview": "/eliza/logos/alexa.png",
+    "website": "https://github.com/elizaos-plugins/client-alexa",
+    "source": "https://github.com/elizaos-plugins/client-alexa",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Deva",
+    "description": "Enables communication with Deva AI systems for advanced conversational capabilities.",
+    "preview": "/eliza/logos/deva.jpg",
+    "website": "https://github.com/elizaos-plugins/client-deva",
+    "source": "https://github.com/elizaos-plugins/client-deva",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Direct",
+    "description": "Deprecated plugin that now lives in @elizaos/core.",
+    "preview": "/eliza/logos/direct.png",
+    "website": "https://github.com/elizaos-plugins/client-direct",
+    "source": "https://github.com/elizaos-plugins/client-direct",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Eliza Home",
+    "description": "Provides integration with Eliza Home environment for home automation and intelligent assistant features.",
+    "preview": "/eliza/logos/home-assistant.png",
+    "website": "https://github.com/elizaos-plugins/client-eliza-home",
+    "source": "https://github.com/elizaos-plugins/client-eliza-home",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Instagram",
+    "description": "Enables Instagram integration with support for media posting, comment handling, and interaction management.",
+    "preview": "/eliza/logos/instagram.jpg",
+    "website": "https://github.com/elizaos-plugins/client-instagram",
+    "source": "https://github.com/elizaos-plugins/client-instagram",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Simsai",
+    "description": "Deprecated plugin that needs a maintainer.",
+    "preview": "/eliza/logos/simsAI.jpg",
+    "website": "https://github.com/elizaos-plugins/client-simsai",
+    "source": "https://github.com/elizaos-plugins/client-simsai",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Telegram Account",
+    "description": "Provides advanced Telegram account management capabilities beyond basic bot functionality.",
+    "preview": "/eliza/logos/telegram.jpg",
+    "website": "https://github.com/elizaos-plugins/client-telegram-account",
+    "source": "https://github.com/elizaos-plugins/client-telegram-account",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "Xmtp",
+    "description": "Enables secure, decentralized, and end-to-end encrypted messaging through the XMTP protocol.",
+    "preview": "/eliza/logos/xmtp.jpg",
+    "website": "https://github.com/elizaos-plugins/client-xmtp",
+    "source": "https://github.com/elizaos-plugins/client-xmtp",
+    "tags": [
+      "client"
+    ]
+  },
+  {
+    "title": "0x",
+    "description": "Enables token swaps through 0x Protocol across multiple EVM blockchains with optimized routing and liquidity aggregation.",
+    "preview": "/eliza/logos/0x.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-0x",
+    "source": "https://github.com/elizaos-plugins/plugin-0x",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Agentkit",
+    "description": "Integrates CDP AgentKit tools for NFT and token management on various blockchain networks.",
+    "preview": "/eliza/logos/agentkitCDB.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-agentkit",
+    "source": "https://github.com/elizaos-plugins/plugin-agentkit",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Ankr",
+    "description": "Provides blockchain data query interfaces for wallet information, NFT operations, and token analytics.",
+    "preview": "/eliza/logos/ankr.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-ankr",
+    "source": "https://github.com/elizaos-plugins/plugin-ankr",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Arbitrage",
+    "description": "Identifies and executes cryptocurrency arbitrage opportunities across multiple exchanges.",
+    "preview": "/eliza/logos/arbitage.png",
+    "website": "https://github.com/elizaos-plugins/plugin-arbitrage",
+    "source": "https://github.com/elizaos-plugins/plugin-arbitrage",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Aws S3",
+    "description": "Provides AWS S3 integration for cloud-based file operations and storage management.",
+    "preview": "/eliza/logos/AWS.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-aws-s3",
+    "source": "https://github.com/elizaos-plugins/plugin-aws-s3",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "B2",
+    "description": "Enables token transfers on the B2-Network blockchain with support for B2-BTC and ERC20 tokens.",
+    "preview": "/eliza/logos/B2network.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-b2",
+    "source": "https://github.com/elizaos-plugins/plugin-b2",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Birdeye",
+    "description": "Offers DeFi and token analytics through Birdeye's API with real-time blockchain data across multiple networks.",
+    "preview": "/eliza/logos/birdeye.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-birdeye",
+    "source": "https://github.com/elizaos-plugins/plugin-birdeye",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Bittensor",
+    "description": "Integrates BitMind's API for accessing AI services on the Bittensor network, especially deepfake detection.",
+    "preview": "/eliza/logos/bittensor.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-bittensor",
+    "source": "https://github.com/elizaos-plugins/plugin-bittensor",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Bnb",
+    "description": "Enables interactions with BNB Chain ecosystem including BNB Smart Chain, opBNB, and BNB Greenfield networks.",
+    "preview": "/eliza/logos/BNBchain.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-bnb",
+    "source": "https://github.com/elizaos-plugins/plugin-bnb",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Bootstrap",
+    "description": "Provides core functionality for ElizaOS agents including conversation management and fact tracking.",
+    "preview": "/eliza/logos/bootstrap.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-bootstrap",
+    "source": "https://github.com/elizaos-plugins/plugin-bootstrap",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Browser",
+    "description": "Provides web scraping and browser automation using Playwright with support for multiple browsers and interactions.",
+    "preview": "/eliza/logos/browser.playwright.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-browser",
+    "source": "https://github.com/elizaos-plugins/plugin-browser",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Chainbase",
+    "description": "Bridges on-chain data with AI agents, enabling natural language interactions with blockchain data across networks.",
+    "preview": "/eliza/logos/chainbase.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-chainbase",
+    "source": "https://github.com/elizaos-plugins/plugin-chainbase",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Cronos",
+    "description": "Extends EVM plugin functionality for Cronos blockchain with native CRO token support and wallet operations.",
+    "preview": "/eliza/logos/cronos.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-cronos",
+    "source": "https://github.com/elizaos-plugins/plugin-cronos",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Desk Exchange",
+    "description": "Integrates with DESK Exchange for perpetual futures trading with support for market and limit orders.",
+    "preview": "/eliza/logos/desk.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-desk-exchange",
+    "source": "https://github.com/elizaos-plugins/plugin-desk-exchange",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Devin",
+    "description": "Provides integration with Devin API for automated engineering assistance and session management.",
+    "preview": "/eliza/logos/devin.png",
+    "website": "https://github.com/elizaos-plugins/plugin-devin",
+    "source": "https://github.com/elizaos-plugins/plugin-devin",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Dexscreener",
+    "description": "Accesses DexScreener's token data for price information and market trends across multiple blockchains.",
+    "preview": "/eliza/logos/dexscreener.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-dexscreener",
+    "source": "https://github.com/elizaos-plugins/plugin-dexscreener",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Dkg",
+    "description": "Enables integration with OriginTrail Decentralized Knowledge Graph for enhanced search capabilities.",
+    "preview": "/eliza/logos/OriginTrail.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-dkg",
+    "source": "https://github.com/elizaos-plugins/plugin-dkg",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Email",
+    "description": "Implements email client functionality for sending and receiving emails through SMTP/IMAP services.",
+    "preview": "/eliza/logos/email.png",
+    "website": "https://github.com/elizaos-plugins/plugin-email",
+    "source": "https://github.com/elizaos-plugins/plugin-email",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Email Automation",
+    "description": "Intelligently detects email-worthy conversations and handles generation/delivery with AI-powered content formatting.",
+    "preview": "/eliza/logos/email.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-email-automation",
+    "source": "https://github.com/elizaos-plugins/plugin-email-automation",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Ethstorage",
+    "description": "Enables interaction with EthStorage decentralized storage network for data submission and token transfers.",
+    "preview": "/eliza/logos/ETHstorage.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-ethstorage",
+    "source": "https://github.com/elizaos-plugins/plugin-ethstorage",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Football",
+    "description": "Provides live football match data and league standings information through the Football-Data.org API.",
+    "preview": "/eliza/logos/footballDATA.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-football",
+    "source": "https://github.com/elizaos-plugins/plugin-football",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Form",
+    "description": "Integrates Form chain capabilities for curves-based token economics with ERC20 conversion and management.",
+    "preview": "/eliza/logos/form.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-form",
+    "source": "https://github.com/elizaos-plugins/plugin-form",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Gelato",
+    "description": "Enables smart contract interactions via Gelato Relay supporting both ERC2771 and non-ERC2771 calls on EVM chains.",
+    "preview": "/eliza/logos/gelato.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-gelato",
+    "source": "https://github.com/elizaos-plugins/plugin-gelato",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Gitcoin Passport",
+    "description": "Interacts with Gitcoin Passport API for verifying and managing digital identity credentials.",
+    "preview": "/eliza/logos/gitcoin.passport.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-gitcoin-passport",
+    "source": "https://github.com/elizaos-plugins/plugin-gitcoin-passport",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Holdstation",
+    "description": "Enables token swapping on Holdstation DEX with support for ZKsync Era and upcoming Berachain.",
+    "preview": "/eliza/logos/holdstation.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-holdstation",
+    "source": "https://github.com/elizaos-plugins/plugin-holdstation",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Hyperbolic",
+    "description": "Manages GPU instances on the Hyperbolic platform with capabilities for renting and monitoring resources.",
+    "preview": "/eliza/logos/hyperbolic.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-hyperbolic",
+    "source": "https://github.com/elizaos-plugins/plugin-hyperbolic",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Image",
+    "description": "Processes and analyzes images to generate descriptions with support for multiple vision model providers.",
+    "preview": "/eliza/logos/imagegen.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-image",
+    "source": "https://github.com/elizaos-plugins/plugin-image",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Imgflip",
+    "description": "Generates memes using the imgflip.com API based on user messages.",
+    "preview": "/eliza/logos/imgFlip.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-imgflip",
+    "source": "https://github.com/elizaos-plugins/plugin-imgflip",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Initia",
+    "description": "Enables token transfers on the Initia blockchain with support for INIT token transactions.",
+    "preview": "/eliza/logos/initia.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-initia",
+    "source": "https://github.com/elizaos-plugins/plugin-initia",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Injective",
+    "description": "Provides comprehensive interaction with the Injective blockchain through module-based action creation.",
+    "preview": "/eliza/logos/injective.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-injective",
+    "source": "https://github.com/elizaos-plugins/plugin-injective",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Iq6900",
+    "description": "Provides blockchain inscription functionality through IQ6900's Code-In standard for permanent agent storage.",
+    "preview": "/eliza/logos/IQ6900.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-iq6900",
+    "source": "https://github.com/elizaos-plugins/plugin-iq6900",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Lens Network",
+    "description": "Integrates with Lens protocol for both native and ERC20 tokens.",
+    "preview": "/eliza/logos/lens.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-lens-network",
+    "source": "https://github.com/elizaos-plugins/plugin-lens-network",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Lightning",
+    "description": "Enables Lightning Network integration for creating invoices and making off-chain Bitcoin payments.",
+    "preview": "/eliza/logos/lightning.png",
+    "website": "https://github.com/elizaos-plugins/plugin-lightning",
+    "source": "https://github.com/elizaos-plugins/plugin-lightning",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Lit",
+    "description": "Integrates Lit Protocol for secure and decentralized access control and cryptographic operations.",
+    "preview": "/eliza/logos/LitProtocol.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-lit",
+    "source": "https://github.com/elizaos-plugins/plugin-lit",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Llama",
+    "description": "Provides local LLM capabilities using LLaMA models with CPU and GPU support for efficient text generation.",
+    "preview": "/eliza/logos/meta-llama.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-llama",
+    "source": "https://github.com/elizaos-plugins/plugin-llama",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Mina",
+    "description": "Enables Mina blockchain interactions for token transfers, wallet management, and balance queries.",
+    "preview": "/eliza/logos/Mina.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-mina",
+    "source": "https://github.com/elizaos-plugins/plugin-mina",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Mind Network",
+    "description": "Integrates with Mind Network Hubs for secure, privacy-preserving voting using Fully Homomorphic Encryption.",
+    "preview": "/eliza/logos/MindNetwork.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-mind-network",
+    "source": "https://github.com/elizaos-plugins/plugin-mind-network",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Moralis",
+    "description": "Fetches real-time DeFi data including trading pairs, statistics, and price history through Moralis APIs.",
+    "preview": "/eliza/logos/moralis.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-moralis",
+    "source": "https://github.com/elizaos-plugins/plugin-moralis",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "News",
+    "description": "Fetches and handles real-time news data through NewsAPI integration with search and summary capabilities.",
+    "preview": "/eliza/logos/NewsAPI.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-news",
+    "source": "https://github.com/elizaos-plugins/plugin-news",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Nft Collections",
+    "description": "Integrates NFT data services for comprehensive market analytics and trading with support for 420+ verified collections.",
+    "preview": "/eliza/logos/nftgen.png",
+    "website": "https://github.com/elizaos-plugins/plugin-nft-collections",
+    "source": "https://github.com/elizaos-plugins/plugin-nft-collections",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Nvidia Nim",
+    "description": "Integrates NVIDIA's AI foundation models for content analysis including AI image detection and safety checks.",
+    "preview": "/eliza/logos/nvidia.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-nvidia-nim",
+    "source": "https://github.com/elizaos-plugins/plugin-nvidia-nim",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Openai",
+    "description": "Integrates OpenAI's GPT models for automated text generation with customizable prompts.",
+    "preview": "/eliza/logos/openAI.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-openai",
+    "source": "https://github.com/elizaos-plugins/plugin-openai",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Pdf",
+    "description": "Provides PDF text extraction and processing capabilities for document analysis.",
+    "preview": "/eliza/logos/PDF.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-pdf",
+    "source": "https://github.com/elizaos-plugins/plugin-pdf",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Pyth Data",
+    "description": "Integrates with Pyth Network for real-time price feeds and data streams across multiple asset classes.",
+    "preview": "/eliza/logos/pyth.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-pyth-data",
+    "source": "https://github.com/elizaos-plugins/plugin-pyth-data",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Quick Intel",
+    "description": "Performs token security audits and market analysis with support for multiple chains and address formats.",
+    "preview": "/eliza/logos/quickintel.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-quick-intel",
+    "source": "https://github.com/elizaos-plugins/plugin-quick-intel",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Router Nitro",
+    "description": "Enables cross-chain token transfers using Router Nitro bridge with support for multiple blockchains.",
+    "preview": "/eliza/logos/router.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-router-nitro",
+    "source": "https://github.com/elizaos-plugins/plugin-router-nitro",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Solana Agentkit",
+    "description": "Enables interaction with the Solana blockchain through AgentKit for wallet and transaction management.",
+    "preview": "/eliza/logos/solanaV2.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-solana-agentkit",
+    "source": "https://github.com/elizaos-plugins/plugin-solana-agentkit",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Solana V2",
+    "description": "Leverages @solana/web3.js v2 for modern, efficient Solana integrations with liquidity position management.",
+    "preview": "/eliza/logos/solanaV2.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-solana-v2",
+    "source": "https://github.com/elizaos-plugins/plugin-solana-v2",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Speech Tts",
+    "description": "Provides text-to-speech transcription services using OpenAI and ElevenLabs technologies.",
+    "preview": "/eliza/logos/TTSelevenlabs.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-speech-tts",
+    "source": "https://github.com/elizaos-plugins/plugin-speech-tts",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Squid Router",
+    "description": "Enables cross-chain token swaps between blockchains using the Squid Router protocol.",
+    "preview": "/eliza/logos/squid.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-squid-router",
+    "source": "https://github.com/elizaos-plugins/plugin-squid-router",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Suno",
+    "description": "Integrates Suno AI's music generation for creating custom music from text prompts with detailed controls.",
+    "preview": "/eliza/logos/suno.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-suno",
+    "source": "https://github.com/elizaos-plugins/plugin-suno",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Tee Verifiable Log",
+    "description": "Implements a verifiable logging system within Trusted Execution Environments for secure, auditable records.",
+    "preview": "/eliza/logos/tee.png",
+    "website": "https://github.com/elizaos-plugins/plugin-tee-verifiable-log",
+    "source": "https://github.com/elizaos-plugins/plugin-tee-verifiable-log",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Trikon",
+    "description": "Provides token transfer functionality for Trikon with wallet management on ZKsync Era blockchain.",
+    "preview": "/eliza/logos/trikon.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-trikon",
+    "source": "https://github.com/elizaos-plugins/plugin-trikon",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Trustdb",
+    "description": "Manages trust scores and performance metrics in a secure database for recommender tracking and token analysis.",
+    "preview": "/eliza/logos/trusta.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-trustdb",
+    "source": "https://github.com/elizaos-plugins/plugin-trustdb",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Udio",
+    "description": "Enables AI-powered music generation with capabilities for creating and extending audio from text prompts.",
+    "preview": "/eliza/logos/UDIO.png",
+    "website": "https://github.com/elizaos-plugins/plugin-udio",
+    "source": "https://github.com/elizaos-plugins/plugin-udio",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Video",
+    "description": "Provides comprehensive video processing with download, format handling, and transcription capabilities.",
+    "preview": "/eliza/logos/video.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-video",
+    "source": "https://github.com/elizaos-plugins/plugin-video",
+    "tags": [
+      "plugin"
+    ]
+  },
+  {
+    "title": "Zilliqa",
+    "description": "Integrates Zilliqa blockchain capabilities through the GOAT framework for wallet and transaction functionality.",
+    "preview": "/eliza/logos/zilliqa.jpg",
+    "website": "https://github.com/elizaos-plugins/plugin-zilliqa",
+    "source": "https://github.com/elizaos-plugins/plugin-zilliqa",
     "tags": [
       "plugin"
     ]
