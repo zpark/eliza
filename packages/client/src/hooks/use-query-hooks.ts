@@ -1,7 +1,7 @@
 import { USER_NAME } from "@/constants";
 import { apiClient } from "@/lib/api";
 import { WorldManager } from "@/lib/world-manager";
-import type { Agent, Content, Memory, UUID } from "@elizaos/core";
+import type { Agent, Content, Memory, UUID, Room } from "@elizaos/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "./use-toast";
@@ -488,3 +488,19 @@ export function useDeleteLog() {
 		}
 	});
 }
+
+
+export function useRooms(options = {}) {
+	const network = useNetworkStatus();
+	
+	return useQuery<{ data: Room[] }>({
+	  queryKey: ['rooms'],
+	  queryFn: () => apiClient.getRooms(),
+	  staleTime: STALE_TIMES.FREQUENT, 
+	  refetchInterval: !network.isOffline 
+		? STALE_TIMES.FREQUENT 
+		: false,
+	  refetchIntervalInBackground: false,
+	  ...options
+	});
+  }
