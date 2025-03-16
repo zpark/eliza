@@ -13,18 +13,18 @@ vi.mock('@elizaos/core', () => ({
             content: {
                 text: 'Test memory content'
             },
-            userId: 'test-user',
+            userId: 'test-user-0000-0000-0000-0000-000000000000',
             agentId: 'test-agent',
-            roomId: 'test-room'
+            roomId: 'test-room-0000-0000-0000-0000-000000000000'
         }),
         createMemory: vi.fn().mockResolvedValue({
             id: 'test-memory-id',
             content: {
                 text: 'Test memory content'
             },
-            userId: 'test-user',
+            userId: 'test-user-0000-0000-0000-0000-000000000000',
             agentId: 'test-agent',
-            roomId: 'test-room'
+            roomId: 'test-room-0000-0000-0000-0000-000000000000'
         })
     })),
     ModelClass: {
@@ -37,6 +37,9 @@ describe('factEvaluator', () => {
     let mockRuntime;
     let mockMessage;
     let mockMemoryManager;
+    
+    const TEST_ROOM_ID = 'test-room-0000-0000-0000-0000-000000000000';
+    const TEST_USER_ID = 'test-user-0000-0000-0000-0000-000000000000';
 
     beforeEach(() => {
         mockRuntime = {
@@ -51,7 +54,7 @@ describe('factEvaluator', () => {
             },
             composeState: vi.fn().mockResolvedValue({
                 agentId: 'test-agent',
-                roomId: 'test-room'
+                roomId: TEST_ROOM_ID
             }),
             getConversationLength: vi.fn().mockReturnValue(10)
         };
@@ -60,16 +63,16 @@ describe('factEvaluator', () => {
             content: {
                 text: 'I live in New York and work as a software engineer.'
             },
-            roomId: 'test-room'
+            roomId: TEST_ROOM_ID
         };
 
         mockMemoryManager = {
             addEmbeddingToMemory: vi.fn().mockResolvedValue({
                 id: 'test-memory-id',
                 content: { text: 'Test fact' },
-                userId: 'test-user',
+                userId: TEST_USER_ID,
                 agentId: 'test-agent',
-                roomId: 'test-room'
+                roomId: TEST_ROOM_ID
             }),
             createMemory: vi.fn().mockResolvedValue(true)
         };
@@ -88,7 +91,7 @@ describe('factEvaluator', () => {
             const result = await factEvaluator.validate(mockRuntime, mockMessage);
             
             expect(result).toBe(true);
-            expect(mockRuntime.messageManager.countMemories).toHaveBeenCalledWith('test-room');
+            expect(mockRuntime.messageManager.countMemories).toHaveBeenCalledWith(TEST_ROOM_ID);
             expect(mockRuntime.getConversationLength).toHaveBeenCalled();
         });
 
@@ -308,26 +311,27 @@ describe('factEvaluator', () => {
 
     describe('formatFacts', () => {
         it('should format facts correctly', () => {
+            // Using unknown to bypass type checking since we're mocking Memory objects
             const mockFacts = [
                 {
                     content: { text: 'Fact 1' },
-                    userId: 'test-user',
+                    userId: TEST_USER_ID,
                     agentId: 'test-agent',
-                    roomId: 'test-room'
+                    roomId: TEST_ROOM_ID
                 },
                 {
                     content: { text: 'Fact 2' },
-                    userId: 'test-user',
+                    userId: TEST_USER_ID,
                     agentId: 'test-agent',
-                    roomId: 'test-room'
+                    roomId: TEST_ROOM_ID
                 },
                 {
                     content: { text: 'Fact 3' },
-                    userId: 'test-user',
+                    userId: TEST_USER_ID,
                     agentId: 'test-agent',
-                    roomId: 'test-room'
+                    roomId: TEST_ROOM_ID
                 }
-            ] as Memory[];
+            ] as unknown as Memory[];
 
             const result = formatFacts(mockFacts);
             expect(result).toBe('Fact 3\nFact 2\nFact 1');
