@@ -3,6 +3,7 @@ export * from './types';
 
 // Then all other exports
 export * from './actions';
+export * from './cost';
 export * from './database';
 export * from './entities';
 export * from './import';

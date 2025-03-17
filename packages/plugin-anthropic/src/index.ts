@@ -4,9 +4,42 @@ import type {
   ObjectGenerationParams,
   GenerateTextParams,
   Plugin,
+  TokenUsage,
 } from '@elizaos/core';
-import { ModelType, logger } from '@elizaos/core';
+import {
+  ModelType,
+  logger,
+  estimateTokenCount,
+  getAnthropicPricing,
+  calculateCost,
+} from '@elizaos/core';
 import { generateText } from 'ai';
+
+/**
+ * Estimates token count for Anthropic models
+ * Since Anthropic doesn't provide a direct way to count tokens,
+ * we use a character-based estimation with some adjustments for Claude models
+ *
+ * @param text The text to count tokens for
+ * @returns Estimated token count
+ */
+function estimateAnthropicTokens(text: string): number {
+  if (!text) return 0;
+
+  // Claude models use a different tokenization than GPT models
+  // Based on Anthropic's documentation, approximately 750 words = 1000 tokens
+  // This is roughly 0.23 tokens per character for average English text
+  const CLAUDE_TOKENS_PER_CHAR = 0.23;
+
+  // Count words (rough approximation)
+  const wordCount = text.split(/\s+/).length;
+
+  // Use both word-based and character-based estimation and take the average
+  const wordBasedEstimate = Math.ceil(wordCount * (1000 / 750));
+  const charBasedEstimate = Math.ceil(text.length * CLAUDE_TOKENS_PER_CHAR);
+
+  return Math.ceil((wordBasedEstimate + charBasedEstimate) / 2);
+}
 
 // Define a configuration schema for the Anthropics plugin.
 // const configSchema = z.object({
@@ -72,6 +105,13 @@ export const anthropicPlugin: Plugin = {
       const smallModel = runtime.getSetting('ANTHROPIC_SMALL_MODEL') ?? 'claude-3-haiku-20240307';
       const maxTokens = smallModel.includes('-3-') ? 4096 : 8192;
 
+      // Estimate input tokens
+      const inputTokens = estimateAnthropicTokens(prompt);
+      const systemTokens = runtime.character.system
+        ? estimateAnthropicTokens(runtime.character.system)
+        : 0;
+      const totalInputTokens = inputTokens + systemTokens;
+
       const { text } = await generateText({
         model: anthropic(smallModel),
         prompt,
@@ -81,6 +121,43 @@ export const anthropicPlugin: Plugin = {
         maxTokens,
         stopSequences,
       });
+
+      // Estimate output tokens
+      const outputTokens = estimateAnthropicTokens(text);
+
+      // Calculate cost
+      const tokenUsage: TokenUsage = {
+        inputTokens: totalInputTokens,
+        outputTokens,
+        totalTokens: totalInputTokens + outputTokens,
+      };
+
+      const pricing = getAnthropicPricing(smallModel);
+      if (pricing) {
+        const cost = calculateCost(tokenUsage, pricing);
+        logger.info(
+          `[Anthropic] ${smallModel} usage: ${totalInputTokens} input + ${outputTokens} output tokens = ${tokenUsage.totalTokens} total tokens. Cost: ${cost.totalCost.toFixed(6)} USD`
+        );
+
+        // Create a response object with usage information
+        // Instead of modifying the text string directly, we'll return an object with __usage property
+        // that the runtime can extract
+        const responseWithUsage = {
+          text,
+          __usage: {
+            provider: 'anthropic',
+            model: smallModel,
+            tokenUsage,
+            cost,
+          },
+        };
+
+        // Return the text property, which will have the __usage property attached by the runtime
+        return responseWithUsage.text;
+      } else {
+        logger.warn(`[Anthropic] No pricing information found for model: ${smallModel}`);
+      }
+
       return text;
     },
 
@@ -98,6 +175,13 @@ export const anthropicPlugin: Plugin = {
     ) => {
       const largeModel = runtime.getSetting('ANTHROPIC_LARGE_MODEL') ?? 'claude-3-5-sonnet-latest';
 
+      // Estimate input tokens
+      const inputTokens = estimateAnthropicTokens(prompt);
+      const systemTokens = runtime.character.system
+        ? estimateAnthropicTokens(runtime.character.system)
+        : 0;
+      const totalInputTokens = inputTokens + systemTokens;
+
       const { text } = await generateText({
         model: anthropic(largeModel),
         prompt,
@@ -108,6 +192,43 @@ export const anthropicPlugin: Plugin = {
         frequencyPenalty,
         presencePenalty,
       });
+
+      // Estimate output tokens
+      const outputTokens = estimateAnthropicTokens(text);
+
+      // Calculate cost
+      const tokenUsage: TokenUsage = {
+        inputTokens: totalInputTokens,
+        outputTokens,
+        totalTokens: totalInputTokens + outputTokens,
+      };
+
+      const pricing = getAnthropicPricing(largeModel);
+      if (pricing) {
+        const cost = calculateCost(tokenUsage, pricing);
+        logger.info(
+          `[Anthropic] ${largeModel} usage: ${totalInputTokens} input + ${outputTokens} output tokens = ${tokenUsage.totalTokens} total tokens. Cost: ${cost.totalCost.toFixed(6)} USD`
+        );
+
+        // Create a response object with usage information
+        // Instead of modifying the text string directly, we'll return an object with __usage property
+        // that the runtime can extract
+        const responseWithUsage = {
+          text,
+          __usage: {
+            provider: 'anthropic',
+            model: largeModel,
+            tokenUsage,
+            cost,
+          },
+        };
+
+        // Return the text property, which will have the __usage property attached by the runtime
+        return responseWithUsage.text;
+      } else {
+        logger.warn(`[Anthropic] No pricing information found for model: ${largeModel}`);
+      }
+
       return text;
     },
 

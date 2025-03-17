@@ -1445,6 +1445,9 @@ export class AgentRuntime implements IAgentRuntime {
         : JSON.stringify(response)
     );
 
+    // Extract usage information if available
+    const usage = (response as any)?.__usage;
+
     // Log the model usage
     this.adapter.log({
       entityId: this.agentId,
@@ -1457,6 +1460,21 @@ export class AgentRuntime implements IAgentRuntime {
           Array.isArray(response) && response.every((x) => typeof x === 'number')
             ? '[array]'
             : response,
+        // Include usage information if available
+        usage: usage
+          ? {
+              provider: usage.provider,
+              model: usage.model,
+              inputTokens: usage.tokenUsage.inputTokens,
+              outputTokens: usage.tokenUsage.outputTokens,
+              totalTokens: usage.tokenUsage.totalTokens,
+              inputCost: usage.cost.inputCost,
+              outputCost: usage.cost.outputCost,
+              totalCost: usage.cost.totalCost,
+              currency: usage.cost.currency,
+            }
+          : undefined,
+        elapsedTime,
       },
       type: `useModel:${modelKey}`,
     });

@@ -5,6 +5,7 @@ import type {
   ObjectGenerationParams,
   Plugin,
   TextEmbeddingParams,
+  TokenUsage,
 } from '@elizaos/core';
 import {
   type DetokenizeTextParams,
@@ -12,6 +13,9 @@ import {
   ModelType,
   type TokenizeTextParams,
   logger,
+  estimateTokenCount,
+  getOpenAIPricing,
+  calculateCost,
 } from '@elizaos/core';
 import { generateObject, generateText } from 'ai';
 import { type TiktokenModel, encodingForModel } from 'js-tiktoken';
@@ -48,6 +52,27 @@ async function detokenizeText(model: ModelTypeName, tokens: number[]) {
       : (process.env.OPENAI_LARGE_MODEL ?? process.env.LARGE_MODEL ?? 'gpt-4o');
   const encoding = encodingForModel(modelName as TiktokenModel);
   return encoding.decode(tokens);
+}
+
+/**
+ * Count tokens for OpenAI models using tiktoken
+ *
+ * @param text The text to count tokens for
+ * @param modelName The name of the OpenAI model
+ * @returns The token count
+ */
+function countTokens(text: string, modelName: string): number {
+  try {
+    if (!text) return 0;
+
+    const encoding = encodingForModel(modelName as TiktokenModel);
+    return encoding.encode(text).length;
+  } catch (error) {
+    logger.warn(
+      `Error counting tokens with tiktoken for model ${modelName}: ${error}. Using estimate instead.`
+    );
+    return estimateTokenCount(text);
+  }
 }
 
 /**
@@ -224,6 +249,10 @@ export const openaiPlugin: Plugin = {
       logger.log('generating text');
       logger.log(prompt);
 
+      // Count input tokens
+      const inputTokens = countTokens(prompt, model);
+
+      // Generate text
       const { text: openaiResponse } = await generateText({
         model: openai.languageModel(model),
         prompt: prompt,
@@ -234,6 +263,40 @@ export const openaiPlugin: Plugin = {
         presencePenalty: presence_penalty,
         stopSequences: stopSequences,
       });
+
+      // Count output tokens
+      const outputTokens = countTokens(openaiResponse, model);
+
+      // Calculate cost
+      const tokenUsage: TokenUsage = {
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+      };
+
+      const pricing = getOpenAIPricing(model);
+      if (pricing) {
+        const cost = calculateCost(tokenUsage, pricing);
+        logger.info(
+          `[OpenAI] ${model} usage: ${inputTokens} input + ${outputTokens} output tokens = ${tokenUsage.totalTokens} total tokens. Cost: ${cost.totalCost.toFixed(6)} USD`
+        );
+
+        // Create a response object with usage information
+        const responseWithUsage = {
+          text: openaiResponse,
+          __usage: {
+            provider: 'openai',
+            model,
+            tokenUsage,
+            cost,
+          },
+        };
+
+        // Return the text property, which will have the __usage property attached by the runtime
+        return responseWithUsage.text;
+      } else {
+        logger.warn(`[OpenAI] No pricing information found for model: ${model}`);
+      }
 
       return openaiResponse;
     },
@@ -258,6 +321,10 @@ export const openaiPlugin: Plugin = {
       const model =
         runtime.getSetting('OPENAI_LARGE_MODEL') ?? runtime.getSetting('LARGE_MODEL') ?? 'gpt-4o';
 
+      // Count input tokens
+      const inputTokens = countTokens(prompt, model);
+
+      // Generate text
       const { text: openaiResponse } = await generateText({
         model: openai.languageModel(model),
         prompt: prompt,
@@ -268,6 +335,40 @@ export const openaiPlugin: Plugin = {
         presencePenalty: presencePenalty,
         stopSequences: stopSequences,
       });
+
+      // Count output tokens
+      const outputTokens = countTokens(openaiResponse, model);
+
+      // Calculate cost
+      const tokenUsage: TokenUsage = {
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+      };
+
+      const pricing = getOpenAIPricing(model);
+      if (pricing) {
+        const cost = calculateCost(tokenUsage, pricing);
+        logger.info(
+          `[OpenAI] ${model} usage: ${inputTokens} input + ${outputTokens} output tokens = ${tokenUsage.totalTokens} total tokens. Cost: ${cost.totalCost.toFixed(6)} USD`
+        );
+
+        // Create a response object with usage information
+        const responseWithUsage = {
+          text: openaiResponse,
+          __usage: {
+            provider: 'openai',
+            model,
+            tokenUsage,
+            cost,
+          },
+        };
+
+        // Return the text property, which will have the __usage property attached by the runtime
+        return responseWithUsage.text;
+      } else {
+        logger.warn(`[OpenAI] No pricing information found for model: ${model}`);
+      }
 
       return openaiResponse;
     },
