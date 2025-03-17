@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkeliza_docs=self.webpackChunkeliza_docs||[]).push([[15183],{30001:e=>{e.exports=JSON.parse('{"metadata":{"permalink":"/eliza/news","page":1,"postsPerPage":10,"totalPages":14,"totalCount":132,"nextPage":"/eliza/news/page/2","blogDescription":"Automated aggregating and summarization of elizaOS ecosystem updates","blogTitle":"AI News"}}')}}]);

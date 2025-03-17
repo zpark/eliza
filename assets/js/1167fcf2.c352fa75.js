@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkeliza_docs=self.webpackChunkeliza_docs||[]).push([[2105],{4224:e=>{e.exports=JSON.parse('{"name":"docusaurus-plugin-content-blog","id":"News"}')}}]);

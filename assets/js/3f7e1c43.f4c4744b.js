@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkeliza_docs=self.webpackChunkeliza_docs||[]).push([[515],{8676:e=>{e.exports=JSON.parse('{"tags":[{"label":"Human-Edited","permalink":"/eliza/blog/tags/human","description":"Content written and edited by the ElizaOS team","count":1},{"label":"Feature","permalink":"/eliza/blog/tags/feature","description":"New feature announcements","count":1}]}')}}]);
