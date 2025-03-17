@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunk_elizaos_docs=self.webpackChunk_elizaos_docs||[]).push([[37405],{77376:a=>{a.exports=JSON.parse('{"tags":[{"label":"automated","permalink":"/eliza/community/tags/automated","count":1}]}')}}]);
