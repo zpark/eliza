@@ -6,7 +6,7 @@ config({ path: '../../.env' });
 export default defineConfig({
   dialect: 'postgresql',
   schema: './src/schema/index.ts',
-  out: './drizzle/migrations',
+  out: '../cli/drizzle/migrations',
   dbCredentials: {
     url: process.env.POSTGRES_URL || 'file://../../pglite',
   },
