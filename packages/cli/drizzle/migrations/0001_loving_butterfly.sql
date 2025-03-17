@@ -1,4 +1,3 @@
-ALTER TABLE "agents" ALTER COLUMN "enabled" SET DEFAULT true;
 
 CREATE TABLE "positions" (
 	"id" text PRIMARY KEY NOT NULL,
@@ -49,17 +48,8 @@ CREATE TABLE "recommender_metrics_history" (
 CREATE TABLE "recommenders" (
 	"id" text PRIMARY KEY NOT NULL,
 	"platform" text NOT NULL,
-	"userId" text NOT NULL,
+	"userId" uuid NOT NULL,
 	"username" text NOT NULL
-);
-
-CREATE TABLE "relationships" (
-	"id" text PRIMARY KEY NOT NULL,
-	"createdAt" timestamp DEFAULT now(),
-	"userA" text NOT NULL,
-	"userB" text NOT NULL,
-	"status" text,
-	"userId" text NOT NULL
 );
 
 CREATE TABLE "token_performance" (
@@ -111,7 +101,7 @@ CREATE TABLE "token_recommendations" (
 	"conviction" text NOT NULL,
 	"tradeType" text NOT NULL,
 	"createdAt" timestamp DEFAULT now(),
-	"updatedAt" timestamp DEFAULT now(),
+	"updatedAt" timestamp DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "transactions" (
@@ -138,10 +128,6 @@ ALTER TABLE "positions" ADD CONSTRAINT "positions_recommendationId_token_recomme
 ALTER TABLE "recommender_metrics" ADD CONSTRAINT "recommender_metrics_recommenderId_recommenders_id_fk" FOREIGN KEY ("recommenderId") REFERENCES "public"."recommenders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "recommender_metrics_history" ADD CONSTRAINT "recommender_metrics_history_recommenderId_recommenders_id_fk" FOREIGN KEY ("recommenderId") REFERENCES "public"."recommenders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "recommenders" ADD CONSTRAINT "recommenders_userId_accounts_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."entities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "relationships" ADD CONSTRAINT "relationships_userA_accounts_id_fk" FOREIGN KEY ("userA") REFERENCES "public"."entities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "relationships" ADD CONSTRAINT "relationships_userB_accounts_id_fk" FOREIGN KEY ("userB") REFERENCES "public"."entities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "relationships" ADD CONSTRAINT "relationships_userId_accounts_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."entities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "token_recommendations" ADD CONSTRAINT "token_recommendations_recommenderId_recommenders_id_fk" FOREIGN KEY ("recommenderId") REFERENCES "public"."recommenders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transactions" ADD CONSTRAINT "transactions_positionId_positions_id_fk" FOREIGN KEY ("positionId") REFERENCES "public"."positions"("id") ON DELETE no action ON UPDATE no action;
 ALTER TABLE "recommenders" ADD CONSTRAINT "recommenders_userId_unique" UNIQUE("userId");
-
