@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>ElizaOS Updates</title>
-        <link>https://elizaos.github.io/news</link>
+        <link>https://eliza.how/news</link>
         <description>Stay up to date with the latest from ElizaOS</description>
         <lastBuildDate>Tue, 11 Mar 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
@@ -10,19 +10,19 @@
         <language>en</language>
         <item>
             <title><![CDATA[Daily Report – 2025-03-11]]></title>
-            <link>https://elizaos.github.io/news/2025/03/11</link>
-            <guid>https://elizaos.github.io/news/2025/03/11</guid>
+            <link>https://eliza.how/news/2025/03/11</link>
+            <guid>https://eliza.how/news/2025/03/11</guid>
             <pubDate>Tue, 11 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Overview]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://elizaos.github.io/news/2025/03/11#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://eliza.how/news/2025/03/11#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
 <ul>
 <li><strong>Wrapped Bitcoin (WBTC)</strong>: $78,368.58</li>
 <li><strong>Wrapped Ethereum (WETH)</strong>: $1,862.91</li>
 <li><strong>Solana (SOL)</strong>: $118.22</li>
 <li><strong>ai16z</strong>: $0.181</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-issues-and-solutions-in-elizaos-development">Technical Issues and Solutions in ElizaOS Development<a href="https://elizaos.github.io/news/2025/03/11#technical-issues-and-solutions-in-elizaos-development" class="hash-link" aria-label="Direct link to Technical Issues and Solutions in ElizaOS Development" title="Direct link to Technical Issues and Solutions in ElizaOS Development">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-client-not-connecting">Discord Client Not Connecting<a href="https://elizaos.github.io/news/2025/03/11#discord-client-not-connecting" class="hash-link" aria-label="Direct link to Discord Client Not Connecting" title="Direct link to Discord Client Not Connecting">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-issues-and-solutions-in-elizaos-development">Technical Issues and Solutions in ElizaOS Development<a href="https://eliza.how/news/2025/03/11#technical-issues-and-solutions-in-elizaos-development" class="hash-link" aria-label="Direct link to Technical Issues and Solutions in ElizaOS Development" title="Direct link to Technical Issues and Solutions in ElizaOS Development">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-client-not-connecting">Discord Client Not Connecting<a href="https://eliza.how/news/2025/03/11#discord-client-not-connecting" class="hash-link" aria-label="Direct link to Discord Client Not Connecting" title="Direct link to Discord Client Not Connecting">​</a></h3>
 <ul>
 <li><strong>Issue</strong>: Bot runs but does not connect.</li>
 <li><strong>Solution</strong>:<!-- -->
@@ -36,28 +36,28 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="twitter-plugin-issues">Twitter Plugin Issues<a href="https://elizaos.github.io/news/2025/03/11#twitter-plugin-issues" class="hash-link" aria-label="Direct link to Twitter Plugin Issues" title="Direct link to Twitter Plugin Issues">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="twitter-plugin-issues">Twitter Plugin Issues<a href="https://eliza.how/news/2025/03/11#twitter-plugin-issues" class="hash-link" aria-label="Direct link to Twitter Plugin Issues" title="Direct link to Twitter Plugin Issues">​</a></h3>
 <ul>
 <li><strong>Installation Issue</strong>: Use <code>npx elizaos plugins add @elizaos-plugins/client-twitter</code>.</li>
 <li><strong>Cloudflare Blocking Login</strong>: Add Twitter login cookies to <code>.env</code>.</li>
 <li><strong>Agent Not Replying</strong>: Ensure plugin is registered and check <code>character.json</code>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="model-selection--performance">Model Selection &amp; Performance<a href="https://elizaos.github.io/news/2025/03/11#model-selection--performance" class="hash-link" aria-label="Direct link to Model Selection &amp; Performance" title="Direct link to Model Selection &amp; Performance">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="model-selection--performance">Model Selection &amp; Performance<a href="https://eliza.how/news/2025/03/11#model-selection--performance" class="hash-link" aria-label="Direct link to Model Selection &amp; Performance" title="Direct link to Model Selection &amp; Performance">​</a></h3>
 <ul>
 <li><strong>Llama Model Producing Incorrect Responses</strong>: Use <code>llama-3.2-3b-instruct</code>.</li>
 <li><strong>Venice Model Configuration</strong>: Verify model selection via Venice API.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="plugin-registration-changes">Plugin Registration Changes<a href="https://elizaos.github.io/news/2025/03/11#plugin-registration-changes" class="hash-link" aria-label="Direct link to Plugin Registration Changes" title="Direct link to Plugin Registration Changes">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="plugin-registration-changes">Plugin Registration Changes<a href="https://eliza.how/news/2025/03/11#plugin-registration-changes" class="hash-link" aria-label="Direct link to Plugin Registration Changes" title="Direct link to Plugin Registration Changes">​</a></h3>
 <ul>
 <li><strong>Issue</strong>: New versions require explicit registration.</li>
 <li><strong>Solution</strong>: Register plugins in <code>character.json</code> and install via <code>npx elizaos plugins add &lt;plugin-name&gt;</code>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="permission-error-with-folder2knowledge">Permission Error with <code>folder2knowledge</code><a href="https://elizaos.github.io/news/2025/03/11#permission-error-with-folder2knowledge" class="hash-link" aria-label="Direct link to permission-error-with-folder2knowledge" title="Direct link to permission-error-with-folder2knowledge">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="permission-error-with-folder2knowledge">Permission Error with <code>folder2knowledge</code><a href="https://eliza.how/news/2025/03/11#permission-error-with-folder2knowledge" class="hash-link" aria-label="Direct link to permission-error-with-folder2knowledge" title="Direct link to permission-error-with-folder2knowledge">​</a></h3>
 <ul>
 <li><strong>Issue</strong>: <code>EACCES: permission denied, mkdir '[...]/tmp/.eliza'</code>.</li>
 <li><strong>Solution</strong>: Run with appropriate permissions or change the temp directory.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="faq">FAQ<a href="https://elizaos.github.io/news/2025/03/11#faq" class="hash-link" aria-label="Direct link to FAQ" title="Direct link to FAQ">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="faq">FAQ<a href="https://eliza.how/news/2025/03/11#faq" class="hash-link" aria-label="Direct link to FAQ" title="Direct link to FAQ">​</a></h3>
 <ol>
 <li><strong>Why is my bot not connecting to Discord?</strong>
 <ul>
@@ -100,8 +100,8 @@
 </ul>
 </li>
 </ol>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="action-items">Action Items<a href="https://elizaos.github.io/news/2025/03/11#action-items" class="hash-link" aria-label="Direct link to Action Items" title="Direct link to Action Items">​</a></h3>
-<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-tasks"><strong>Technical Tasks</strong><a href="https://elizaos.github.io/news/2025/03/11#technical-tasks" class="hash-link" aria-label="Direct link to technical-tasks" title="Direct link to technical-tasks">​</a></h4>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="action-items">Action Items<a href="https://eliza.how/news/2025/03/11#action-items" class="hash-link" aria-label="Direct link to Action Items" title="Direct link to Action Items">​</a></h3>
+<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-tasks"><strong>Technical Tasks</strong><a href="https://eliza.how/news/2025/03/11#technical-tasks" class="hash-link" aria-label="Direct link to technical-tasks" title="Direct link to technical-tasks">​</a></h4>
 <ul>
 <li>Fix Discord client connection issues (semipai.)</li>
 <li>Ensure Twitter plugin registration is documented (brownie4732)</li>
@@ -109,7 +109,7 @@
 <li>Fix <code>folder2knowledge</code> permission error (berlin1337)</li>
 <li>Review and merge Zilliqa plugin PR (mtbc_69795)</li>
 </ul>
-<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="documentation-needs"><strong>Documentation Needs</strong><a href="https://elizaos.github.io/news/2025/03/11#documentation-needs" class="hash-link" aria-label="Direct link to documentation-needs" title="Direct link to documentation-needs">​</a></h4>
+<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="documentation-needs"><strong>Documentation Needs</strong><a href="https://eliza.how/news/2025/03/11#documentation-needs" class="hash-link" aria-label="Direct link to documentation-needs" title="Direct link to documentation-needs">​</a></h4>
 <ul>
 <li>Clarify plugin registration process (brownie4732)</li>
 <li>Add Twitter login cookie instructions (brownie4732)</li>
@@ -117,7 +117,7 @@
 <li>Explain instruction-tuned models in docs (nullfoxgiven)</li>
 <li>Update Discord client troubleshooting guide (semipai.)</li>
 </ul>
-<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="feature-requests"><strong>Feature Requests</strong><a href="https://elizaos.github.io/news/2025/03/11#feature-requests" class="hash-link" aria-label="Direct link to feature-requests" title="Direct link to feature-requests">​</a></h4>
+<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="feature-requests"><strong>Feature Requests</strong><a href="https://eliza.how/news/2025/03/11#feature-requests" class="hash-link" aria-label="Direct link to feature-requests" title="Direct link to feature-requests">​</a></h4>
 <ul>
 <li>Improve Discord client stability (semipai.)</li>
 <li>Enhance Twitter plugin auto-reply functionality (ordinalwatches)</li>
@@ -125,7 +125,7 @@
 <li>Add Cloudflare bypass options for Twitter login (boudy__08)</li>
 <li>Improve model selection UI in Venice API (melraiczyk)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-v2-development-and-branding-updates">ElizaOS v2 Development and Branding Updates<a href="https://elizaos.github.io/news/2025/03/11#elizaos-v2-development-and-branding-updates" class="hash-link" aria-label="Direct link to ElizaOS v2 Development and Branding Updates" title="Direct link to ElizaOS v2 Development and Branding Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-v2-development-and-branding-updates">ElizaOS v2 Development and Branding Updates<a href="https://eliza.how/news/2025/03/11#elizaos-v2-development-and-branding-updates" class="hash-link" aria-label="Direct link to ElizaOS v2 Development and Branding Updates" title="Direct link to ElizaOS v2 Development and Branding Updates">​</a></h2>
 <ul>
 <li><strong>Spartan Integration</strong>: DegenSpartanAI (now "Spartan") added for trading, LP management, and intel layer functionality.</li>
 <li><strong>Codebase Consolidation</strong>: Moved to a monorepo to improve efficiency. Focus on bug-fixing for trading, chat, and Discord integration.</li>
@@ -133,7 +133,7 @@
 <li><strong>Technical Improvements</strong>: Enhanced logging features and AI-driven tokenomics discussions.</li>
 <li><strong>Op Stack Rollup</strong>: Community member offered help with deployment.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-and-market-discussions">ElizaOS Development and Market Discussions<a href="https://elizaos.github.io/news/2025/03/11#elizaos-development-and-market-discussions" class="hash-link" aria-label="Direct link to ElizaOS Development and Market Discussions" title="Direct link to ElizaOS Development and Market Discussions">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-and-market-discussions">ElizaOS Development and Market Discussions<a href="https://eliza.how/news/2025/03/11#elizaos-development-and-market-discussions" class="hash-link" aria-label="Direct link to ElizaOS Development and Market Discussions" title="Direct link to ElizaOS Development and Market Discussions">​</a></h2>
 <ul>
 <li><strong>Market Discussions</strong>: Topics included Sui Candy Machine, hackathon token sales, and Lana AI legitimacy.</li>
 <li><strong>Technical Topics</strong>: Discord client issues, Twitter plugin installation, model selection, and permission errors.</li>
@@ -144,19 +144,19 @@
         </item>
         <item>
             <title><![CDATA[Daily Report – 2025-03-10]]></title>
-            <link>https://elizaos.github.io/news/2025/03/10</link>
-            <guid>https://elizaos.github.io/news/2025/03/10</guid>
+            <link>https://eliza.how/news/2025/03/10</link>
+            <guid>https://eliza.how/news/2025/03/10</guid>
             <pubDate>Mon, 10 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Price Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-price-update">Crypto Market Price Update<a href="https://elizaos.github.io/news/2025/03/10#crypto-market-price-update" class="hash-link" aria-label="Direct link to Crypto Market Price Update" title="Direct link to Crypto Market Price Update">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-price-update">Crypto Market Price Update<a href="https://eliza.how/news/2025/03/10#crypto-market-price-update" class="hash-link" aria-label="Direct link to Crypto Market Price Update" title="Direct link to Crypto Market Price Update">​</a></h2>
 <ul>
 <li><strong>Wrapped Bitcoin (WBTC):</strong> $80,488.74 → $78,368.58</li>
 <li><strong>Wrapped Ethereum (WETH):</strong> $2,018.31 → $1,862.91</li>
 <li><strong>Solana (SOL):</strong> $126.42 → $118.22</li>
 <li><strong>ai16z Token:</strong> $0.1925 → $0.1813</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-issues-and-solutions-in-elizaos-development">Technical Issues and Solutions in ElizaOS Development<a href="https://elizaos.github.io/news/2025/03/10#technical-issues-and-solutions-in-elizaos-development" class="hash-link" aria-label="Direct link to Technical Issues and Solutions in ElizaOS Development" title="Direct link to Technical Issues and Solutions in ElizaOS Development">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-issues--solutions">Key Issues &amp; Solutions<a href="https://elizaos.github.io/news/2025/03/10#key-issues--solutions" class="hash-link" aria-label="Direct link to Key Issues &amp; Solutions" title="Direct link to Key Issues &amp; Solutions">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-issues-and-solutions-in-elizaos-development">Technical Issues and Solutions in ElizaOS Development<a href="https://eliza.how/news/2025/03/10#technical-issues-and-solutions-in-elizaos-development" class="hash-link" aria-label="Direct link to Technical Issues and Solutions in ElizaOS Development" title="Direct link to Technical Issues and Solutions in ElizaOS Development">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-issues--solutions">Key Issues &amp; Solutions<a href="https://eliza.how/news/2025/03/10#key-issues--solutions" class="hash-link" aria-label="Direct link to Key Issues &amp; Solutions" title="Direct link to Key Issues &amp; Solutions">​</a></h3>
 <ul>
 <li><strong>Discord Client Not Connecting:</strong> Resolved by updating <code>discord.js@14.x</code>, clearing <code>node_modules</code>, and ensuring correct token permissions.</li>
 <li><strong>MongoDB Sharding Issue:</strong> Fixed by using a proper sharded cluster instead of a standalone instance.</li>
@@ -166,7 +166,7 @@
 <li><strong>Plugin Registration Changes:</strong> Explicit registration now required via <code>npx elizaos plugins add &lt;plugin-name&gt;</code>.</li>
 <li><strong>Permission Error with <code>folder2knowledge</code>:</strong> Fixed by adjusting permissions or changing the temp directory.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="faq">FAQ<a href="https://elizaos.github.io/news/2025/03/10#faq" class="hash-link" aria-label="Direct link to FAQ" title="Direct link to FAQ">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="faq">FAQ<a href="https://eliza.how/news/2025/03/10#faq" class="hash-link" aria-label="Direct link to FAQ" title="Direct link to FAQ">​</a></h3>
 <ol>
 <li><strong>Bot not connecting to Discord?</strong> → Likely a <code>discord.js</code> version conflict.</li>
 <li><strong>How to enable MongoDB sharding?</strong> → Use a proper sharded cluster.</li>
@@ -175,8 +175,8 @@
 <li><strong>Agent blocked by Cloudflare?</strong> → A VPN may help.</li>
 <li><strong>Permission error in <code>folder2knowledge</code>?</strong> → Run with elevated privileges or change the temp directory.</li>
 </ol>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="action-items">Action Items<a href="https://elizaos.github.io/news/2025/03/10#action-items" class="hash-link" aria-label="Direct link to Action Items" title="Direct link to Action Items">​</a></h3>
-<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-tasks"><strong>Technical Tasks</strong><a href="https://elizaos.github.io/news/2025/03/10#technical-tasks" class="hash-link" aria-label="Direct link to technical-tasks" title="Direct link to technical-tasks">​</a></h4>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="action-items">Action Items<a href="https://eliza.how/news/2025/03/10#action-items" class="hash-link" aria-label="Direct link to Action Items" title="Direct link to Action Items">​</a></h3>
+<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-tasks"><strong>Technical Tasks</strong><a href="https://eliza.how/news/2025/03/10#technical-tasks" class="hash-link" aria-label="Direct link to technical-tasks" title="Direct link to technical-tasks">​</a></h4>
 <ul>
 <li>Fix Discord client connection issues.</li>
 <li>Improve Twitter client authentication.</li>
@@ -184,7 +184,7 @@
 <li>Improve error messages for plugin registration failures.</li>
 <li>Fix caching issues in system prompts.</li>
 </ul>
-<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="documentation-needs"><strong>Documentation Needs</strong><a href="https://elizaos.github.io/news/2025/03/10#documentation-needs" class="hash-link" aria-label="Direct link to documentation-needs" title="Direct link to documentation-needs">​</a></h4>
+<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="documentation-needs"><strong>Documentation Needs</strong><a href="https://eliza.how/news/2025/03/10#documentation-needs" class="hash-link" aria-label="Direct link to documentation-needs" title="Direct link to documentation-needs">​</a></h4>
 <ul>
 <li>Update Discord client setup guide.</li>
 <li>Add Twitter client installation steps.</li>
@@ -192,7 +192,7 @@
 <li>Clarify MongoDB sharding requirements.</li>
 <li>Document best practices for AI model selection.</li>
 </ul>
-<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="feature-requests"><strong>Feature Requests</strong><a href="https://elizaos.github.io/news/2025/03/10#feature-requests" class="hash-link" aria-label="Direct link to feature-requests" title="Direct link to feature-requests">​</a></h4>
+<h4 class="anchor anchorWithStickyNavbar_fF9Z" id="feature-requests"><strong>Feature Requests</strong><a href="https://eliza.how/news/2025/03/10#feature-requests" class="hash-link" aria-label="Direct link to feature-requests" title="Direct link to feature-requests">​</a></h4>
 <ul>
 <li>Add better debugging tools for client integrations.</li>
 <li>Implement a UI for managing registered plugins.</li>
@@ -200,35 +200,35 @@
 <li>Add a built-in cache clearing command.</li>
 <li>Enable automatic retries for failed Twitter API requests.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="project-updates-ai16z-liquidity-market-making-and-elizaos-v2-integration">Project Updates: ai16z Liquidity, Market-Making, and ElizaOS v2 Integration<a href="https://elizaos.github.io/news/2025/03/10#project-updates-ai16z-liquidity-market-making-and-elizaos-v2-integration" class="hash-link" aria-label="Direct link to Project Updates: ai16z Liquidity, Market-Making, and ElizaOS v2 Integration" title="Direct link to Project Updates: ai16z Liquidity, Market-Making, and ElizaOS v2 Integration">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="project-updates-ai16z-liquidity-market-making-and-elizaos-v2-integration">Project Updates: ai16z Liquidity, Market-Making, and ElizaOS v2 Integration<a href="https://eliza.how/news/2025/03/10#project-updates-ai16z-liquidity-market-making-and-elizaos-v2-integration" class="hash-link" aria-label="Direct link to Project Updates: ai16z Liquidity, Market-Making, and ElizaOS v2 Integration" title="Direct link to Project Updates: ai16z Liquidity, Market-Making, and ElizaOS v2 Integration">​</a></h2>
 <ul>
 <li><strong>Liquidity &amp; Market-Making:</strong> Concerns raised about ai16z liquidity and Wintermute’s strategy.</li>
 <li><strong>Project Team &amp; Development:</strong> Shaw is the only original team member working on v2.</li>
 <li><strong>DegenAI (Spartan) Integration:</strong> Spartan is being integrated into ElizaOS v2 for trading and LP management.</li>
 <li><strong>Technical &amp; Documentation Tasks:</strong> Focus on improving liquidity, fixing ElizaOS v2 bugs, and updating documentation.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="newsletter-aggregation-rebranding-and-ai-hackathon-discussion">Newsletter Aggregation, Rebranding, and AI Hackathon Discussion<a href="https://elizaos.github.io/news/2025/03/10#newsletter-aggregation-rebranding-and-ai-hackathon-discussion" class="hash-link" aria-label="Direct link to Newsletter Aggregation, Rebranding, and AI Hackathon Discussion" title="Direct link to Newsletter Aggregation, Rebranding, and AI Hackathon Discussion">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="newsletter-aggregation--processing">Newsletter Aggregation &amp; Processing<a href="https://elizaos.github.io/news/2025/03/10#newsletter-aggregation--processing" class="hash-link" aria-label="Direct link to Newsletter Aggregation &amp; Processing" title="Direct link to Newsletter Aggregation &amp; Processing">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="newsletter-aggregation-rebranding-and-ai-hackathon-discussion">Newsletter Aggregation, Rebranding, and AI Hackathon Discussion<a href="https://eliza.how/news/2025/03/10#newsletter-aggregation-rebranding-and-ai-hackathon-discussion" class="hash-link" aria-label="Direct link to Newsletter Aggregation, Rebranding, and AI Hackathon Discussion" title="Direct link to Newsletter Aggregation, Rebranding, and AI Hackathon Discussion">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="newsletter-aggregation--processing">Newsletter Aggregation &amp; Processing<a href="https://eliza.how/news/2025/03/10#newsletter-aggregation--processing" class="hash-link" aria-label="Direct link to Newsletter Aggregation &amp; Processing" title="Direct link to Newsletter Aggregation &amp; Processing">​</a></h3>
 <ul>
 <li>Workflow shared for aggregating and summarizing daily news via HackMD.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="rebranding--contract-updates">Rebranding &amp; Contract Updates<a href="https://elizaos.github.io/news/2025/03/10#rebranding--contract-updates" class="hash-link" aria-label="Direct link to Rebranding &amp; Contract Updates" title="Direct link to Rebranding &amp; Contract Updates">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="rebranding--contract-updates">Rebranding &amp; Contract Updates<a href="https://eliza.how/news/2025/03/10#rebranding--contract-updates" class="hash-link" aria-label="Direct link to Rebranding &amp; Contract Updates" title="Direct link to Rebranding &amp; Contract Updates">​</a></h3>
 <ul>
 <li>Official rebranding to <code>&lt;@1300745997625982977&gt;OS</code>, but no contract updates for <code>$ai16z</code> and <code>$degenai</code>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="newsletter-content-discussion">Newsletter Content Discussion<a href="https://elizaos.github.io/news/2025/03/10#newsletter-content-discussion" class="hash-link" aria-label="Direct link to Newsletter Content Discussion" title="Direct link to Newsletter Content Discussion">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="newsletter-content-discussion">Newsletter Content Discussion<a href="https://eliza.how/news/2025/03/10#newsletter-content-discussion" class="hash-link" aria-label="Direct link to Newsletter Content Discussion" title="Direct link to Newsletter Content Discussion">​</a></h3>
 <ul>
 <li>Debate on whether BTC, ETH, and SOL price overviews should be included.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="hackmd-collaboration-features">HackMD Collaboration Features<a href="https://elizaos.github.io/news/2025/03/10#hackmd-collaboration-features" class="hash-link" aria-label="Direct link to HackMD Collaboration Features" title="Direct link to HackMD Collaboration Features">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="hackmd-collaboration-features">HackMD Collaboration Features<a href="https://eliza.how/news/2025/03/10#hackmd-collaboration-features" class="hash-link" aria-label="Direct link to HackMD Collaboration Features" title="Direct link to HackMD Collaboration Features">​</a></h3>
 <ul>
 <li>Discussion on improving newsletter review process using HackMD’s features.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-hackathon-idea-the-aipprentice">AI Hackathon Idea: "The AIpprentice"<a href="https://elizaos.github.io/news/2025/03/10#ai-hackathon-idea-the-aipprentice" class="hash-link" aria-label="Direct link to AI Hackathon Idea: &quot;The AIpprentice&quot;" title="Direct link to AI Hackathon Idea: &quot;The AIpprentice&quot;">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-hackathon-idea-the-aipprentice">AI Hackathon Idea: "The AIpprentice"<a href="https://eliza.how/news/2025/03/10#ai-hackathon-idea-the-aipprentice" class="hash-link" aria-label="Direct link to AI Hackathon Idea: &quot;The AIpprentice&quot;" title="Direct link to AI Hackathon Idea: &quot;The AIpprentice&quot;">​</a></h3>
 <ul>
 <li>Proposal for a hackathon game show where AI agents compete as interns.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-news-updates-and-technical-issues">AI News Updates and Technical Issues<a href="https://elizaos.github.io/news/2025/03/10#ai-news-updates-and-technical-issues" class="hash-link" aria-label="Direct link to AI News Updates and Technical Issues" title="Direct link to AI News Updates and Technical Issues">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-news-updates-and-technical-issues">AI News Updates and Technical Issues<a href="https://eliza.how/news/2025/03/10#ai-news-updates-and-technical-issues" class="hash-link" aria-label="Direct link to AI News Updates and Technical Issues" title="Direct link to AI News Updates and Technical Issues">​</a></h2>
 <ul>
 <li><strong>Liquidity Pool Issue:</strong> Concerns about ai16z liquidity, no resolution recorded.</li>
 <li><strong>Automating News Updates:</strong> Suggested running updates on a loop, no implementation details.</li>
@@ -236,7 +236,7 @@
 <li><strong>Demo Day Episode:</strong> A 1.8GB behind-the-scenes video was shared.</li>
 <li><strong>Action Items:</strong> Investigate JSON feed error, automate news updates, evaluate GPU hosting, modify news playback.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="project-updates-liquidity-ai-integration-and-technical-fixes">Project Updates: Liquidity, AI Integration, and Technical Fixes<a href="https://elizaos.github.io/news/2025/03/10#project-updates-liquidity-ai-integration-and-technical-fixes" class="hash-link" aria-label="Direct link to Project Updates: Liquidity, AI Integration, and Technical Fixes" title="Direct link to Project Updates: Liquidity, AI Integration, and Technical Fixes">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="project-updates-liquidity-ai-integration-and-technical-fixes">Project Updates: Liquidity, AI Integration, and Technical Fixes<a href="https://eliza.how/news/2025/03/10#project-updates-liquidity-ai-integration-and-technical-fixes" class="hash-link" aria-label="Direct link to Project Updates: Liquidity, AI Integration, and Technical Fixes" title="Direct link to Project Updates: Liquidity, AI Integration, and Technical Fixes">​</a></h2>
 <ul>
 <li><strong>ai16z Liquidity Issues:</strong> Concerns about market-making strategies and price suppression.</li>
 <li><strong>DegenSpartanAI Integration:</strong> Migration to a monorepo caused delays, but bug-fixing is in progress.</li>
@@ -249,45 +249,45 @@
         </item>
         <item>
             <title><![CDATA[Daily Report – 2025-03-09]]></title>
-            <link>https://elizaos.github.io/news/2025/03/09</link>
-            <guid>https://elizaos.github.io/news/2025/03/09</guid>
+            <link>https://eliza.how/news/2025/03/09</link>
+            <guid>https://eliza.how/news/2025/03/09</guid>
             <pubDate>Sun, 09 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Price Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-price-update">Crypto Market Price Update<a href="https://elizaos.github.io/news/2025/03/09#crypto-market-price-update" class="hash-link" aria-label="Direct link to Crypto Market Price Update" title="Direct link to Crypto Market Price Update">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-price-update">Crypto Market Price Update<a href="https://eliza.how/news/2025/03/09#crypto-market-price-update" class="hash-link" aria-label="Direct link to Crypto Market Price Update" title="Direct link to Crypto Market Price Update">​</a></h2>
 <ul>
 <li><strong>Wrapped Bitcoin (WBTC)</strong>: $86,032.54 → $80,488.74</li>
 <li><strong>Wrapped Ethereum (WETH)</strong>: $2,201.97 → $2,018.31</li>
 <li><strong>Solana (SOL)</strong>: $136.91 → $126.42</li>
 <li><strong>ai16z Token</strong>: $0.2033 → $0.1925</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai--crypto-market-discussions">AI &amp; Crypto Market Discussions<a href="https://elizaos.github.io/news/2025/03/09#ai--crypto-market-discussions" class="hash-link" aria-label="Direct link to AI &amp; Crypto Market Discussions" title="Direct link to AI &amp; Crypto Market Discussions">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-topics">Key Topics:<a href="https://elizaos.github.io/news/2025/03/09#key-topics" class="hash-link" aria-label="Direct link to Key Topics:" title="Direct link to Key Topics:">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai--crypto-market-discussions">AI &amp; Crypto Market Discussions<a href="https://eliza.how/news/2025/03/09#ai--crypto-market-discussions" class="hash-link" aria-label="Direct link to AI &amp; Crypto Market Discussions" title="Direct link to AI &amp; Crypto Market Discussions">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-topics">Key Topics:<a href="https://eliza.how/news/2025/03/09#key-topics" class="hash-link" aria-label="Direct link to Key Topics:" title="Direct link to Key Topics:">​</a></h3>
 <ul>
 <li><strong>AI Adoption &amp; Market Trends</strong>: Impact of ManusAI and Eliza V2.</li>
 <li><strong>Liquidity Concerns</strong>: AI16Z token liquidity issues.</li>
 <li><strong>Token Integration</strong>: Randy project token implementation.</li>
 <li><strong>Launch Platforms</strong>: Comparison of GFM and Pump.fun.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="governance-simulations">Governance Simulations:<a href="https://elizaos.github.io/news/2025/03/09#governance-simulations" class="hash-link" aria-label="Direct link to Governance Simulations:" title="Direct link to Governance Simulations:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="governance-simulations">Governance Simulations:<a href="https://eliza.how/news/2025/03/09#governance-simulations" class="hash-link" aria-label="Direct link to Governance Simulations:" title="Direct link to Governance Simulations:">​</a></h3>
 <ul>
 <li><strong>AI Agents in Governance</strong>: Testing governance models.</li>
 <li><strong>Identity Verification</strong>: Cryptographic signatures &amp; reputation systems.</li>
 <li><strong>News Aggregation</strong>: Pipeline for Discord, GitHub, and Twitter updates.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-development">AI Development:<a href="https://elizaos.github.io/news/2025/03/09#ai-development" class="hash-link" aria-label="Direct link to AI Development:" title="Direct link to AI Development:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-development">AI Development:<a href="https://eliza.how/news/2025/03/09#ai-development" class="hash-link" aria-label="Direct link to AI Development:" title="Direct link to AI Development:">​</a></h3>
 <ul>
 <li><strong>Fact-Checking &amp; AI Hallucinations</strong>: Real-time validation &amp; confidence thresholds.</li>
 <li><strong>DegenAI (Spartan) Integration</strong>: Trading, LP management, and intelligence functions.</li>
 <li><strong>Monorepo Migration</strong>: Delays and bug fixes.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="other-updates">Other Updates:<a href="https://elizaos.github.io/news/2025/03/09#other-updates" class="hash-link" aria-label="Direct link to Other Updates:" title="Direct link to Other Updates:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="other-updates">Other Updates:<a href="https://eliza.how/news/2025/03/09#other-updates" class="hash-link" aria-label="Direct link to Other Updates:" title="Direct link to Other Updates:">​</a></h3>
 <ul>
 <li><strong>Newsletter Aggregation</strong>: Summarization &amp; peer review via HackMD.</li>
 <li><strong>Rebranding Clarifications</strong>: No contract updates for $ai16z and $degenai.</li>
 <li><strong>AI Hackathon Proposal</strong>: "The AIpprentice" – AI agents as interns.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-discussions--troubleshooting">Technical Discussions &amp; Troubleshooting<a href="https://elizaos.github.io/news/2025/03/09#technical-discussions--troubleshooting" class="hash-link" aria-label="Direct link to Technical Discussions &amp; Troubleshooting" title="Direct link to Technical Discussions &amp; Troubleshooting">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-issues">Discord Issues:<a href="https://elizaos.github.io/news/2025/03/09#discord-issues" class="hash-link" aria-label="Direct link to Discord Issues:" title="Direct link to Discord Issues:">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-discussions--troubleshooting">Technical Discussions &amp; Troubleshooting<a href="https://eliza.how/news/2025/03/09#technical-discussions--troubleshooting" class="hash-link" aria-label="Direct link to Technical Discussions &amp; Troubleshooting" title="Direct link to Technical Discussions &amp; Troubleshooting">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-issues">Discord Issues:<a href="https://eliza.how/news/2025/03/09#discord-issues" class="hash-link" aria-label="Direct link to Discord Issues:" title="Direct link to Discord Issues:">​</a></h3>
 <ul>
 <li><strong>Plugin Auto-Initialization</strong>: Requires <code>DISCORD_BOT_TOKEN</code> &amp; <code>DISCORD_CLIENT_ID</code>.</li>
 <li><strong>Client UI Blank Screen</strong>: Debugging traced to Node.js version mismatch.</li>
@@ -295,22 +295,22 @@
 <li><strong>Twitter Client Not Working</strong>: Missing dependencies &amp; incorrect authentication.</li>
 <li><strong>Discord Client Not Connecting</strong>: Bot permissions &amp; <code>discord.js</code> version conflict.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="mongodb--database">MongoDB &amp; Database:<a href="https://elizaos.github.io/news/2025/03/09#mongodb--database" class="hash-link" aria-label="Direct link to MongoDB &amp; Database:" title="Direct link to MongoDB &amp; Database:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="mongodb--database">MongoDB &amp; Database:<a href="https://eliza.how/news/2025/03/09#mongodb--database" class="hash-link" aria-label="Direct link to MongoDB &amp; Database:" title="Direct link to MongoDB &amp; Database:">​</a></h3>
 <ul>
 <li><strong>Sharding Issue</strong>: Requires a proper sharded cluster (not supported on free-tier Atlas).</li>
 <li><strong>Database Cache Issues</strong>: Clearing <code>.elizaos/cache</code> &amp; flushing Redis.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="plugin-development">Plugin Development:<a href="https://elizaos.github.io/news/2025/03/09#plugin-development" class="hash-link" aria-label="Direct link to Plugin Development:" title="Direct link to Plugin Development:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="plugin-development">Plugin Development:<a href="https://eliza.how/news/2025/03/09#plugin-development" class="hash-link" aria-label="Direct link to Plugin Development:" title="Direct link to Plugin Development:">​</a></h3>
 <ul>
 <li><strong>New Plugin</strong>: Generates text &amp; saves to a file using <code>@elizaos/core</code>.</li>
 <li><strong>Registering Plugins</strong>: Requires <code>npx elizaos plugins add &lt;plugin-name&gt;</code>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-model-issues">AI Model Issues:<a href="https://elizaos.github.io/news/2025/03/09#ai-model-issues" class="hash-link" aria-label="Direct link to AI Model Issues:" title="Direct link to AI Model Issues:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-model-issues">AI Model Issues:<a href="https://eliza.how/news/2025/03/09#ai-model-issues" class="hash-link" aria-label="Direct link to AI Model Issues:" title="Direct link to AI Model Issues:">​</a></h3>
 <ul>
 <li><strong>Llama Model Performance</strong>: Ensure instruction-tuned versions (e.g., <code>llama-3.2-3b-instruct</code>).</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-technical-discussions">ElizaOS Technical Discussions<a href="https://elizaos.github.io/news/2025/03/09#elizaos-technical-discussions" class="hash-link" aria-label="Direct link to ElizaOS Technical Discussions" title="Direct link to ElizaOS Technical Discussions">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-solutions">Key Solutions:<a href="https://elizaos.github.io/news/2025/03/09#key-solutions" class="hash-link" aria-label="Direct link to Key Solutions:" title="Direct link to Key Solutions:">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-technical-discussions">ElizaOS Technical Discussions<a href="https://eliza.how/news/2025/03/09#elizaos-technical-discussions" class="hash-link" aria-label="Direct link to ElizaOS Technical Discussions" title="Direct link to ElizaOS Technical Discussions">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-solutions">Key Solutions:<a href="https://eliza.how/news/2025/03/09#key-solutions" class="hash-link" aria-label="Direct link to Key Solutions:" title="Direct link to Key Solutions:">​</a></h3>
 <ul>
 <li><strong>Rollback to Older Versions</strong>: Use <code>git checkout &lt;commit-hash&gt;</code>.</li>
 <li><strong>Bun Migration</strong>: <code>bun run build</code> replaces <code>bun</code>.</li>
@@ -323,19 +323,19 @@
 <li><strong>24/7 Agent Deployment</strong>: Options include cloud VPS &amp; <code>pm2</code>.</li>
 <li><strong>Twitter API Rate Limits</strong>: Implement exponential backoff &amp; rotate accounts.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="repository-management">Repository Management:<a href="https://elizaos.github.io/news/2025/03/09#repository-management" class="hash-link" aria-label="Direct link to Repository Management:" title="Direct link to Repository Management:">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="repository-management">Repository Management:<a href="https://eliza.how/news/2025/03/09#repository-management" class="hash-link" aria-label="Direct link to Repository Management:" title="Direct link to Repository Management:">​</a></h3>
 <ul>
 <li><strong>Git Flow Adoption</strong>: Suggested for better repo management.</li>
 <li><strong>System Prompt Generation</strong>: Located in <code>composeState@core/src/runtime.ts</code>.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="automation--infrastructure">Automation &amp; Infrastructure<a href="https://elizaos.github.io/news/2025/03/09#automation--infrastructure" class="hash-link" aria-label="Direct link to Automation &amp; Infrastructure" title="Direct link to Automation &amp; Infrastructure">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="automation--infrastructure">Automation &amp; Infrastructure<a href="https://eliza.how/news/2025/03/09#automation--infrastructure" class="hash-link" aria-label="Direct link to Automation &amp; Infrastructure" title="Direct link to Automation &amp; Infrastructure">​</a></h2>
 <ul>
 <li><strong>Asset Management</strong>: Git with LFS &amp; S3/R2 for production.</li>
 <li><strong>News Automation</strong>: JSON feed 404 issue &amp; looping mechanism proposal.</li>
 <li><strong>GPU Hosting</strong>: Cost-benefit analysis for AI processing.</li>
 <li><strong>AI Tools</strong>: Luma, Pika, and Runway for style transfer &amp; character addition.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-market-trends--governance">AI Market Trends &amp; Governance<a href="https://elizaos.github.io/news/2025/03/09#ai-market-trends--governance" class="hash-link" aria-label="Direct link to AI Market Trends &amp; Governance" title="Direct link to AI Market Trends &amp; Governance">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-market-trends--governance">AI Market Trends &amp; Governance<a href="https://eliza.how/news/2025/03/09#ai-market-trends--governance" class="hash-link" aria-label="Direct link to AI Market Trends &amp; Governance" title="Direct link to AI Market Trends &amp; Governance">​</a></h2>
 <ul>
 <li><strong>Liquidity Issues</strong>: AI16Z low liquidity in Raydium pools.</li>
 <li><strong>Token Integration</strong>: Randy project acceleration.</li>
@@ -350,51 +350,51 @@
         </item>
         <item>
             <title><![CDATA[Daily Report – 2025-03-08]]></title>
-            <link>https://elizaos.github.io/news/2025/03/08</link>
-            <guid>https://elizaos.github.io/news/2025/03/08</guid>
+            <link>https://eliza.how/news/2025/03/08</link>
+            <guid>https://eliza.how/news/2025/03/08</guid>
             <pubDate>Sat, 08 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://elizaos.github.io/news/2025/03/08#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/03/08#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
 <ul>
 <li><strong>Wrapped Bitcoin (WBTC)</strong>: Decreased from <strong>$86,642.32</strong> to <strong>$86,032.54</strong></li>
 <li><strong>ai16z</strong>: Dropped from <strong>$0.2289</strong> to <strong>$0.2033</strong></li>
 <li><strong>Solana (SOL)</strong>: Declined from <strong>$139.28</strong> to <strong>$136.91</strong></li>
 <li><strong>Wrapped Ethereum (WETH)</strong>: Increased from <strong>$2,139.43</strong> to <strong>$2,201.97</strong></li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-governance-and-crypto-developments">AI, Governance, and Crypto Developments<a href="https://elizaos.github.io/news/2025/03/08#ai-governance-and-crypto-developments" class="hash-link" aria-label="Direct link to AI, Governance, and Crypto Developments" title="Direct link to AI, Governance, and Crypto Developments">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-and-blockchain-integration">AI and Blockchain Integration<a href="https://elizaos.github.io/news/2025/03/08#ai-and-blockchain-integration" class="hash-link" aria-label="Direct link to AI and Blockchain Integration" title="Direct link to AI and Blockchain Integration">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-governance-and-crypto-developments">AI, Governance, and Crypto Developments<a href="https://eliza.how/news/2025/03/08#ai-governance-and-crypto-developments" class="hash-link" aria-label="Direct link to AI, Governance, and Crypto Developments" title="Direct link to AI, Governance, and Crypto Developments">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-and-blockchain-integration">AI and Blockchain Integration<a href="https://eliza.how/news/2025/03/08#ai-and-blockchain-integration" class="hash-link" aria-label="Direct link to AI and Blockchain Integration" title="Direct link to AI and Blockchain Integration">​</a></h3>
 <ul>
 <li><strong>AI Acharya</strong> project introduced, focusing on ethical AI governance using Vedic principles and blockchain.</li>
 <li>Features include ethical consensus algorithms, meditation biometrics in ML models, and a proposed <strong>quantum bridge</strong> between AI and blockchain.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="degenai-migration-to-elizaos-v2">DegenAI Migration to ElizaOS v2<a href="https://elizaos.github.io/news/2025/03/08#degenai-migration-to-elizaos-v2" class="hash-link" aria-label="Direct link to DegenAI Migration to ElizaOS v2" title="Direct link to DegenAI Migration to ElizaOS v2">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="degenai-migration-to-elizaos-v2">DegenAI Migration to ElizaOS v2<a href="https://eliza.how/news/2025/03/08#degenai-migration-to-elizaos-v2" class="hash-link" aria-label="Direct link to DegenAI Migration to ElizaOS v2" title="Direct link to DegenAI Migration to ElizaOS v2">​</a></h3>
 <ul>
 <li><strong>DegenAI</strong> (now <strong>Spartan</strong>) is integrating into <strong>ElizaOS v2</strong>, consolidating repositories.</li>
 <li>Bug fixes ensure core functionalities like <strong>trading, yapping, and Discord integration</strong>.</li>
 <li><strong>Market-making and arbitrage trading</strong> under discussion, with AI-driven tools being considered.</li>
 <li><strong>AI hallucinations</strong> remain a challenge, with solutions like real-time data grounding and confidence thresholds.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-v0259-release">ElizaOS v0.25.9 Release<a href="https://elizaos.github.io/news/2025/03/08#elizaos-v0259-release" class="hash-link" aria-label="Direct link to ElizaOS v0.25.9 Release" title="Direct link to ElizaOS v0.25.9 Release">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-v0259-release">ElizaOS v0.25.9 Release<a href="https://eliza.how/news/2025/03/08#elizaos-v0259-release" class="hash-link" aria-label="Direct link to ElizaOS v0.25.9 Release" title="Direct link to ElizaOS v0.25.9 Release">​</a></h3>
 <ul>
 <li><strong>Enhancements</strong>: Improved plugin handling, JSON5 support, better error logging.</li>
 <li><strong>UI/UX Updates</strong>: New navigation buttons, upgraded agent GUI.</li>
 <li><strong>New Integrations</strong>: LightLinkChain, Viction, Weixin/WeChat, SonicLabs, KaiaChain, t3rn protocol.</li>
 <li><strong>AI-powered NFTs</strong>: Magnus5202 leading a project aiming for <strong>$1M in assets</strong>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-trends--ai-token-liquidity">Crypto Market Trends &amp; AI Token Liquidity<a href="https://elizaos.github.io/news/2025/03/08#crypto-market-trends--ai-token-liquidity" class="hash-link" aria-label="Direct link to Crypto Market Trends &amp; AI Token Liquidity" title="Direct link to Crypto Market Trends &amp; AI Token Liquidity">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-trends--ai-token-liquidity">Crypto Market Trends &amp; AI Token Liquidity<a href="https://eliza.how/news/2025/03/08#crypto-market-trends--ai-token-liquidity" class="hash-link" aria-label="Direct link to Crypto Market Trends &amp; AI Token Liquidity" title="Direct link to Crypto Market Trends &amp; AI Token Liquidity">​</a></h3>
 <ul>
 <li><strong>Liquidity issues</strong> for <strong>AI16Z</strong> discussed, with liquidity spread across <strong>Raydium pools</strong> and market-making by <strong>Wintermute</strong>.</li>
 <li><strong>Market recovery</strong> predicted for <strong>late March/early April</strong> based on <strong>M2 money supply</strong>.</li>
 <li><strong>Token launch platforms</strong>: GFM vs. Pump.fun, with GFM seen as a smoother experience.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="governance-simulations--ai-agent-development">Governance Simulations &amp; AI Agent Development<a href="https://elizaos.github.io/news/2025/03/08#governance-simulations--ai-agent-development" class="hash-link" aria-label="Direct link to Governance Simulations &amp; AI Agent Development" title="Direct link to Governance Simulations &amp; AI Agent Development">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="governance-simulations--ai-agent-development">Governance Simulations &amp; AI Agent Development<a href="https://eliza.how/news/2025/03/08#governance-simulations--ai-agent-development" class="hash-link" aria-label="Direct link to Governance Simulations &amp; AI Agent Development" title="Direct link to Governance Simulations &amp; AI Agent Development">​</a></h3>
 <ul>
 <li><strong>Clank Tank</strong> forked to simulate governance proposals using AI agents.</li>
 <li><strong>Agent trust &amp; identity verification</strong> explored via cryptographic signatures, reputation systems, and <strong>Trusted Execution Environments (TEE)</strong>.</li>
 <li><strong>Governance charter</strong> in development, with community input via <strong>Discord &amp; Snapshot proposals</strong>.</li>
 <li><strong>Automated newsletters</strong> for AI agents set up using <strong>HackMD API</strong> for peer review.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-analysis--technical-discussions--solutions">Discord Chat Analysis – Technical Discussions &amp; Solutions<a href="https://elizaos.github.io/news/2025/03/08#discord-chat-analysis--technical-discussions--solutions" class="hash-link" aria-label="Direct link to Discord Chat Analysis – Technical Discussions &amp; Solutions" title="Direct link to Discord Chat Analysis – Technical Discussions &amp; Solutions">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-analysis--technical-discussions--solutions">Discord Chat Analysis – Technical Discussions &amp; Solutions<a href="https://eliza.how/news/2025/03/08#discord-chat-analysis--technical-discussions--solutions" class="hash-link" aria-label="Direct link to Discord Chat Analysis – Technical Discussions &amp; Solutions" title="Direct link to Discord Chat Analysis – Technical Discussions &amp; Solutions">​</a></h2>
 <ul>
 <li><strong>Troubleshooting</strong>: Twitter auto-posting failures, Cloudflare login blocks, Discord bot issues.</li>
 <li><strong>Key solutions</strong>:<!-- -->
@@ -407,13 +407,13 @@
 <li><strong>FAQ section</strong> created for recurring issues (Twitter replies, Cloudflare blocks, Discord bot connectivity).</li>
 <li><strong>Action items</strong>: Improve documentation, enhance error handling, add <strong>LinkedIn client support</strong>.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="asset-management">Asset Management<a href="https://elizaos.github.io/news/2025/03/08#asset-management" class="hash-link" aria-label="Direct link to Asset Management" title="Direct link to Asset Management">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="asset-management">Asset Management<a href="https://eliza.how/news/2025/03/08#asset-management" class="hash-link" aria-label="Direct link to Asset Management" title="Direct link to Asset Management">​</a></h2>
 <ul>
 <li><strong>Repository selection</strong>: Git with <strong>LFS</strong> for large files, <strong>S3/R2</strong> for production delivery.</li>
 <li><strong>Action item</strong>: Set up Git repository with LFS, configure S3/R2, and document workflow.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-discussions--solutions-for-elizaos">Technical Discussions &amp; Solutions for ElizaOS<a href="https://elizaos.github.io/news/2025/03/08#technical-discussions--solutions-for-elizaos" class="hash-link" aria-label="Direct link to Technical Discussions &amp; Solutions for ElizaOS" title="Direct link to Technical Discussions &amp; Solutions for ElizaOS">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-technical-fixes">Key Technical Fixes<a href="https://elizaos.github.io/news/2025/03/08#key-technical-fixes" class="hash-link" aria-label="Direct link to Key Technical Fixes" title="Direct link to Key Technical Fixes">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-discussions--solutions-for-elizaos">Technical Discussions &amp; Solutions for ElizaOS<a href="https://eliza.how/news/2025/03/08#technical-discussions--solutions-for-elizaos" class="hash-link" aria-label="Direct link to Technical Discussions &amp; Solutions for ElizaOS" title="Direct link to Technical Discussions &amp; Solutions for ElizaOS">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="key-technical-fixes">Key Technical Fixes<a href="https://eliza.how/news/2025/03/08#key-technical-fixes" class="hash-link" aria-label="Direct link to Key Technical Fixes" title="Direct link to Key Technical Fixes">​</a></h3>
 <ul>
 <li><strong>Rollback to older versions</strong>: Use <code>git checkout &lt;commit-hash&gt;</code>.</li>
 <li><strong>Bun migration</strong>: Use <code>bun run build</code> and <code>bun install</code> instead of <code>bun</code>.</li>
@@ -431,7 +431,7 @@
 <li><strong>Database cache issues</strong>: Clear <code>.elizaos/cache</code>, set <code>CACHE_TTL=0</code>, flush Redis (<code>redis-cli flushall</code>).</li>
 <li><strong>Twitter API rate limits</strong>: Use <strong>exponential backoff, account rotation, fresh cookies</strong>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="repository-management--system-prompt-generation">Repository Management &amp; System Prompt Generation<a href="https://elizaos.github.io/news/2025/03/08#repository-management--system-prompt-generation" class="hash-link" aria-label="Direct link to Repository Management &amp; System Prompt Generation" title="Direct link to Repository Management &amp; System Prompt Generation">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="repository-management--system-prompt-generation">Repository Management &amp; System Prompt Generation<a href="https://eliza.how/news/2025/03/08#repository-management--system-prompt-generation" class="hash-link" aria-label="Direct link to Repository Management &amp; System Prompt Generation" title="Direct link to Repository Management &amp; System Prompt Generation">​</a></h3>
 <ul>
 <li><strong>Repo management</strong>: [nullfoxgiven] suggested adopting <strong>Git Flow</strong> for better organization.</li>
 <li><strong>System prompt generation</strong>: Located in <code>composeState@core/src/runtime.ts</code>.</li>
@@ -439,13 +439,13 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-07]]></title>
-            <link>https://elizaos.github.io/news/2025/03/07</link>
-            <guid>https://elizaos.github.io/news/2025/03/07</guid>
+            <link>https://eliza.how/news/2025/03/07</link>
+            <guid>https://eliza.how/news/2025/03/07</guid>
             <pubDate>Fri, 07 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Overview]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="overview">Overview<a href="https://elizaos.github.io/news/2025/03/07#overview" class="hash-link" aria-label="Direct link to Overview" title="Direct link to Overview">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="overview">Overview<a href="https://eliza.how/news/2025/03/07#overview" class="hash-link" aria-label="Direct link to Overview" title="Direct link to Overview">​</a></h2>
 <p>This summary provides insights into various domains, including the crypto market, AI discussions, community updates, and technology advancements.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://elizaos.github.io/news/2025/03/07#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/03/07#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h3>
 <ul>
 <li><strong>Wrapped Bitcoin (WBTC)</strong>
 <ul>
@@ -476,7 +476,7 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking-and-ai-development">Eliza v2 Hacking and AI Development<a href="https://elizaos.github.io/news/2025/03/07#eliza-v2-hacking-and-ai-development" class="hash-link" aria-label="Direct link to Eliza v2 Hacking and AI Development" title="Direct link to Eliza v2 Hacking and AI Development">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking-and-ai-development">Eliza v2 Hacking and AI Development<a href="https://eliza.how/news/2025/03/07#eliza-v2-hacking-and-ai-development" class="hash-link" aria-label="Direct link to Eliza v2 Hacking and AI Development" title="Direct link to Eliza v2 Hacking and AI Development">​</a></h3>
 <ul>
 <li>Discussions on "Eliza v2 Hacking" with reference links available.</li>
 <li>Notes on the concept of a "Vibe coder" equated to an "AGI babysitter".</li>
@@ -484,7 +484,7 @@
 <li>Avatar creation bottlenecks discussed, proposing AI-generated solutions.</li>
 <li>Critiques on intelligence of certain AI models.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="community-daos-and-development">Community: DAOs and Development<a href="https://elizaos.github.io/news/2025/03/07#community-daos-and-development" class="hash-link" aria-label="Direct link to Community: DAOs and Development" title="Direct link to Community: DAOs and Development">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="community-daos-and-development">Community: DAOs and Development<a href="https://eliza.how/news/2025/03/07#community-daos-and-development" class="hash-link" aria-label="Direct link to Community: DAOs and Development" title="Direct link to Community: DAOs and Development">​</a></h3>
 <ul>
 <li><strong>Nether Monsters</strong>
 <ul>
@@ -497,11 +497,11 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-twitter-discussions-and-media">Recent Twitter Discussions and Media<a href="https://elizaos.github.io/news/2025/03/07#recent-twitter-discussions-and-media" class="hash-link" aria-label="Direct link to Recent Twitter Discussions and Media" title="Direct link to Recent Twitter Discussions and Media">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-twitter-discussions-and-media">Recent Twitter Discussions and Media<a href="https://eliza.how/news/2025/03/07#recent-twitter-discussions-and-media" class="hash-link" aria-label="Direct link to Recent Twitter Discussions and Media" title="Direct link to Recent Twitter Discussions and Media">​</a></h3>
 <ul>
 <li>A gallery of recent Twitter exchanges focused on AI, tech developments, and community insights with notable mentions of tech influencers and projects.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="rebranding-of-ai16zdao-to-elizaos">Rebranding of ai16zdao to elizaOS<a href="https://elizaos.github.io/news/2025/03/07#rebranding-of-ai16zdao-to-elizaos" class="hash-link" aria-label="Direct link to Rebranding of ai16zdao to elizaOS" title="Direct link to Rebranding of ai16zdao to elizaOS">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="rebranding-of-ai16zdao-to-elizaos">Rebranding of ai16zdao to elizaOS<a href="https://eliza.how/news/2025/03/07#rebranding-of-ai16zdao-to-elizaos" class="hash-link" aria-label="Direct link to Rebranding of ai16zdao to elizaOS" title="Direct link to Rebranding of ai16zdao to elizaOS">​</a></h3>
 <ul>
 <li>Official rebranding to @elizaOS with updated contracts:<!-- -->
 <ul>
@@ -511,12 +511,12 @@
 </li>
 <li>Transition signifies a new phase for elizaOS.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="building-an-online-presence">Building an Online Presence<a href="https://elizaos.github.io/news/2025/03/07#building-an-online-presence" class="hash-link" aria-label="Direct link to Building an Online Presence" title="Direct link to Building an Online Presence">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="building-an-online-presence">Building an Online Presence<a href="https://eliza.how/news/2025/03/07#building-an-online-presence" class="hash-link" aria-label="Direct link to Building an Online Presence" title="Direct link to Building an Online Presence">​</a></h3>
 <ul>
 <li>Emphasis on using GitHub profiles and active X (Twitter) accounts as professional showcases.</li>
 <li>Example: @OttoCatalytic’s on-chain portfolio site.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="miscellaneous-updates">Miscellaneous Updates<a href="https://elizaos.github.io/news/2025/03/07#miscellaneous-updates" class="hash-link" aria-label="Direct link to Miscellaneous Updates" title="Direct link to Miscellaneous Updates">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="miscellaneous-updates">Miscellaneous Updates<a href="https://eliza.how/news/2025/03/07#miscellaneous-updates" class="hash-link" aria-label="Direct link to Miscellaneous Updates" title="Direct link to Miscellaneous Updates">​</a></h3>
 <ul>
 <li>Promotional content for "Eliza Studios".</li>
 <li>Technological innovations in avatar creation discussed.</li>
@@ -526,12 +526,12 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-06]]></title>
-            <link>https://elizaos.github.io/news/2025/03/06</link>
-            <guid>https://elizaos.github.io/news/2025/03/06</guid>
+            <link>https://eliza.how/news/2025/03/06</link>
+            <guid>https://eliza.how/news/2025/03/06</guid>
             <pubDate>Thu, 06 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Categories]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="categories">Categories<a href="https://elizaos.github.io/news/2025/03/06#categories" class="hash-link" aria-label="Direct link to Categories" title="Direct link to Categories">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-summary">Crypto Market Summary<a href="https://elizaos.github.io/news/2025/03/06#crypto-market-summary" class="hash-link" aria-label="Direct link to Crypto Market Summary" title="Direct link to Crypto Market Summary">​</a></h3>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="categories">Categories<a href="https://eliza.how/news/2025/03/06#categories" class="hash-link" aria-label="Direct link to Categories" title="Direct link to Categories">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-summary">Crypto Market Summary<a href="https://eliza.how/news/2025/03/06#crypto-market-summary" class="hash-link" aria-label="Direct link to Crypto Market Summary" title="Direct link to Crypto Market Summary">​</a></h3>
 <ul>
 <li>
 <p><strong>Wrapped Bitcoin (WBTC)</strong></p>
@@ -571,7 +571,7 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking-and-ai-driven-defi-innovations">Eliza v2 Hacking and AI-Driven DeFi Innovations<a href="https://elizaos.github.io/news/2025/03/06#eliza-v2-hacking-and-ai-driven-defi-innovations" class="hash-link" aria-label="Direct link to Eliza v2 Hacking and AI-Driven DeFi Innovations" title="Direct link to Eliza v2 Hacking and AI-Driven DeFi Innovations">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking-and-ai-driven-defi-innovations">Eliza v2 Hacking and AI-Driven DeFi Innovations<a href="https://eliza.how/news/2025/03/06#eliza-v2-hacking-and-ai-driven-defi-innovations" class="hash-link" aria-label="Direct link to Eliza v2 Hacking and AI-Driven DeFi Innovations" title="Direct link to Eliza v2 Hacking and AI-Driven DeFi Innovations">​</a></h3>
 <ul>
 <li>Discussions about "Eliza v2 Hacking" with several mentions from <a href="https://twitter.com/shawmakesmagic" target="_blank" rel="noopener noreferrer">@shawmakesmagic</a>.</li>
 <li>STP Network partners with @elizaOS for AI-driven autonomous worlds.<br>
@@ -581,30 +581,30 @@
 <img decoding="async" loading="lazy" src="https://opengraph.githubassets.com/1/elizaOS/eliza/pull/3789" alt="Image" class="img__Ss2"></li>
 <li>Grok described as 'anti memory hole technology' by <a href="https://twitter.com/dankvr" target="_blank" rel="noopener noreferrer">@dankvr</a>.</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="vibe-coding-insights">Vibe Coding Insights<a href="https://elizaos.github.io/news/2025/03/06#vibe-coding-insights" class="hash-link" aria-label="Direct link to Vibe Coding Insights" title="Direct link to Vibe Coding Insights">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="vibe-coding-insights">Vibe Coding Insights<a href="https://eliza.how/news/2025/03/06#vibe-coding-insights" class="hash-link" aria-label="Direct link to Vibe Coding Insights" title="Direct link to Vibe Coding Insights">​</a></h3>
 <ul>
 <li>Unlimited potential with vibe coding; <a href="https://twitter.com/shawmakesmagic" target="_blank" rel="noopener noreferrer">@shawmakesmagic</a>.</li>
 <li>Importance of code reading and checking for "smell".<br>
 <!-- -->Source: <a href="https://twitter.com/shawmakesmagic" target="_blank" rel="noopener noreferrer">@shawmakesmagic</a></li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="fixes-for-build-and-docker-issues-in-elizaos">Fixes for Build and Docker Issues in ElizaOS<a href="https://elizaos.github.io/news/2025/03/06#fixes-for-build-and-docker-issues-in-elizaos" class="hash-link" aria-label="Direct link to Fixes for Build and Docker Issues in ElizaOS" title="Direct link to Fixes for Build and Docker Issues in ElizaOS">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="fixes-for-build-and-docker-issues-in-elizaos">Fixes for Build and Docker Issues in ElizaOS<a href="https://eliza.how/news/2025/03/06#fixes-for-build-and-docker-issues-in-elizaos" class="hash-link" aria-label="Direct link to Fixes for Build and Docker Issues in ElizaOS" title="Direct link to Fixes for Build and Docker Issues in ElizaOS">​</a></h3>
 <ul>
 <li>Single-command build issue resolved in ElizaOS v2.<br>
 <img decoding="async" loading="lazy" src="https://opengraph.githubassets.com/1/elizaOS/eliza/pull/3787" alt="Image" class="img__Ss2"></li>
 <li>Dockerfile build error fixes for smoother builds.<br>
 <img decoding="async" loading="lazy" src="https://opengraph.githubassets.com/1/elizaOS/eliza/pull/3790" alt="Image" class="img__Ss2"></li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="notthreadguy-avatar-commission">NotThreadGuy Avatar Commission<a href="https://elizaos.github.io/news/2025/03/06#notthreadguy-avatar-commission" class="hash-link" aria-label="Direct link to NotThreadGuy Avatar Commission" title="Direct link to NotThreadGuy Avatar Commission">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="notthreadguy-avatar-commission">NotThreadGuy Avatar Commission<a href="https://eliza.how/news/2025/03/06#notthreadguy-avatar-commission" class="hash-link" aria-label="Direct link to NotThreadGuy Avatar Commission" title="Direct link to NotThreadGuy Avatar Commission">​</a></h3>
 <ul>
 <li>Commissioned @notthreadguy avatar by <a href="https://twitter.com/dankvr" target="_blank" rel="noopener noreferrer">@dankvr</a>.<br>
 <img decoding="async" loading="lazy" src="https://pbs.twimg.com/media/GlX3zX7XsAAcJto.jpg" alt="Image" class="img__Ss2"></li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="missing-discord-chat-transcript">Missing Discord Chat Transcript<a href="https://elizaos.github.io/news/2025/03/06#missing-discord-chat-transcript" class="hash-link" aria-label="Direct link to Missing Discord Chat Transcript" title="Direct link to Missing Discord Chat Transcript">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="missing-discord-chat-transcript">Missing Discord Chat Transcript<a href="https://eliza.how/news/2025/03/06#missing-discord-chat-transcript" class="hash-link" aria-label="Direct link to Missing Discord Chat Transcript" title="Direct link to Missing Discord Chat Transcript">​</a></h3>
 <ul>
 <li>Placeholder provided without actual Discord chat content.<br>
 <!-- -->Source: <a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Discord</a></li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-on-vibe-coding-elizaos-and-ai-partnerships">Recent Updates on Vibe Coding, ElizaOS, and AI Partnerships<a href="https://elizaos.github.io/news/2025/03/06#recent-updates-on-vibe-coding-elizaos-and-ai-partnerships" class="hash-link" aria-label="Direct link to Recent Updates on Vibe Coding, ElizaOS, and AI Partnerships" title="Direct link to Recent Updates on Vibe Coding, ElizaOS, and AI Partnerships">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-on-vibe-coding-elizaos-and-ai-partnerships">Recent Updates on Vibe Coding, ElizaOS, and AI Partnerships<a href="https://eliza.how/news/2025/03/06#recent-updates-on-vibe-coding-elizaos-and-ai-partnerships" class="hash-link" aria-label="Direct link to Recent Updates on Vibe Coding, ElizaOS, and AI Partnerships" title="Direct link to Recent Updates on Vibe Coding, ElizaOS, and AI Partnerships">​</a></h3>
 <ul>
 <li>Partnership announcement with @elizaOS for AI-driven Autonomous Worlds.</li>
 <li>ElizaOS updates: CLI fixes, build improvements, Docker-related fixes.</li>
@@ -617,12 +617,12 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-05]]></title>
-            <link>https://elizaos.github.io/news/2025/03/05</link>
-            <guid>https://elizaos.github.io/news/2025/03/05</guid>
+            <link>https://eliza.how/news/2025/03/05</link>
+            <guid>https://eliza.how/news/2025/03/05</guid>
             <pubDate>Wed, 05 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Overview]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://elizaos.github.io/news/2025/03/05#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="wrapped-bitcoin-wbtc">Wrapped Bitcoin (WBTC)<a href="https://elizaos.github.io/news/2025/03/05#wrapped-bitcoin-wbtc" class="hash-link" aria-label="Direct link to Wrapped Bitcoin (WBTC)" title="Direct link to Wrapped Bitcoin (WBTC)">​</a></h3>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://eliza.how/news/2025/03/05#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="wrapped-bitcoin-wbtc">Wrapped Bitcoin (WBTC)<a href="https://eliza.how/news/2025/03/05#wrapped-bitcoin-wbtc" class="hash-link" aria-label="Direct link to Wrapped Bitcoin (WBTC)" title="Direct link to Wrapped Bitcoin (WBTC)">​</a></h3>
 <ul>
 <li><strong>Price Range:</strong> $87,072.95 - $90,517.90</li>
 <li><strong>Market Cap:</strong> $11.26 billion</li>
@@ -630,7 +630,7 @@
 <li><strong>Daily Change:</strong> 0.0258%</li>
 <li><strong>Source:</strong> [WBTC]</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="solana-sol">Solana (SOL)<a href="https://elizaos.github.io/news/2025/03/05#solana-sol" class="hash-link" aria-label="Direct link to Solana (SOL)" title="Direct link to Solana (SOL)">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="solana-sol">Solana (SOL)<a href="https://eliza.how/news/2025/03/05#solana-sol" class="hash-link" aria-label="Direct link to Solana (SOL)" title="Direct link to Solana (SOL)">​</a></h3>
 <ul>
 <li><strong>Price Range:</strong> $143.88 - $146.32</li>
 <li><strong>Market Cap:</strong> Currently zero</li>
@@ -638,7 +638,7 @@
 <li><strong>Daily Change:</strong> 0.0357%</li>
 <li><strong>Source:</strong> [SOL]</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="wrapped-ethereum-weth">Wrapped Ethereum (WETH)<a href="https://elizaos.github.io/news/2025/03/05#wrapped-ethereum-weth" class="hash-link" aria-label="Direct link to Wrapped Ethereum (WETH)" title="Direct link to Wrapped Ethereum (WETH)">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="wrapped-ethereum-weth">Wrapped Ethereum (WETH)<a href="https://eliza.how/news/2025/03/05#wrapped-ethereum-weth" class="hash-link" aria-label="Direct link to Wrapped Ethereum (WETH)" title="Direct link to Wrapped Ethereum (WETH)">​</a></h3>
 <ul>
 <li><strong>Price Range:</strong> $2,170.14 - $2,242.55</li>
 <li><strong>Market Cap:</strong> $6.26 billion</li>
@@ -646,18 +646,18 @@
 <li><strong>Daily Change:</strong> 0.0394%</li>
 <li><strong>Source:</strong> [WETH]</li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai16z-token">ai16z Token<a href="https://elizaos.github.io/news/2025/03/05#ai16z-token" class="hash-link" aria-label="Direct link to ai16z Token" title="Direct link to ai16z Token">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai16z-token">ai16z Token<a href="https://eliza.how/news/2025/03/05#ai16z-token" class="hash-link" aria-label="Direct link to ai16z Token" title="Direct link to ai16z Token">​</a></h3>
 <ul>
 <li><strong>Price Range:</strong> $0.2912 - $0.2978</li>
 <li><strong>Source:</strong> [ai16z]</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-ollama-and-elizaos">Latest Updates on Ollama and ElizaOS<a href="https://elizaos.github.io/news/2025/03/05#latest-updates-on-ollama-and-elizaos" class="hash-link" aria-label="Direct link to Latest Updates on Ollama and ElizaOS" title="Direct link to Latest Updates on Ollama and ElizaOS">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ollama">Ollama<a href="https://elizaos.github.io/news/2025/03/05#ollama" class="hash-link" aria-label="Direct link to Ollama" title="Direct link to Ollama">​</a></h3>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-ollama-and-elizaos">Latest Updates on Ollama and ElizaOS<a href="https://eliza.how/news/2025/03/05#latest-updates-on-ollama-and-elizaos" class="hash-link" aria-label="Direct link to Latest Updates on Ollama and ElizaOS" title="Direct link to Latest Updates on Ollama and ElizaOS">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ollama">Ollama<a href="https://eliza.how/news/2025/03/05#ollama" class="hash-link" aria-label="Direct link to Ollama" title="Direct link to Ollama">​</a></h3>
 <ul>
 <li><strong>Update:</strong> Released for the QwQ preview model. Update command: <code>ollama pull qwq</code></li>
 <li><strong>Source:</strong> <a href="https://twitter.com/ai16zdao/status/1897411094874141176" target="_blank" rel="noopener noreferrer">Update Link</a></li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos">ElizaOS<a href="https://elizaos.github.io/news/2025/03/05#elizaos" class="hash-link" aria-label="Direct link to ElizaOS" title="Direct link to ElizaOS">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos">ElizaOS<a href="https://eliza.how/news/2025/03/05#elizaos" class="hash-link" aria-label="Direct link to ElizaOS" title="Direct link to ElizaOS">​</a></h3>
 <ul>
 <li><strong>Logs Functionality:</strong> Improved tracking and debugging capabilities</li>
 <li><strong>v2-Specific Initialization Changes:</strong> Likely improves setup</li>
@@ -670,13 +670,13 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussions-on-data-structures-daos-and-recorded-spaces">Discussions on Data Structures, DAOs, and Recorded Spaces<a href="https://elizaos.github.io/news/2025/03/05#discussions-on-data-structures-daos-and-recorded-spaces" class="hash-link" aria-label="Direct link to Discussions on Data Structures, DAOs, and Recorded Spaces" title="Direct link to Discussions on Data Structures, DAOs, and Recorded Spaces">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussions-on-data-structures-daos-and-recorded-spaces">Discussions on Data Structures, DAOs, and Recorded Spaces<a href="https://eliza.how/news/2025/03/05#discussions-on-data-structures-daos-and-recorded-spaces" class="hash-link" aria-label="Direct link to Discussions on Data Structures, DAOs, and Recorded Spaces" title="Direct link to Discussions on Data Structures, DAOs, and Recorded Spaces">​</a></h2>
 <ul>
 <li><strong>Data Structure Discussion:</strong> <a href="https://twitter.com/shawmakesmagic/status/1897141565908509162" target="_blank" rel="noopener noreferrer">Tweet</a></li>
 <li><strong>Recorded Spaces Discussion:</strong> <a href="https://twitter.com/elizaOS/status/1897412253781242306" target="_blank" rel="noopener noreferrer">ElizaOS Mention</a></li>
 <li><strong>DAOs Discussion:</strong> <a href="https://twitter.com/dankvr/status/1897148215805534413" target="_blank" rel="noopener noreferrer">Tweet</a></li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking-and-json-parsing-issue">Eliza v2 Hacking and JSON Parsing Issue<a href="https://elizaos.github.io/news/2025/03/05#eliza-v2-hacking-and-json-parsing-issue" class="hash-link" aria-label="Direct link to Eliza v2 Hacking and JSON Parsing Issue" title="Direct link to Eliza v2 Hacking and JSON Parsing Issue">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking-and-json-parsing-issue">Eliza v2 Hacking and JSON Parsing Issue<a href="https://eliza.how/news/2025/03/05#eliza-v2-hacking-and-json-parsing-issue" class="hash-link" aria-label="Direct link to Eliza v2 Hacking and JSON Parsing Issue" title="Direct link to Eliza v2 Hacking and JSON Parsing Issue">​</a></h2>
 <ul>
 <li><strong>Hacking Reports:</strong> Concerns around Eliza v2</li>
 <li><strong>JSON Parsing Bug:</strong> Found in <code>parseJSONObjectFromText</code> function, related to <code>normalizeJSONString</code></li>
@@ -688,7 +688,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="earnings-calls-now-hosted-on-discord">Earnings Calls Now Hosted on Discord<a href="https://elizaos.github.io/news/2025/03/05#earnings-calls-now-hosted-on-discord" class="hash-link" aria-label="Direct link to Earnings Calls Now Hosted on Discord" title="Direct link to Earnings Calls Now Hosted on Discord">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="earnings-calls-now-hosted-on-discord">Earnings Calls Now Hosted on Discord<a href="https://eliza.how/news/2025/03/05#earnings-calls-now-hosted-on-discord" class="hash-link" aria-label="Direct link to Earnings Calls Now Hosted on Discord" title="Direct link to Earnings Calls Now Hosted on Discord">​</a></h2>
 <ul>
 <li><strong>Earnings Call Transition:</strong> Hosted in Discord with @baoskee, founder of @daosdotfun</li>
 <li><strong>Sources:</strong>
@@ -698,7 +698,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-build-and-linting-improvements">ElizaOS Build and Linting Improvements<a href="https://elizaos.github.io/news/2025/03/05#elizaos-build-and-linting-improvements" class="hash-link" aria-label="Direct link to ElizaOS Build and Linting Improvements" title="Direct link to ElizaOS Build and Linting Improvements">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-build-and-linting-improvements">ElizaOS Build and Linting Improvements<a href="https://eliza.how/news/2025/03/05#elizaos-build-and-linting-improvements" class="hash-link" aria-label="Direct link to ElizaOS Build and Linting Improvements" title="Direct link to ElizaOS Build and Linting Improvements">​</a></h2>
 <ul>
 <li><strong>Build Process Enhancements:</strong> Stability and compatibility improvements</li>
 <li><strong>Key Fixes:</strong> Docker build issues; Linting enhancements</li>
@@ -710,7 +710,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="enhancing-defi-capabilities-in-plugin-sui">Enhancing DeFi Capabilities in Plugin-Sui<a href="https://elizaos.github.io/news/2025/03/05#enhancing-defi-capabilities-in-plugin-sui" class="hash-link" aria-label="Direct link to Enhancing DeFi Capabilities in Plugin-Sui" title="Direct link to Enhancing DeFi Capabilities in Plugin-Sui">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="enhancing-defi-capabilities-in-plugin-sui">Enhancing DeFi Capabilities in Plugin-Sui<a href="https://eliza.how/news/2025/03/05#enhancing-defi-capabilities-in-plugin-sui" class="hash-link" aria-label="Direct link to Enhancing DeFi Capabilities in Plugin-Sui" title="Direct link to Enhancing DeFi Capabilities in Plugin-Sui">​</a></h2>
 <ul>
 <li><strong>DeFi Expansion:</strong> Supports swaps for any coin via Sui Swap</li>
 <li><strong>Integration with Cetus:</strong> CLMM pools, liquidity positions</li>
@@ -721,7 +721,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-ai-daos-and-development">Latest Updates on AI, DAOs, and Development<a href="https://elizaos.github.io/news/2025/03/05#latest-updates-on-ai-daos-and-development" class="hash-link" aria-label="Direct link to Latest Updates on AI, DAOs, and Development" title="Direct link to Latest Updates on AI, DAOs, and Development">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-ai-daos-and-development">Latest Updates on AI, DAOs, and Development<a href="https://eliza.how/news/2025/03/05#latest-updates-on-ai-daos-and-development" class="hash-link" aria-label="Direct link to Latest Updates on AI, DAOs, and Development" title="Direct link to Latest Updates on AI, DAOs, and Development">​</a></h2>
 <ul>
 <li><strong>AI Developments:</strong> AI agents managing cloud infrastructure</li>
 <li><strong>Token Listings:</strong> $ai16z on CoinMarketCap and CoinGecko</li>
@@ -738,11 +738,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-04]]></title>
-            <link>https://elizaos.github.io/news/2025/03/04</link>
-            <guid>https://elizaos.github.io/news/2025/03/04</guid>
+            <link>https://eliza.how/news/2025/03/04</link>
+            <guid>https://eliza.how/news/2025/03/04</guid>
             <pubDate>Tue, 04 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://elizaos.github.io/news/2025/03/04#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/03/04#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
 <ul>
 <li>
 <p><strong>Wrapped Bitcoin (WBTC)</strong></p>
@@ -772,7 +772,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-weekly-updates-and-documentation-efforts">ElizaOS Weekly Updates and Documentation Efforts<a href="https://elizaos.github.io/news/2025/03/04#elizaos-weekly-updates-and-documentation-efforts" class="hash-link" aria-label="Direct link to ElizaOS Weekly Updates and Documentation Efforts" title="Direct link to ElizaOS Weekly Updates and Documentation Efforts">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-weekly-updates-and-documentation-efforts">ElizaOS Weekly Updates and Documentation Efforts<a href="https://eliza.how/news/2025/03/04#elizaos-weekly-updates-and-documentation-efforts" class="hash-link" aria-label="Direct link to ElizaOS Weekly Updates and Documentation Efforts" title="Direct link to ElizaOS Weekly Updates and Documentation Efforts">​</a></h2>
 <ul>
 <li>
 <p><strong>Weekly Updates</strong></p>
@@ -800,7 +800,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="navigation-button-addition">Navigation Button Addition<a href="https://elizaos.github.io/news/2025/03/04#navigation-button-addition" class="hash-link" aria-label="Direct link to Navigation Button Addition" title="Direct link to Navigation Button Addition">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="navigation-button-addition">Navigation Button Addition<a href="https://eliza.how/news/2025/03/04#navigation-button-addition" class="hash-link" aria-label="Direct link to Navigation Button Addition" title="Direct link to Navigation Button Addition">​</a></h2>
 <ul>
 <li>
 <p><strong>Navigation Enhancements</strong></p>
@@ -819,7 +819,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-development-and-productivity">AI Development and Productivity<a href="https://elizaos.github.io/news/2025/03/04#ai-development-and-productivity" class="hash-link" aria-label="Direct link to AI Development and Productivity" title="Direct link to AI Development and Productivity">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-development-and-productivity">AI Development and Productivity<a href="https://eliza.how/news/2025/03/04#ai-development-and-productivity" class="hash-link" aria-label="Direct link to AI Development and Productivity" title="Direct link to AI Development and Productivity">​</a></h2>
 <ul>
 <li>
 <p><strong>AI Development Insights</strong></p>
@@ -837,7 +837,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-and-tako-protocol-updates">Eliza v2 and Tako Protocol Updates<a href="https://elizaos.github.io/news/2025/03/04#eliza-v2-and-tako-protocol-updates" class="hash-link" aria-label="Direct link to Eliza v2 and Tako Protocol Updates" title="Direct link to Eliza v2 and Tako Protocol Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-and-tako-protocol-updates">Eliza v2 and Tako Protocol Updates<a href="https://eliza.how/news/2025/03/04#eliza-v2-and-tako-protocol-updates" class="hash-link" aria-label="Direct link to Eliza v2 and Tako Protocol Updates" title="Direct link to Eliza v2 and Tako Protocol Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>Tako Protocol Announcement</strong></p>
@@ -855,7 +855,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agent-development-updates-and-api-fixes">Agent Development Updates and API Fixes<a href="https://elizaos.github.io/news/2025/03/04#agent-development-updates-and-api-fixes" class="hash-link" aria-label="Direct link to Agent Development Updates and API Fixes" title="Direct link to Agent Development Updates and API Fixes">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agent-development-updates-and-api-fixes">Agent Development Updates and API Fixes<a href="https://eliza.how/news/2025/03/04#agent-development-updates-and-api-fixes" class="hash-link" aria-label="Direct link to Agent Development Updates and API Fixes" title="Direct link to Agent Development Updates and API Fixes">​</a></h2>
 <ul>
 <li>
 <p><strong>Agent Development School</strong></p>
@@ -873,7 +873,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-and-documentation-updates-in-elizaos">Recent Fixes and Documentation Updates in ElizaOS<a href="https://elizaos.github.io/news/2025/03/04#recent-fixes-and-documentation-updates-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes and Documentation Updates in ElizaOS" title="Direct link to Recent Fixes and Documentation Updates in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-and-documentation-updates-in-elizaos">Recent Fixes and Documentation Updates in ElizaOS<a href="https://eliza.how/news/2025/03/04#recent-fixes-and-documentation-updates-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes and Documentation Updates in ElizaOS" title="Direct link to Recent Fixes and Documentation Updates in ElizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Build Error Fix</strong></p>
@@ -892,7 +892,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="database-migration-fixes-and-development-updates">Database Migration Fixes and Development Updates<a href="https://elizaos.github.io/news/2025/03/04#database-migration-fixes-and-development-updates" class="hash-link" aria-label="Direct link to Database Migration Fixes and Development Updates" title="Direct link to Database Migration Fixes and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="database-migration-fixes-and-development-updates">Database Migration Fixes and Development Updates<a href="https://eliza.how/news/2025/03/04#database-migration-fixes-and-development-updates" class="hash-link" aria-label="Direct link to Database Migration Fixes and Development Updates" title="Direct link to Database Migration Fixes and Development Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>Database Migration Update</strong></p>
@@ -909,7 +909,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-and-community-updates">ElizaOS Development and Community Updates<a href="https://elizaos.github.io/news/2025/03/04#elizaos-development-and-community-updates" class="hash-link" aria-label="Direct link to ElizaOS Development and Community Updates" title="Direct link to ElizaOS Development and Community Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-and-community-updates">ElizaOS Development and Community Updates<a href="https://eliza.how/news/2025/03/04#elizaos-development-and-community-updates" class="hash-link" aria-label="Direct link to ElizaOS Development and Community Updates" title="Direct link to ElizaOS Development and Community Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>Community and Development Highlights</strong></p>
@@ -938,11 +938,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-03]]></title>
-            <link>https://elizaos.github.io/news/2025/03/03</link>
-            <guid>https://elizaos.github.io/news/2025/03/03</guid>
+            <link>https://eliza.how/news/2025/03/03</link>
+            <guid>https://eliza.how/news/2025/03/03</guid>
             <pubDate>Mon, 03 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Summary]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-summary">Crypto Market Summary<a href="https://elizaos.github.io/news/2025/03/03#crypto-market-summary" class="hash-link" aria-label="Direct link to Crypto Market Summary" title="Direct link to Crypto Market Summary">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-summary">Crypto Market Summary<a href="https://eliza.how/news/2025/03/03#crypto-market-summary" class="hash-link" aria-label="Direct link to Crypto Market Summary" title="Direct link to Crypto Market Summary">​</a></h2>
 <ul>
 <li>
 <p><strong>Wrapped Bitcoin (WBTC)</strong></p>
@@ -981,7 +981,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-and-improvements-in-elizaos">Recent Fixes and Improvements in ElizaOS<a href="https://elizaos.github.io/news/2025/03/03#recent-fixes-and-improvements-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes and Improvements in ElizaOS" title="Direct link to Recent Fixes and Improvements in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-and-improvements-in-elizaos">Recent Fixes and Improvements in ElizaOS<a href="https://eliza.how/news/2025/03/03#recent-fixes-and-improvements-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes and Improvements in ElizaOS" title="Direct link to Recent Fixes and Improvements in ElizaOS">​</a></h2>
 <ul>
 <li><strong>GUI and System Fixes</strong>
 <ul>
@@ -993,7 +993,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-innovations-in-nfts-music-and-hacking">AI Innovations in NFTs, Music, and Hacking<a href="https://elizaos.github.io/news/2025/03/03#ai-innovations-in-nfts-music-and-hacking" class="hash-link" aria-label="Direct link to AI Innovations in NFTs, Music, and Hacking" title="Direct link to AI Innovations in NFTs, Music, and Hacking">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-innovations-in-nfts-music-and-hacking">AI Innovations in NFTs, Music, and Hacking<a href="https://eliza.how/news/2025/03/03#ai-innovations-in-nfts-music-and-hacking" class="hash-link" aria-label="Direct link to AI Innovations in NFTs, Music, and Hacking" title="Direct link to AI Innovations in NFTs, Music, and Hacking">​</a></h2>
 <ul>
 <li>
 <p><strong>Magnus5202 Project</strong></p>
@@ -1014,7 +1014,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-development-updates-and-fixes">Recent Development Updates and Fixes<a href="https://elizaos.github.io/news/2025/03/03#recent-development-updates-and-fixes" class="hash-link" aria-label="Direct link to Recent Development Updates and Fixes" title="Direct link to Recent Development Updates and Fixes">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-development-updates-and-fixes">Recent Development Updates and Fixes<a href="https://eliza.how/news/2025/03/03#recent-development-updates-and-fixes" class="hash-link" aria-label="Direct link to Recent Development Updates and Fixes" title="Direct link to Recent Development Updates and Fixes">​</a></h2>
 <ul>
 <li>
 <p><strong>GUI Improvements</strong></p>
@@ -1035,7 +1035,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="building-and-development-updates">Building and Development Updates<a href="https://elizaos.github.io/news/2025/03/03#building-and-development-updates" class="hash-link" aria-label="Direct link to Building and Development Updates" title="Direct link to Building and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="building-and-development-updates">Building and Development Updates<a href="https://eliza.how/news/2025/03/03#building-and-development-updates" class="hash-link" aria-label="Direct link to Building and Development Updates" title="Direct link to Building and Development Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>Community Building</strong></p>
@@ -1050,7 +1050,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-in-elizaos">Recent Updates in ElizaOS<a href="https://elizaos.github.io/news/2025/03/03#recent-updates-in-elizaos" class="hash-link" aria-label="Direct link to Recent Updates in ElizaOS" title="Direct link to Recent Updates in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-in-elizaos">Recent Updates in ElizaOS<a href="https://eliza.how/news/2025/03/03#recent-updates-in-elizaos" class="hash-link" aria-label="Direct link to Recent Updates in ElizaOS" title="Direct link to Recent Updates in ElizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Feature Addition</strong></p>
@@ -1065,7 +1065,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="delete-functionality-fixes">Delete Functionality Fixes<a href="https://elizaos.github.io/news/2025/03/03#delete-functionality-fixes" class="hash-link" aria-label="Direct link to Delete Functionality Fixes" title="Direct link to Delete Functionality Fixes">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="delete-functionality-fixes">Delete Functionality Fixes<a href="https://eliza.how/news/2025/03/03#delete-functionality-fixes" class="hash-link" aria-label="Direct link to Delete Functionality Fixes" title="Direct link to Delete Functionality Fixes">​</a></h2>
 <ul>
 <li><strong>Agent Deletion Fixes</strong>
 <ul>
@@ -1073,7 +1073,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="integration-of-weather-tavily-plugin-in-slack-and-6551-research">Integration of Weather, Tavily Plugin in Slack and 6551 Research<a href="https://elizaos.github.io/news/2025/03/03#integration-of-weather-tavily-plugin-in-slack-and-6551-research" class="hash-link" aria-label="Direct link to Integration of Weather, Tavily Plugin in Slack and 6551 Research" title="Direct link to Integration of Weather, Tavily Plugin in Slack and 6551 Research">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="integration-of-weather-tavily-plugin-in-slack-and-6551-research">Integration of Weather, Tavily Plugin in Slack and 6551 Research<a href="https://eliza.how/news/2025/03/03#integration-of-weather-tavily-plugin-in-slack-and-6551-research" class="hash-link" aria-label="Direct link to Integration of Weather, Tavily Plugin in Slack and 6551 Research" title="Direct link to Integration of Weather, Tavily Plugin in Slack and 6551 Research">​</a></h2>
 <ul>
 <li>
 <p><strong>Slack Integration</strong></p>
@@ -1088,7 +1088,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="character-studio-updates-leaderboard-integration--nft-marketplace">Character Studio Updates: Leaderboard Integration &amp; NFT Marketplace<a href="https://elizaos.github.io/news/2025/03/03#character-studio-updates-leaderboard-integration--nft-marketplace" class="hash-link" aria-label="Direct link to Character Studio Updates: Leaderboard Integration &amp; NFT Marketplace" title="Direct link to Character Studio Updates: Leaderboard Integration &amp; NFT Marketplace">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="character-studio-updates-leaderboard-integration--nft-marketplace">Character Studio Updates: Leaderboard Integration &amp; NFT Marketplace<a href="https://eliza.how/news/2025/03/03#character-studio-updates-leaderboard-integration--nft-marketplace" class="hash-link" aria-label="Direct link to Character Studio Updates: Leaderboard Integration &amp; NFT Marketplace" title="Direct link to Character Studio Updates: Leaderboard Integration &amp; NFT Marketplace">​</a></h2>
 <ul>
 <li>
 <p><strong>NFT Marketplace</strong></p>
@@ -1103,7 +1103,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-request">Discord Chat Transcript Request<a href="https://elizaos.github.io/news/2025/03/03#discord-chat-transcript-request" class="hash-link" aria-label="Direct link to Discord Chat Transcript Request" title="Direct link to Discord Chat Transcript Request">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-request">Discord Chat Transcript Request<a href="https://eliza.how/news/2025/03/03#discord-chat-transcript-request" class="hash-link" aria-label="Direct link to Discord Chat Transcript Request" title="Direct link to Discord Chat Transcript Request">​</a></h2>
 <ul>
 <li><strong>Transcript Placeholder Notice</strong>
 <ul>
@@ -1114,11 +1114,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-02]]></title>
-            <link>https://elizaos.github.io/news/2025/03/02</link>
-            <guid>https://elizaos.github.io/news/2025/03/02</guid>
+            <link>https://eliza.how/news/2025/03/02</link>
+            <guid>https://eliza.how/news/2025/03/02</guid>
             <pubDate>Sun, 02 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Overview]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://elizaos.github.io/news/2025/03/02#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://eliza.how/news/2025/03/02#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
 <ul>
 <li>
 <p><strong>Wrapped Bitcoin (WBTC)</strong></p>
@@ -1157,7 +1157,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="development-updates-and-ai-agent-dev-school">Development Updates and AI Agent Dev School<a href="https://elizaos.github.io/news/2025/03/02#development-updates-and-ai-agent-dev-school" class="hash-link" aria-label="Direct link to Development Updates and AI Agent Dev School" title="Direct link to Development Updates and AI Agent Dev School">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="development-updates-and-ai-agent-dev-school">Development Updates and AI Agent Dev School<a href="https://eliza.how/news/2025/03/02#development-updates-and-ai-agent-dev-school" class="hash-link" aria-label="Direct link to Development Updates and AI Agent Dev School" title="Direct link to Development Updates and AI Agent Dev School">​</a></h2>
 <ul>
 <li>
 <p><strong>AI Agent Dev School</strong></p>
@@ -1197,7 +1197,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking">Eliza v2 Hacking<a href="https://elizaos.github.io/news/2025/03/02#eliza-v2-hacking" class="hash-link" aria-label="Direct link to Eliza v2 Hacking" title="Direct link to Eliza v2 Hacking">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="eliza-v2-hacking">Eliza v2 Hacking<a href="https://eliza.how/news/2025/03/02#eliza-v2-hacking" class="hash-link" aria-label="Direct link to Eliza v2 Hacking" title="Direct link to Eliza v2 Hacking">​</a></h2>
 <ul>
 <li><strong>Hacking Incidents</strong>
 <ul>
@@ -1212,7 +1212,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="fixing-typos-and-improving-consistency-in-discord-chat-logs">Fixing Typos and Improving Consistency in Discord Chat Logs<a href="https://elizaos.github.io/news/2025/03/02#fixing-typos-and-improving-consistency-in-discord-chat-logs" class="hash-link" aria-label="Direct link to Fixing Typos and Improving Consistency in Discord Chat Logs" title="Direct link to Fixing Typos and Improving Consistency in Discord Chat Logs">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="fixing-typos-and-improving-consistency-in-discord-chat-logs">Fixing Typos and Improving Consistency in Discord Chat Logs<a href="https://eliza.how/news/2025/03/02#fixing-typos-and-improving-consistency-in-discord-chat-logs" class="hash-link" aria-label="Direct link to Fixing Typos and Improving Consistency in Discord Chat Logs" title="Direct link to Fixing Typos and Improving Consistency in Discord Chat Logs">​</a></h2>
 <ul>
 <li>
 <p><strong>Discord Chat Logs</strong></p>
@@ -1229,7 +1229,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="fix-and-update-cli-plugin-dependencies-and-json5-support">Fix and Update: CLI Plugin Dependencies and JSON5 Support<a href="https://elizaos.github.io/news/2025/03/02#fix-and-update-cli-plugin-dependencies-and-json5-support" class="hash-link" aria-label="Direct link to Fix and Update: CLI Plugin Dependencies and JSON5 Support" title="Direct link to Fix and Update: CLI Plugin Dependencies and JSON5 Support">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="fix-and-update-cli-plugin-dependencies-and-json5-support">Fix and Update: CLI Plugin Dependencies and JSON5 Support<a href="https://eliza.how/news/2025/03/02#fix-and-update-cli-plugin-dependencies-and-json5-support" class="hash-link" aria-label="Direct link to Fix and Update: CLI Plugin Dependencies and JSON5 Support" title="Direct link to Fix and Update: CLI Plugin Dependencies and JSON5 Support">​</a></h2>
 <ul>
 <li>
 <p><strong>CLI Updated for Plugin Dependencies</strong></p>
@@ -1247,7 +1247,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-in-elizaos-development">Recent Updates in ElizaOS Development<a href="https://elizaos.github.io/news/2025/03/02#recent-updates-in-elizaos-development" class="hash-link" aria-label="Direct link to Recent Updates in ElizaOS Development" title="Direct link to Recent Updates in ElizaOS Development">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-in-elizaos-development">Recent Updates in ElizaOS Development<a href="https://eliza.how/news/2025/03/02#recent-updates-in-elizaos-development" class="hash-link" aria-label="Direct link to Recent Updates in ElizaOS Development" title="Direct link to Recent Updates in ElizaOS Development">​</a></h2>
 <ul>
 <li>
 <p><strong>Automated Deployment for CVM</strong></p>
@@ -1264,7 +1264,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="claude-ai-progress-in-playing-pokémon">Claude AI Progress in Playing Pokémon<a href="https://elizaos.github.io/news/2025/03/02#claude-ai-progress-in-playing-pok%C3%A9mon" class="hash-link" aria-label="Direct link to Claude AI Progress in Playing Pokémon" title="Direct link to Claude AI Progress in Playing Pokémon">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="claude-ai-progress-in-playing-pokémon">Claude AI Progress in Playing Pokémon<a href="https://eliza.how/news/2025/03/02#claude-ai-progress-in-playing-pok%C3%A9mon" class="hash-link" aria-label="Direct link to Claude AI Progress in Playing Pokémon" title="Direct link to Claude AI Progress in Playing Pokémon">​</a></h2>
 <ul>
 <li><strong>Benchmarking AI Progress</strong>
 <ul>
@@ -1273,7 +1273,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-ai-and-development-updates">Recent AI and Development Updates<a href="https://elizaos.github.io/news/2025/03/02#recent-ai-and-development-updates" class="hash-link" aria-label="Direct link to Recent AI and Development Updates" title="Direct link to Recent AI and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-ai-and-development-updates">Recent AI and Development Updates<a href="https://eliza.how/news/2025/03/02#recent-ai-and-development-updates" class="hash-link" aria-label="Direct link to Recent AI and Development Updates" title="Direct link to Recent AI and Development Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>ElizaOS v0.25.9 Release</strong></p>
@@ -1307,11 +1307,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-01]]></title>
-            <link>https://elizaos.github.io/news/2025/03/01</link>
-            <guid>https://elizaos.github.io/news/2025/03/01</guid>
+            <link>https://eliza.how/news/2025/03/01</link>
+            <guid>https://eliza.how/news/2025/03/01</guid>
             <pubDate>Sat, 01 Mar 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[1. Crypto Market Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="1-crypto-market-update">1. Crypto Market Update<a href="https://elizaos.github.io/news/2025/03/01#1-crypto-market-update" class="hash-link" aria-label="Direct link to 1. Crypto Market Update" title="Direct link to 1. Crypto Market Update">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="1-crypto-market-update">1. Crypto Market Update<a href="https://eliza.how/news/2025/03/01#1-crypto-market-update" class="hash-link" aria-label="Direct link to 1. Crypto Market Update" title="Direct link to 1. Crypto Market Update">​</a></h2>
 <ul>
 <li>
 <p><strong>Wrapped Bitcoin (WBTC)</strong></p>
@@ -1346,7 +1346,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="2-elizaos-plugin-documentation-and-ui-enhancements">2. ElizaOS Plugin Documentation and UI Enhancements<a href="https://elizaos.github.io/news/2025/03/01#2-elizaos-plugin-documentation-and-ui-enhancements" class="hash-link" aria-label="Direct link to 2. ElizaOS Plugin Documentation and UI Enhancements" title="Direct link to 2. ElizaOS Plugin Documentation and UI Enhancements">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="2-elizaos-plugin-documentation-and-ui-enhancements">2. ElizaOS Plugin Documentation and UI Enhancements<a href="https://eliza.how/news/2025/03/01#2-elizaos-plugin-documentation-and-ui-enhancements" class="hash-link" aria-label="Direct link to 2. ElizaOS Plugin Documentation and UI Enhancements" title="Direct link to 2. ElizaOS Plugin Documentation and UI Enhancements">​</a></h2>
 <ul>
 <li>
 <p><strong>Documentation Improvements</strong></p>
@@ -1378,7 +1378,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="3-ai-agents-and-their-growing-ecosystem">3. AI Agents and Their Growing Ecosystem<a href="https://elizaos.github.io/news/2025/03/01#3-ai-agents-and-their-growing-ecosystem" class="hash-link" aria-label="Direct link to 3. AI Agents and Their Growing Ecosystem" title="Direct link to 3. AI Agents and Their Growing Ecosystem">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="3-ai-agents-and-their-growing-ecosystem">3. AI Agents and Their Growing Ecosystem<a href="https://eliza.how/news/2025/03/01#3-ai-agents-and-their-growing-ecosystem" class="hash-link" aria-label="Direct link to 3. AI Agents and Their Growing Ecosystem" title="Direct link to 3. AI Agents and Their Growing Ecosystem">​</a></h2>
 <ul>
 <li>
 <p><strong>AI Agent Dev School</strong></p>
@@ -1409,7 +1409,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="4-future-of-entertainment-and-virtual-interaction">4. Future of Entertainment and Virtual Interaction<a href="https://elizaos.github.io/news/2025/03/01#4-future-of-entertainment-and-virtual-interaction" class="hash-link" aria-label="Direct link to 4. Future of Entertainment and Virtual Interaction" title="Direct link to 4. Future of Entertainment and Virtual Interaction">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="4-future-of-entertainment-and-virtual-interaction">4. Future of Entertainment and Virtual Interaction<a href="https://eliza.how/news/2025/03/01#4-future-of-entertainment-and-virtual-interaction" class="hash-link" aria-label="Direct link to 4. Future of Entertainment and Virtual Interaction" title="Direct link to 4. Future of Entertainment and Virtual Interaction">​</a></h2>
 <ul>
 <li>
 <p><strong>Smaller AI Models</strong></p>
@@ -1426,7 +1426,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="5-ranking-discussion">5. Ranking Discussion<a href="https://elizaos.github.io/news/2025/03/01#5-ranking-discussion" class="hash-link" aria-label="Direct link to 5. Ranking Discussion" title="Direct link to 5. Ranking Discussion">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="5-ranking-discussion">5. Ranking Discussion<a href="https://eliza.how/news/2025/03/01#5-ranking-discussion" class="hash-link" aria-label="Direct link to 5. Ranking Discussion" title="Direct link to 5. Ranking Discussion">​</a></h2>
 <ul>
 <li>
 <p><strong>General Commentary</strong></p>
@@ -1443,7 +1443,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="6-discord-chat-transcript-request">6. Discord Chat Transcript Request<a href="https://elizaos.github.io/news/2025/03/01#6-discord-chat-transcript-request" class="hash-link" aria-label="Direct link to 6. Discord Chat Transcript Request" title="Direct link to 6. Discord Chat Transcript Request">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="6-discord-chat-transcript-request">6. Discord Chat Transcript Request<a href="https://eliza.how/news/2025/03/01#6-discord-chat-transcript-request" class="hash-link" aria-label="Direct link to 6. Discord Chat Transcript Request" title="Direct link to 6. Discord Chat Transcript Request">​</a></h2>
 <ul>
 <li><strong>Request for Actual Transcript</strong>
 <ul>
@@ -1456,11 +1456,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-28]]></title>
-            <link>https://elizaos.github.io/news/2025/02/28</link>
-            <guid>https://elizaos.github.io/news/2025/02/28</guid>
+            <link>https://eliza.how/news/2025/02/28</link>
+            <guid>https://eliza.how/news/2025/02/28</guid>
             <pubDate>Fri, 28 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Crypto Market Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://elizaos.github.io/news/2025/02/28#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/02/28#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
 <ul>
 <li>
 <p><strong>Wrapped Bitcoin (WBTC)</strong></p>
@@ -1469,7 +1469,7 @@
 <li>24-hour Trading Volume: $76,490,845</li>
 <li>Market Capitalization: $10,733,063,375</li>
 <li>Previous Daily Change: -0.0228%</li>
-<li><a href="https://elizaos.github.io/news/2025/02/28#">Source</a></li>
+<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
 </ul>
 </li>
 <li>
@@ -1479,7 +1479,7 @@
 <li>24-hour Trading Volume: $171,444,015</li>
 <li>Market Capitalization: $6,589,499,040</li>
 <li>Previous Daily Change: -0.0417%</li>
-<li><a href="https://elizaos.github.io/news/2025/02/28#">Source</a></li>
+<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
 </ul>
 </li>
 <li>
@@ -1488,18 +1488,18 @@
 <li>Price increased: $134.00 to $148.06</li>
 <li>24-hour Trading Volume: $214,049,926</li>
 <li>Previous Daily Change: -0.0293%</li>
-<li><a href="https://elizaos.github.io/news/2025/02/28#">Source</a></li>
+<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
 </ul>
 </li>
 <li>
 <p><strong>ai16z Token</strong></p>
 <ul>
 <li>Recorded Price: $0.4034</li>
-<li><a href="https://elizaos.github.io/news/2025/02/28#">Source</a></li>
+<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-developments-and-security-concerns">AI Developments and Security Concerns<a href="https://elizaos.github.io/news/2025/02/28#ai-developments-and-security-concerns" class="hash-link" aria-label="Direct link to AI Developments and Security Concerns" title="Direct link to AI Developments and Security Concerns">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-developments-and-security-concerns">AI Developments and Security Concerns<a href="https://eliza.how/news/2025/02/28#ai-developments-and-security-concerns" class="hash-link" aria-label="Direct link to AI Developments and Security Concerns" title="Direct link to AI Developments and Security Concerns">​</a></h2>
 <ul>
 <li>
 <p><strong>Eliza v2 Hack</strong></p>
@@ -1523,7 +1523,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-social-media-reactions-and-mentions">Recent Social Media Reactions and Mentions<a href="https://elizaos.github.io/news/2025/02/28#recent-social-media-reactions-and-mentions" class="hash-link" aria-label="Direct link to Recent Social Media Reactions and Mentions" title="Direct link to Recent Social Media Reactions and Mentions">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-social-media-reactions-and-mentions">Recent Social Media Reactions and Mentions<a href="https://eliza.how/news/2025/02/28#recent-social-media-reactions-and-mentions" class="hash-link" aria-label="Direct link to Recent Social Media Reactions and Mentions" title="Direct link to Recent Social Media Reactions and Mentions">​</a></h2>
 <ul>
 <li>Comments and reactions from users on platforms like Twitter.<!-- -->
 <ul>
@@ -1537,7 +1537,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="founder-daos-and-research-on-daosdotfun">Founder DAOs and Research on DAOsdotfun<a href="https://elizaos.github.io/news/2025/02/28#founder-daos-and-research-on-daosdotfun" class="hash-link" aria-label="Direct link to Founder DAOs and Research on DAOsdotfun" title="Direct link to Founder DAOs and Research on DAOsdotfun">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="founder-daos-and-research-on-daosdotfun">Founder DAOs and Research on DAOsdotfun<a href="https://eliza.how/news/2025/02/28#founder-daos-and-research-on-daosdotfun" class="hash-link" aria-label="Direct link to Founder DAOs and Research on DAOsdotfun" title="Direct link to Founder DAOs and Research on DAOsdotfun">​</a></h2>
 <ul>
 <li>
 <p><strong>Founders DAO Options</strong></p>
@@ -1555,7 +1555,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-placeholder">Discord Chat Transcript Placeholder<a href="https://elizaos.github.io/news/2025/02/28#discord-chat-transcript-placeholder" class="hash-link" aria-label="Direct link to Discord Chat Transcript Placeholder" title="Direct link to Discord Chat Transcript Placeholder">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-placeholder">Discord Chat Transcript Placeholder<a href="https://eliza.how/news/2025/02/28#discord-chat-transcript-placeholder" class="hash-link" aria-label="Direct link to Discord Chat Transcript Placeholder" title="Direct link to Discord Chat Transcript Placeholder">​</a></h2>
 <ul>
 <li>Request for actual content to analyze in Discord chats<!-- -->
 <ul>
@@ -1563,7 +1563,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-elizaos-daos-and-crypto-developments">Latest Updates on ElizaOS, DAOs, and Crypto Developments<a href="https://elizaos.github.io/news/2025/02/28#latest-updates-on-elizaos-daos-and-crypto-developments" class="hash-link" aria-label="Direct link to Latest Updates on ElizaOS, DAOs, and Crypto Developments" title="Direct link to Latest Updates on ElizaOS, DAOs, and Crypto Developments">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-elizaos-daos-and-crypto-developments">Latest Updates on ElizaOS, DAOs, and Crypto Developments<a href="https://eliza.how/news/2025/02/28#latest-updates-on-elizaos-daos-and-crypto-developments" class="hash-link" aria-label="Direct link to Latest Updates on ElizaOS, DAOs, and Crypto Developments" title="Direct link to Latest Updates on ElizaOS, DAOs, and Crypto Developments">​</a></h2>
 <ul>
 <li>Various updates and discussions around ElizaOS, DAOs, and community events like hacks, partnerships, and new features.<!-- -->
 <ul>
@@ -1580,11 +1580,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-27]]></title>
-            <link>https://elizaos.github.io/news/2025/02/27</link>
-            <guid>https://elizaos.github.io/news/2025/02/27</guid>
+            <link>https://eliza.how/news/2025/02/27</link>
+            <guid>https://eliza.how/news/2025/02/27</guid>
             <pubDate>Thu, 27 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[ElizaOS Updates and AI Developments]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-updates-and-ai-developments">ElizaOS Updates and AI Developments<a href="https://elizaos.github.io/news/2025/02/27#elizaos-updates-and-ai-developments" class="hash-link" aria-label="Direct link to ElizaOS Updates and AI Developments" title="Direct link to ElizaOS Updates and AI Developments">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-updates-and-ai-developments">ElizaOS Updates and AI Developments<a href="https://eliza.how/news/2025/02/27#elizaos-updates-and-ai-developments" class="hash-link" aria-label="Direct link to ElizaOS Updates and AI Developments" title="Direct link to ElizaOS Updates and AI Developments">​</a></h2>
 <ul>
 <li><strong>Eliza v2 Development</strong>
 <ul>
@@ -1615,7 +1615,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-on-privacy-advocacy-and-code-improvements">Recent Updates on Privacy Advocacy and Code Improvements<a href="https://elizaos.github.io/news/2025/02/27#recent-updates-on-privacy-advocacy-and-code-improvements" class="hash-link" aria-label="Direct link to Recent Updates on Privacy Advocacy and Code Improvements" title="Direct link to Recent Updates on Privacy Advocacy and Code Improvements">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-on-privacy-advocacy-and-code-improvements">Recent Updates on Privacy Advocacy and Code Improvements<a href="https://eliza.how/news/2025/02/27#recent-updates-on-privacy-advocacy-and-code-improvements" class="hash-link" aria-label="Direct link to Recent Updates on Privacy Advocacy and Code Improvements" title="Direct link to Recent Updates on Privacy Advocacy and Code Improvements">​</a></h2>
 <ul>
 <li><strong>Privacy Advocacy</strong>
 <ul>
@@ -1638,7 +1638,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="cryptocurrency-market-overview">Cryptocurrency Market Overview<a href="https://elizaos.github.io/news/2025/02/27#cryptocurrency-market-overview" class="hash-link" aria-label="Direct link to Cryptocurrency Market Overview" title="Direct link to Cryptocurrency Market Overview">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="cryptocurrency-market-overview">Cryptocurrency Market Overview<a href="https://eliza.how/news/2025/02/27#cryptocurrency-market-overview" class="hash-link" aria-label="Direct link to Cryptocurrency Market Overview" title="Direct link to Cryptocurrency Market Overview">​</a></h2>
 <ul>
 <li><strong>Market Trends</strong>
 <ul>
@@ -1652,7 +1652,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-development-updates-for-elizaos">Recent Development Updates for ElizaOS<a href="https://elizaos.github.io/news/2025/02/27#recent-development-updates-for-elizaos" class="hash-link" aria-label="Direct link to Recent Development Updates for ElizaOS" title="Direct link to Recent Development Updates for ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-development-updates-for-elizaos">Recent Development Updates for ElizaOS<a href="https://eliza.how/news/2025/02/27#recent-development-updates-for-elizaos" class="hash-link" aria-label="Direct link to Recent Development Updates for ElizaOS" title="Direct link to Recent Development Updates for ElizaOS">​</a></h2>
 <ul>
 <li><strong>CLI and GUI Improvements</strong>
 <ul>
@@ -1674,7 +1674,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="sustainable-token-launch-strategies">Sustainable Token Launch Strategies<a href="https://elizaos.github.io/news/2025/02/27#sustainable-token-launch-strategies" class="hash-link" aria-label="Direct link to Sustainable Token Launch Strategies" title="Direct link to Sustainable Token Launch Strategies">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="sustainable-token-launch-strategies">Sustainable Token Launch Strategies<a href="https://eliza.how/news/2025/02/27#sustainable-token-launch-strategies" class="hash-link" aria-label="Direct link to Sustainable Token Launch Strategies" title="Direct link to Sustainable Token Launch Strategies">​</a></h2>
 <ul>
 <li><strong>Launch Insights</strong>
 <ul>
@@ -1688,7 +1688,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="project-updates-security-fixes-and-character-creator-improvements">Project Updates: Security Fixes and Character Creator Improvements<a href="https://elizaos.github.io/news/2025/02/27#project-updates-security-fixes-and-character-creator-improvements" class="hash-link" aria-label="Direct link to Project Updates: Security Fixes and Character Creator Improvements" title="Direct link to Project Updates: Security Fixes and Character Creator Improvements">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="project-updates-security-fixes-and-character-creator-improvements">Project Updates: Security Fixes and Character Creator Improvements<a href="https://eliza.how/news/2025/02/27#project-updates-security-fixes-and-character-creator-improvements" class="hash-link" aria-label="Direct link to Project Updates: Security Fixes and Character Creator Improvements" title="Direct link to Project Updates: Security Fixes and Character Creator Improvements">​</a></h2>
 <ul>
 <li><strong>Security Upgrades</strong>
 <ul>
@@ -1703,7 +1703,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="enhancements-and-plugin-support-in-elizaos">Enhancements and Plugin Support in ElizaOS<a href="https://elizaos.github.io/news/2025/02/27#enhancements-and-plugin-support-in-elizaos" class="hash-link" aria-label="Direct link to Enhancements and Plugin Support in ElizaOS" title="Direct link to Enhancements and Plugin Support in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="enhancements-and-plugin-support-in-elizaos">Enhancements and Plugin Support in ElizaOS<a href="https://eliza.how/news/2025/02/27#enhancements-and-plugin-support-in-elizaos" class="hash-link" aria-label="Direct link to Enhancements and Plugin Support in ElizaOS" title="Direct link to Enhancements and Plugin Support in ElizaOS">​</a></h2>
 <ul>
 <li><strong>Plugin and Format Enhancements</strong>
 <ul>
@@ -1718,7 +1718,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="hyperfy-showcases">Hyperfy Showcases<a href="https://elizaos.github.io/news/2025/02/27#hyperfy-showcases" class="hash-link" aria-label="Direct link to Hyperfy Showcases" title="Direct link to Hyperfy Showcases">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="hyperfy-showcases">Hyperfy Showcases<a href="https://eliza.how/news/2025/02/27#hyperfy-showcases" class="hash-link" aria-label="Direct link to Hyperfy Showcases" title="Direct link to Hyperfy Showcases">​</a></h2>
 <ul>
 <li><strong>PlayCanvas Upgrade</strong>
 <ul>
@@ -1734,7 +1734,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="grok3-as-a-research-assistant-and-related-resources">Grok3 as a Research Assistant and Related Resources<a href="https://elizaos.github.io/news/2025/02/27#grok3-as-a-research-assistant-and-related-resources" class="hash-link" aria-label="Direct link to Grok3 as a Research Assistant and Related Resources" title="Direct link to Grok3 as a Research Assistant and Related Resources">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="grok3-as-a-research-assistant-and-related-resources">Grok3 as a Research Assistant and Related Resources<a href="https://eliza.how/news/2025/02/27#grok3-as-a-research-assistant-and-related-resources" class="hash-link" aria-label="Direct link to Grok3 as a Research Assistant and Related Resources" title="Direct link to Grok3 as a Research Assistant and Related Resources">​</a></h2>
 <ul>
 <li><strong>Research Assistant</strong>
 <ul>
@@ -1748,7 +1748,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="missing-discord-chat-transcript">Missing Discord Chat Transcript<a href="https://elizaos.github.io/news/2025/02/27#missing-discord-chat-transcript" class="hash-link" aria-label="Direct link to Missing Discord Chat Transcript" title="Direct link to Missing Discord Chat Transcript">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="missing-discord-chat-transcript">Missing Discord Chat Transcript<a href="https://eliza.how/news/2025/02/27#missing-discord-chat-transcript" class="hash-link" aria-label="Direct link to Missing Discord Chat Transcript" title="Direct link to Missing Discord Chat Transcript">​</a></h2>
 <ul>
 <li><strong>Placeholder Notice</strong>
 <ul>
@@ -1760,24 +1760,24 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-26]]></title>
-            <link>https://elizaos.github.io/news/2025/02/26</link>
-            <guid>https://elizaos.github.io/news/2025/02/26</guid>
+            <link>https://eliza.how/news/2025/02/26</link>
+            <guid>https://eliza.how/news/2025/02/26</guid>
             <pubDate>Wed, 26 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Table of Contents]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="table-of-contents">Table of Contents<a href="https://elizaos.github.io/news/2025/02/26#table-of-contents" class="hash-link" aria-label="Direct link to Table of Contents" title="Direct link to Table of Contents">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="table-of-contents">Table of Contents<a href="https://eliza.how/news/2025/02/26#table-of-contents" class="hash-link" aria-label="Direct link to Table of Contents" title="Direct link to Table of Contents">​</a></h2>
 <ol>
-<li><a href="https://elizaos.github.io/news/2025/02/26#bug-fixes-and-improvements-in-elizaos">Bug Fixes and Improvements in ElizaOS</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#founder-daos-on-solana">Founder DAOs on Solana</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#crypto-market-overview">Crypto Market Overview</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#agent-development-and-v2-discussion">Agent Development and V2 Discussion</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#server-cleanup-and-clank-tank-lighting-preview">Server Cleanup and Clank Tank Lighting Preview</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#local-ai-refactor-and-potential-clank-tank-integration">Local AI Refactor and Potential Clank Tank Integration</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#pglite-migrations-fix-and-development-updates">PGlite Migrations Fix and Development Updates</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#elizaos-development-updates">ElizaOS Development Updates</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#social-media-highlights">Social Media Highlights</a></li>
-<li><a href="https://elizaos.github.io/news/2025/02/26#elizaos-and-near-protocol-partnership">ElizaOS and NEAR Protocol Partnership</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#bug-fixes-and-improvements-in-elizaos">Bug Fixes and Improvements in ElizaOS</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#founder-daos-on-solana">Founder DAOs on Solana</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#crypto-market-overview">Crypto Market Overview</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#agent-development-and-v2-discussion">Agent Development and V2 Discussion</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#server-cleanup-and-clank-tank-lighting-preview">Server Cleanup and Clank Tank Lighting Preview</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#local-ai-refactor-and-potential-clank-tank-integration">Local AI Refactor and Potential Clank Tank Integration</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#pglite-migrations-fix-and-development-updates">PGlite Migrations Fix and Development Updates</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#elizaos-development-updates">ElizaOS Development Updates</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#social-media-highlights">Social Media Highlights</a></li>
+<li><a href="https://eliza.how/news/2025/02/26#elizaos-and-near-protocol-partnership">ElizaOS and NEAR Protocol Partnership</a></li>
 </ol>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-and-improvements-in-elizaos">Bug Fixes and Improvements in ElizaOS<a href="https://elizaos.github.io/news/2025/02/26#bug-fixes-and-improvements-in-elizaos" class="hash-link" aria-label="Direct link to Bug Fixes and Improvements in ElizaOS" title="Direct link to Bug Fixes and Improvements in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-and-improvements-in-elizaos">Bug Fixes and Improvements in ElizaOS<a href="https://eliza.how/news/2025/02/26#bug-fixes-and-improvements-in-elizaos" class="hash-link" aria-label="Direct link to Bug Fixes and Improvements in ElizaOS" title="Direct link to Bug Fixes and Improvements in ElizaOS">​</a></h2>
 <ul>
 <li><strong>Fixed participant errors</strong> (<a href="https://github.com/elizaOS/eliza/pull/3671" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Pre-start dimension setup to prevent issues</strong> (<a href="https://github.com/elizaOS/eliza/pull/3668" target="_blank" rel="noopener noreferrer">Source</a>)</li>
@@ -1785,61 +1785,61 @@
 <li><strong>Twitter functionality improvement with explicit activation for posting</strong> (<a href="https://github.com/elizaOS/eliza/pull/3659" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Addressed issues with extensions and migrations</strong> (<a href="https://github.com/elizaOS/eliza/pull/3665" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="founder-daos-on-solana">Founder DAOs on Solana<a href="https://elizaos.github.io/news/2025/02/26#founder-daos-on-solana" class="hash-link" aria-label="Direct link to Founder DAOs on Solana" title="Direct link to Founder DAOs on Solana">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="founder-daos-on-solana">Founder DAOs on Solana<a href="https://eliza.how/news/2025/02/26#founder-daos-on-solana" class="hash-link" aria-label="Direct link to Founder DAOs on Solana" title="Direct link to Founder DAOs on Solana">​</a></h2>
 <ul>
 <li><strong>Introduction of Kickstarter-style Founder DAOs for fundraising</strong> (<a href="https://twitter.com/daosdotfun/status/1894565080949559369" target="_blank" rel="noopener noreferrer">Source 1</a>, <a href="https://twitter.com/daosdotfun/status/1894565084569243669" target="_blank" rel="noopener noreferrer">Source 2</a>)</li>
 <li><strong>Tokenomics: 10 billion tokens, public and team allocation details</strong> (<a href="https://twitter.com/daosdotfun/status/1894565086402154559" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Launch of first official Founder DAO, @Artistdaofun</strong> (<a href="https://twitter.com/daosdotfun/status/1894571320840786015" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://elizaos.github.io/news/2025/02/26#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://eliza.how/news/2025/02/26#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
 <ul>
 <li><strong>Wrapped Bitcoin (WBTC)</strong>: $88,563.27, Volume: $84.71M, Market Cap: $11.44B, Daily change: -0.0375%</li>
 <li><strong>Solana (SOL)</strong>: $142.44, Volume: $363.17M, Daily change: 0.0148%</li>
 <li><strong>Wrapped Ethereum (WETH)</strong>: $2,484.40, Volume: $298.38M, Market Cap: $7.26B, Daily change: -0.0097%</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agent-development-and-v2-discussion">Agent Development and V2 Discussion<a href="https://elizaos.github.io/news/2025/02/26#agent-development-and-v2-discussion" class="hash-link" aria-label="Direct link to Agent Development and V2 Discussion" title="Direct link to Agent Development and V2 Discussion">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agent-development-and-v2-discussion">Agent Development and V2 Discussion<a href="https://eliza.how/news/2025/02/26#agent-development-and-v2-discussion" class="hash-link" aria-label="Direct link to Agent Development and V2 Discussion" title="Direct link to Agent Development and V2 Discussion">​</a></h2>
 <ul>
 <li><strong>Nerdy discussions on agent development and V2 features</strong> (<a href="https://twitter.com/shawmakesmagic/status/1894864630155296786" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Placeholder for Discord chat requires content for analysis</strong> (<a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="server-cleanup-and-clank-tank-lighting-preview">Server Cleanup and Clank Tank Lighting Preview<a href="https://elizaos.github.io/news/2025/02/26#server-cleanup-and-clank-tank-lighting-preview" class="hash-link" aria-label="Direct link to Server Cleanup and Clank Tank Lighting Preview" title="Direct link to Server Cleanup and Clank Tank Lighting Preview">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="server-cleanup-and-clank-tank-lighting-preview">Server Cleanup and Clank Tank Lighting Preview<a href="https://eliza.how/news/2025/02/26#server-cleanup-and-clank-tank-lighting-preview" class="hash-link" aria-label="Direct link to Server Cleanup and Clank Tank Lighting Preview" title="Direct link to Server Cleanup and Clank Tank Lighting Preview">​</a></h2>
 <ul>
 <li><strong>Server cleanup with future Hyperfy and Whisper services</strong> (<a href="https://github.com/elizaOS/eliza/pull/3667" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Preview of Clank Tank set with baked lighting for cross-platform update</strong> (<a href="https://twitter.com/dankvr/status/1894619680691691716" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="local-ai-refactor-and-potential-clank-tank-integration">Local AI Refactor and Potential Clank Tank Integration<a href="https://elizaos.github.io/news/2025/02/26#local-ai-refactor-and-potential-clank-tank-integration" class="hash-link" aria-label="Direct link to Local AI Refactor and Potential Clank Tank Integration" title="Direct link to Local AI Refactor and Potential Clank Tank Integration">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="local-ai-refactor-and-potential-clank-tank-integration">Local AI Refactor and Potential Clank Tank Integration<a href="https://eliza.how/news/2025/02/26#local-ai-refactor-and-potential-clank-tank-integration" class="hash-link" aria-label="Direct link to Local AI Refactor and Potential Clank Tank Integration" title="Direct link to Local AI Refactor and Potential Clank Tank Integration">​</a></h2>
 <ul>
 <li><strong>Local AI system refactor: Enhanced validation, error handling, and logging</strong> (<a href="https://github.com/elizaOS/eliza/pull/3663" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Exploring potential Clank Tank integration</strong> (<a href="https://twitter.com/dankvr/status/1894575309996838938" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="pglite-migrations-fix-and-development-updates">PGlite Migrations Fix and Development Updates<a href="https://elizaos.github.io/news/2025/02/26#pglite-migrations-fix-and-development-updates" class="hash-link" aria-label="Direct link to PGlite Migrations Fix and Development Updates" title="Direct link to PGlite Migrations Fix and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="pglite-migrations-fix-and-development-updates">PGlite Migrations Fix and Development Updates<a href="https://eliza.how/news/2025/02/26#pglite-migrations-fix-and-development-updates" class="hash-link" aria-label="Direct link to PGlite Migrations Fix and Development Updates" title="Direct link to PGlite Migrations Fix and Development Updates">​</a></h2>
 <ul>
 <li><strong>PGlite migrations fix: Code-first SQL management and extension support</strong> (<a href="https://github.com/elizaOS/eliza/pull/3672" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>10 contributors merged 10 pull requests focusing on various enhancements and bug fixes</strong></li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-updates">ElizaOS Development Updates<a href="https://elizaos.github.io/news/2025/02/26#elizaos-development-updates" class="hash-link" aria-label="Direct link to ElizaOS Development Updates" title="Direct link to ElizaOS Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-updates">ElizaOS Development Updates<a href="https://eliza.how/news/2025/02/26#elizaos-development-updates" class="hash-link" aria-label="Direct link to ElizaOS Development Updates" title="Direct link to ElizaOS Development Updates">​</a></h2>
 <ul>
 <li><strong>New PR 'Stable' with risk assessment and testing steps</strong> (<a href="https://github.com/elizaOS/eliza/pull/3666" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>'Building' PR initiated for documentation tracing</strong> (<a href="https://github.com/elizaOS/eliza/pull/3669" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="social-media-highlights">Social Media Highlights<a href="https://elizaos.github.io/news/2025/02/26#social-media-highlights" class="hash-link" aria-label="Direct link to Social Media Highlights" title="Direct link to Social Media Highlights">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="social-media-highlights">Social Media Highlights<a href="https://eliza.how/news/2025/02/26#social-media-highlights" class="hash-link" aria-label="Direct link to Social Media Highlights" title="Direct link to Social Media Highlights">​</a></h2>
 <ul>
 <li><strong>Maksim Yurchanka completes project details</strong> (<a href="https://twitter.com/daosdotfun/status/1894664956865544542" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 <li><strong>Commentary on a meme sparking IRC chat-style debates</strong> (<a href="https://twitter.com/dankvr/status/1894592298547019949" target="_blank" rel="noopener noreferrer">Source</a>)</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-and-near-protocol-partnership">ElizaOS and NEAR Protocol Partnership<a href="https://elizaos.github.io/news/2025/02/26#elizaos-and-near-protocol-partnership" class="hash-link" aria-label="Direct link to ElizaOS and NEAR Protocol Partnership" title="Direct link to ElizaOS and NEAR Protocol Partnership">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-and-near-protocol-partnership">ElizaOS and NEAR Protocol Partnership<a href="https://eliza.how/news/2025/02/26#elizaos-and-near-protocol-partnership" class="hash-link" aria-label="Direct link to ElizaOS and NEAR Protocol Partnership" title="Direct link to ElizaOS and NEAR Protocol Partnership">​</a></h2>
 <ul>
 <li><strong>Partnership announcement emphasizing community and partner importance</strong> (<a href="https://twitter.com/ai16zdao/status/1894806134034202946" target="_blank" rel="noopener noreferrer">Source 1</a>, <a href="https://twitter.com/ai16dao_/status/1894806069605515346" target="_blank" rel="noopener noreferrer">Source 2</a>)</li>
 </ul>]]></content:encoded>
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-25]]></title>
-            <link>https://elizaos.github.io/news/2025/02/25</link>
-            <guid>https://elizaos.github.io/news/2025/02/25</guid>
+            <link>https://eliza.how/news/2025/02/25</link>
+            <guid>https://eliza.how/news/2025/02/25</guid>
             <pubDate>Tue, 25 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[This summary contains insights and updates across various topics such as AI agent development, innovation, cryptocurrency, and more. The information is categorized for ease of analysis.]]></description>
             <content:encoded><![CDATA[<p>This summary contains insights and updates across various topics such as AI agent development, innovation, cryptocurrency, and more. The information is categorized for ease of analysis.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-and-ai-agent-development">ElizaOS and AI Agent Development<a href="https://elizaos.github.io/news/2025/02/25#elizaos-and-ai-agent-development" class="hash-link" aria-label="Direct link to ElizaOS and AI Agent Development" title="Direct link to ElizaOS and AI Agent Development">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-and-ai-agent-development">ElizaOS and AI Agent Development<a href="https://eliza.how/news/2025/02/25#elizaos-and-ai-agent-development" class="hash-link" aria-label="Direct link to ElizaOS and AI Agent Development" title="Direct link to ElizaOS and AI Agent Development">​</a></h3>
 <ul>
 <li>
 <p><strong>ElizaOS Guide &amp; Mini-game</strong>:<br>
@@ -1859,7 +1859,7 @@
 <em>Source: <a href="https://twitter.com/shawmakesmagic/status/1894522700003213336" target="_blank" rel="noopener noreferrer">Twitter</a></em></p>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="innovation-and-open-source-developments">Innovation and Open Source Developments<a href="https://elizaos.github.io/news/2025/02/25#innovation-and-open-source-developments" class="hash-link" aria-label="Direct link to Innovation and Open Source Developments" title="Direct link to Innovation and Open Source Developments">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="innovation-and-open-source-developments">Innovation and Open Source Developments<a href="https://eliza.how/news/2025/02/25#innovation-and-open-source-developments" class="hash-link" aria-label="Direct link to Innovation and Open Source Developments" title="Direct link to Innovation and Open Source Developments">​</a></h3>
 <ul>
 <li>
 <p><strong>Super Agent Hackathon</strong>:<br>
@@ -1879,7 +1879,7 @@
 <em>Source: <a href="https://twitter.com/dankvr/status/1894229555285459263" target="_blank" rel="noopener noreferrer">Twitter</a></em></p>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discussion-on-probability-ai-behavior-and-cryptocurrency">Discussion on Probability, AI Behavior, and Cryptocurrency<a href="https://elizaos.github.io/news/2025/02/25#discussion-on-probability-ai-behavior-and-cryptocurrency" class="hash-link" aria-label="Direct link to Discussion on Probability, AI Behavior, and Cryptocurrency" title="Direct link to Discussion on Probability, AI Behavior, and Cryptocurrency">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discussion-on-probability-ai-behavior-and-cryptocurrency">Discussion on Probability, AI Behavior, and Cryptocurrency<a href="https://eliza.how/news/2025/02/25#discussion-on-probability-ai-behavior-and-cryptocurrency" class="hash-link" aria-label="Direct link to Discussion on Probability, AI Behavior, and Cryptocurrency" title="Direct link to Discussion on Probability, AI Behavior, and Cryptocurrency">​</a></h3>
 <ul>
 <li><strong>Probability and AI Behavior Insights</strong>:<!-- -->
 <ul>
@@ -1890,7 +1890,7 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://elizaos.github.io/news/2025/02/25#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/02/25#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h3>
 <ul>
 <li><strong>Cryptocurrency Prices</strong>:<!-- -->
 <ul>
@@ -1901,7 +1901,7 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="entropy-in-predictive-text-generation">Entropy in Predictive Text Generation<a href="https://elizaos.github.io/news/2025/02/25#entropy-in-predictive-text-generation" class="hash-link" aria-label="Direct link to Entropy in Predictive Text Generation" title="Direct link to Entropy in Predictive Text Generation">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="entropy-in-predictive-text-generation">Entropy in Predictive Text Generation<a href="https://eliza.how/news/2025/02/25#entropy-in-predictive-text-generation" class="hash-link" aria-label="Direct link to Entropy in Predictive Text Generation" title="Direct link to Entropy in Predictive Text Generation">​</a></h3>
 <ul>
 <li>
 <p><strong>Entropy Introduction</strong>:<br>
@@ -1914,13 +1914,13 @@
 <em>Source: <a href="https://twitter.com/shawmakesmagic/status/1894286157233754364" target="_blank" rel="noopener noreferrer">Twitter</a></em></p>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-placeholder">Discord Chat Transcript Placeholder<a href="https://elizaos.github.io/news/2025/02/25#discord-chat-transcript-placeholder" class="hash-link" aria-label="Direct link to Discord Chat Transcript Placeholder" title="Direct link to Discord Chat Transcript Placeholder">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-placeholder">Discord Chat Transcript Placeholder<a href="https://eliza.how/news/2025/02/25#discord-chat-transcript-placeholder" class="hash-link" aria-label="Direct link to Discord Chat Transcript Placeholder" title="Direct link to Discord Chat Transcript Placeholder">​</a></h3>
 <ul>
 <li><strong>Placeholder Messages</strong>:<br>
 <!-- -->Indicates absence of actual Discord chat transcripts, calls for real content to enable analysis.<br>
 <em>Source: <a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Discord</a></em></li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-agents-elizaos-and-crypto-innovations">AI Agents, ElizaOS, and Crypto Innovations<a href="https://elizaos.github.io/news/2025/02/25#ai-agents-elizaos-and-crypto-innovations" class="hash-link" aria-label="Direct link to AI Agents, ElizaOS, and Crypto Innovations" title="Direct link to AI Agents, ElizaOS, and Crypto Innovations">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-agents-elizaos-and-crypto-innovations">AI Agents, ElizaOS, and Crypto Innovations<a href="https://eliza.how/news/2025/02/25#ai-agents-elizaos-and-crypto-innovations" class="hash-link" aria-label="Direct link to AI Agents, ElizaOS, and Crypto Innovations" title="Direct link to AI Agents, ElizaOS, and Crypto Innovations">​</a></h3>
 <ul>
 <li>
 <p><strong>Super Agent Hackathon Recap</strong>:<br>
@@ -1971,11 +1971,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-24]]></title>
-            <link>https://elizaos.github.io/news/2025/02/24</link>
-            <guid>https://elizaos.github.io/news/2025/02/24</guid>
+            <link>https://eliza.how/news/2025/02/24</link>
+            <guid>https://eliza.how/news/2025/02/24</guid>
             <pubDate>Mon, 24 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Update Discord Link for elizaOS]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="update-discord-link-for-elizaos">Update Discord Link for elizaOS<a href="https://elizaos.github.io/news/2025/02/24#update-discord-link-for-elizaos" class="hash-link" aria-label="Direct link to Update Discord Link for elizaOS" title="Direct link to Update Discord Link for elizaOS">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="update-discord-link-for-elizaos">Update Discord Link for elizaOS<a href="https://eliza.how/news/2025/02/24#update-discord-link-for-elizaos" class="hash-link" aria-label="Direct link to Update Discord Link for elizaOS" title="Direct link to Update Discord Link for elizaOS">​</a></h2>
 <ul>
 <li><strong>Issue</strong>: Placeholder for Discord chat transcript provided without actual content.<!-- -->
 <ul>
@@ -1995,7 +1995,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://elizaos.github.io/news/2025/02/24#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-overview">Crypto Market Overview<a href="https://eliza.how/news/2025/02/24#crypto-market-overview" class="hash-link" aria-label="Direct link to Crypto Market Overview" title="Direct link to Crypto Market Overview">​</a></h2>
 <ul>
 <li><strong>Asset Prices</strong>:<!-- -->
 <ul>
@@ -2006,7 +2006,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="documentation-updates-and-fixes">Documentation Updates and Fixes<a href="https://elizaos.github.io/news/2025/02/24#documentation-updates-and-fixes" class="hash-link" aria-label="Direct link to Documentation Updates and Fixes" title="Direct link to Documentation Updates and Fixes">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="documentation-updates-and-fixes">Documentation Updates and Fixes<a href="https://eliza.how/news/2025/02/24#documentation-updates-and-fixes" class="hash-link" aria-label="Direct link to Documentation Updates and Fixes" title="Direct link to Documentation Updates and Fixes">​</a></h2>
 <ul>
 <li><strong>Formatting Fix</strong>: <code>docs/packages/plugin.md</code> improved for readability.<!-- -->
 <ul>
@@ -2021,7 +2021,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-highlights-from-eliza-framework-and-agent-scarlett">Recent Updates and Highlights from Eliza Framework and Agent Scarlett<a href="https://elizaos.github.io/news/2025/02/24#recent-updates-and-highlights-from-eliza-framework-and-agent-scarlett" class="hash-link" aria-label="Direct link to Recent Updates and Highlights from Eliza Framework and Agent Scarlett" title="Direct link to Recent Updates and Highlights from Eliza Framework and Agent Scarlett">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-highlights-from-eliza-framework-and-agent-scarlett">Recent Updates and Highlights from Eliza Framework and Agent Scarlett<a href="https://eliza.how/news/2025/02/24#recent-updates-and-highlights-from-eliza-framework-and-agent-scarlett" class="hash-link" aria-label="Direct link to Recent Updates and Highlights from Eliza Framework and Agent Scarlett" title="Direct link to Recent Updates and Highlights from Eliza Framework and Agent Scarlett">​</a></h2>
 <ul>
 <li><strong>Feature</strong>: Middleware settings added for more control over the agent server in Eliza framework.<!-- -->
 <ul>
@@ -2041,7 +2041,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="featstoracha-plugin-and-development-updates">feat/storacha Plugin and Development Updates<a href="https://elizaos.github.io/news/2025/02/24#featstoracha-plugin-and-development-updates" class="hash-link" aria-label="Direct link to feat/storacha Plugin and Development Updates" title="Direct link to feat/storacha Plugin and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="featstoracha-plugin-and-development-updates">feat/storacha Plugin and Development Updates<a href="https://eliza.how/news/2025/02/24#featstoracha-plugin-and-development-updates" class="hash-link" aria-label="Direct link to feat/storacha Plugin and Development Updates" title="Direct link to feat/storacha Plugin and Development Updates">​</a></h2>
 <ul>
 <li><strong>Storacha Plugin</strong>: Introduction details in the pull request.<!-- -->
 <ul>
@@ -2051,7 +2051,7 @@
 </li>
 <li><strong>Development Progress</strong>: Focus on package improvements; 11 contributors merged 3 pull requests.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-in-knowledge-processing-and-near-ai-integration">Bug Fixes in Knowledge Processing and NEAR AI Integration<a href="https://elizaos.github.io/news/2025/02/24#bug-fixes-in-knowledge-processing-and-near-ai-integration" class="hash-link" aria-label="Direct link to Bug Fixes in Knowledge Processing and NEAR AI Integration" title="Direct link to Bug Fixes in Knowledge Processing and NEAR AI Integration">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-in-knowledge-processing-and-near-ai-integration">Bug Fixes in Knowledge Processing and NEAR AI Integration<a href="https://eliza.how/news/2025/02/24#bug-fixes-in-knowledge-processing-and-near-ai-integration" class="hash-link" aria-label="Direct link to Bug Fixes in Knowledge Processing and NEAR AI Integration" title="Direct link to Bug Fixes in Knowledge Processing and NEAR AI Integration">​</a></h2>
 <ul>
 <li><strong>Knowledge Processing</strong>: Introduced length check to fix 'Invalid array length' error.<!-- -->
 <ul>
@@ -2066,7 +2066,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-v0258-release">ElizaOS v0.25.8 Release<a href="https://elizaos.github.io/news/2025/02/24#elizaos-v0258-release" class="hash-link" aria-label="Direct link to ElizaOS v0.25.8 Release" title="Direct link to ElizaOS v0.25.8 Release">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-v0258-release">ElizaOS v0.25.8 Release<a href="https://eliza.how/news/2025/02/24#elizaos-v0258-release" class="hash-link" aria-label="Direct link to ElizaOS v0.25.8 Release" title="Direct link to ElizaOS v0.25.8 Release">​</a></h2>
 <ul>
 <li><strong>Release</strong>: Merged latest changes; moved all plugins out of the main repository.<!-- -->
 <ul>
@@ -2076,7 +2076,7 @@
 </li>
 <li><strong>New Features</strong>: Support for @near_ai and @SecretNetwork LLM models.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-online-highlights">Latest Online Highlights<a href="https://elizaos.github.io/news/2025/02/24#latest-online-highlights" class="hash-link" aria-label="Direct link to Latest Online Highlights" title="Direct link to Latest Online Highlights">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-online-highlights">Latest Online Highlights<a href="https://eliza.how/news/2025/02/24#latest-online-highlights" class="hash-link" aria-label="Direct link to Latest Online Highlights" title="Direct link to Latest Online Highlights">​</a></h2>
 <ul>
 <li><strong>Clank Tank</strong>: @_AgentScarlett shares Season 1, Episode 1.<!-- -->
 <ul>
@@ -2091,7 +2091,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussions-on-technology-and-daos">Discussions on Technology and DAOs<a href="https://elizaos.github.io/news/2025/02/24#discussions-on-technology-and-daos" class="hash-link" aria-label="Direct link to Discussions on Technology and DAOs" title="Direct link to Discussions on Technology and DAOs">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussions-on-technology-and-daos">Discussions on Technology and DAOs<a href="https://eliza.how/news/2025/02/24#discussions-on-technology-and-daos" class="hash-link" aria-label="Direct link to Discussions on Technology and DAOs" title="Direct link to Discussions on Technology and DAOs">​</a></h2>
 <ul>
 <li>Discussions around potential tech impact and DAO interests.<!-- -->
 <ul>
@@ -2099,7 +2099,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="memecoin-discussion-and-market-speculation">Memecoin Discussion and Market Speculation<a href="https://elizaos.github.io/news/2025/02/24#memecoin-discussion-and-market-speculation" class="hash-link" aria-label="Direct link to Memecoin Discussion and Market Speculation" title="Direct link to Memecoin Discussion and Market Speculation">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="memecoin-discussion-and-market-speculation">Memecoin Discussion and Market Speculation<a href="https://eliza.how/news/2025/02/24#memecoin-discussion-and-market-speculation" class="hash-link" aria-label="Direct link to Memecoin Discussion and Market Speculation" title="Direct link to Memecoin Discussion and Market Speculation">​</a></h2>
 <ul>
 <li><strong>Speculation</strong>: Considerations for launching a memecoin.<!-- -->
 <ul>
@@ -2115,11 +2115,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-23]]></title>
-            <link>https://elizaos.github.io/news/2025/02/23</link>
-            <guid>https://elizaos.github.io/news/2025/02/23</guid>
+            <link>https://eliza.how/news/2025/02/23</link>
+            <guid>https://eliza.how/news/2025/02/23</guid>
             <pubDate>Sun, 23 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Community Updates and Interaction]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="community-updates-and-interaction">Community Updates and Interaction<a href="https://elizaos.github.io/news/2025/02/23#community-updates-and-interaction" class="hash-link" aria-label="Direct link to Community Updates and Interaction" title="Direct link to Community Updates and Interaction">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="community-updates-and-interaction">Community Updates and Interaction<a href="https://eliza.how/news/2025/02/23#community-updates-and-interaction" class="hash-link" aria-label="Direct link to Community Updates and Interaction" title="Direct link to Community Updates and Interaction">​</a></h2>
 <ul>
 <li>
 <p><strong>Website Development:</strong> DankVR is developing a website, temporarily hosted on YouTube, to improve production, token holder interaction, and AI/writer enhancements.<br>
@@ -2138,7 +2138,7 @@
 <a href="https://twitter.com/shawmakesmagic/status/1893755947090133087" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="update-discord-link-for-elizaos">Update Discord Link for elizaOS<a href="https://elizaos.github.io/news/2025/02/23#update-discord-link-for-elizaos" class="hash-link" aria-label="Direct link to Update Discord Link for elizaOS" title="Direct link to Update Discord Link for elizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="update-discord-link-for-elizaos">Update Discord Link for elizaOS<a href="https://eliza.how/news/2025/02/23#update-discord-link-for-elizaos" class="hash-link" aria-label="Direct link to Update Discord Link for elizaOS" title="Direct link to Update Discord Link for elizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Pull Request Merged:</strong> Update to the Discord link for elizaOS (PR #3643).<br>
@@ -2150,7 +2150,7 @@
 <a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="comparing-wallet-ux-across-ecosystems">Comparing Wallet UX Across Ecosystems<a href="https://elizaos.github.io/news/2025/02/23#comparing-wallet-ux-across-ecosystems" class="hash-link" aria-label="Direct link to Comparing Wallet UX Across Ecosystems" title="Direct link to Comparing Wallet UX Across Ecosystems">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="comparing-wallet-ux-across-ecosystems">Comparing Wallet UX Across Ecosystems<a href="https://eliza.how/news/2025/02/23#comparing-wallet-ux-across-ecosystems" class="hash-link" aria-label="Direct link to Comparing Wallet UX Across Ecosystems" title="Direct link to Comparing Wallet UX Across Ecosystems">​</a></h2>
 <ul>
 <li>
 <p><strong>Solana UX Skepticism:</strong> User questions exceptionalism of Solana UX; sees no significant differences across ecosystems.<br>
@@ -2165,7 +2165,7 @@
 <a href="https://twitter.com/shawmakesmagic/status/1893750815539462439" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="clank-tank-episode-one-release-and-development-updates">CLANK TANK Episode One Release and Development Updates<a href="https://elizaos.github.io/news/2025/02/23#clank-tank-episode-one-release-and-development-updates" class="hash-link" aria-label="Direct link to CLANK TANK Episode One Release and Development Updates" title="Direct link to CLANK TANK Episode One Release and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="clank-tank-episode-one-release-and-development-updates">CLANK TANK Episode One Release and Development Updates<a href="https://eliza.how/news/2025/02/23#clank-tank-episode-one-release-and-development-updates" class="hash-link" aria-label="Direct link to CLANK TANK Episode One Release and Development Updates" title="Direct link to CLANK TANK Episode One Release and Development Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>Episode Release:</strong> Challenges with the first CLANK TANK episode and ongoing documentation updates for elizaOS.<br>
@@ -2176,7 +2176,7 @@
 <a href="https://twitter.com/shawmakesmagic/status/1893738363342962709" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussion-on-wallet-and-size">Discussion on Wallet and Size<a href="https://elizaos.github.io/news/2025/02/23#discussion-on-wallet-and-size" class="hash-link" aria-label="Direct link to Discussion on Wallet and Size" title="Direct link to Discussion on Wallet and Size">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussion-on-wallet-and-size">Discussion on Wallet and Size<a href="https://eliza.how/news/2025/02/23#discussion-on-wallet-and-size" class="hash-link" aria-label="Direct link to Discussion on Wallet and Size" title="Direct link to Discussion on Wallet and Size">​</a></h2>
 <ul>
 <li>
 <p><strong>Wallet Solutions:</strong> Discussions suggest wallet-related issues are solvable.<br>
@@ -2187,12 +2187,12 @@
 <a href="https://twitter.com/shawmakesmagic/status/1893745694004981772" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="development-summary">Development Summary<a href="https://elizaos.github.io/news/2025/02/23#development-summary" class="hash-link" aria-label="Direct link to Development Summary" title="Direct link to Development Summary">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="development-summary">Development Summary<a href="https://eliza.how/news/2025/02/23#development-summary" class="hash-link" aria-label="Direct link to Development Summary" title="Direct link to Development Summary">​</a></h2>
 <ul>
 <li><strong>Recent Efforts:</strong> Focus on package improvements, new features, and bug fixes, with contributions from various developers. A total of 11 pull requests were merged.<br>
 <a href="https://github.com/elizaOS/eliza/commits?author=dankvr" target="_blank" rel="noopener noreferrer">Contributions Detail</a></li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="clank-tank-premiere-development-updates-and-ai-agent-discussions">Clank Tank Premiere, Development Updates, and AI Agent Discussions<a href="https://elizaos.github.io/news/2025/02/23#clank-tank-premiere-development-updates-and-ai-agent-discussions" class="hash-link" aria-label="Direct link to Clank Tank Premiere, Development Updates, and AI Agent Discussions" title="Direct link to Clank Tank Premiere, Development Updates, and AI Agent Discussions">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="clank-tank-premiere-development-updates-and-ai-agent-discussions">Clank Tank Premiere, Development Updates, and AI Agent Discussions<a href="https://eliza.how/news/2025/02/23#clank-tank-premiere-development-updates-and-ai-agent-discussions" class="hash-link" aria-label="Direct link to Clank Tank Premiere, Development Updates, and AI Agent Discussions" title="Direct link to Clank Tank Premiere, Development Updates, and AI Agent Discussions">​</a></h2>
 <ul>
 <li>
 <p><strong>Premiere Announcement:</strong> Details on CLANK TANK Episode 1, inviting idea pitches to AI judges.<br>
@@ -2218,11 +2218,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-22]]></title>
-            <link>https://elizaos.github.io/news/2025/02/22</link>
-            <guid>https://elizaos.github.io/news/2025/02/22</guid>
+            <link>https://eliza.how/news/2025/02/22</link>
+            <guid>https://eliza.how/news/2025/02/22</guid>
             <pubDate>Sat, 22 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Recent Fixes and Improvements in ElizaOS]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-and-improvements-in-elizaos">Recent Fixes and Improvements in ElizaOS<a href="https://elizaos.github.io/news/2025/02/22#recent-fixes-and-improvements-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes and Improvements in ElizaOS" title="Direct link to Recent Fixes and Improvements in ElizaOS">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-and-improvements-in-elizaos">Recent Fixes and Improvements in ElizaOS<a href="https://eliza.how/news/2025/02/22#recent-fixes-and-improvements-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes and Improvements in ElizaOS" title="Direct link to Recent Fixes and Improvements in ElizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Agent Re-initialization Bug Fix</strong>: A rollback was implemented to allow agent re-initialization via the client direct API at the <code>/agents/:agentId/set</code> route.<br>
@@ -2245,7 +2245,7 @@
 <a href="https://github.com/elizaOS/eliza/pull/3616" target="_blank" rel="noopener noreferrer">GitHub Pull Request #3616</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="analysis-request-for-x-and-discord-content">Analysis Request for X and Discord Content<a href="https://elizaos.github.io/news/2025/02/22#analysis-request-for-x-and-discord-content" class="hash-link" aria-label="Direct link to Analysis Request for X and Discord Content" title="Direct link to Analysis Request for X and Discord Content">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="analysis-request-for-x-and-discord-content">Analysis Request for X and Discord Content<a href="https://eliza.how/news/2025/02/22#analysis-request-for-x-and-discord-content" class="hash-link" aria-label="Direct link to Analysis Request for X and Discord Content" title="Direct link to Analysis Request for X and Discord Content">​</a></h2>
 <ul>
 <li>
 <p><strong>Tool for Content Analysis</strong>: Grok 3 by xAI offers the ability to analyze X user profiles, posts, and uploads.<br>
@@ -2256,7 +2256,7 @@
 <a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Discord Channel</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-fixes-in-elizaos">Recent Updates and Fixes in ElizaOS<a href="https://elizaos.github.io/news/2025/02/22#recent-updates-and-fixes-in-elizaos" class="hash-link" aria-label="Direct link to Recent Updates and Fixes in ElizaOS" title="Direct link to Recent Updates and Fixes in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-fixes-in-elizaos">Recent Updates and Fixes in ElizaOS<a href="https://eliza.how/news/2025/02/22#recent-updates-and-fixes-in-elizaos" class="hash-link" aria-label="Direct link to Recent Updates and Fixes in ElizaOS" title="Direct link to Recent Updates and Fixes in ElizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Documentation Updates</strong>: Redundant documents consolidated; focus shifted towards concepts with source links added.<br>
@@ -2271,12 +2271,12 @@
 <a href="https://github.com/elizaOS/eliza/pull/3607" target="_blank" rel="noopener noreferrer">GitHub Pull Request #3607</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agentcharacter-refactor-and-development-updates">Agent/Character Refactor and Development Updates<a href="https://elizaos.github.io/news/2025/02/22#agentcharacter-refactor-and-development-updates" class="hash-link" aria-label="Direct link to Agent/Character Refactor and Development Updates" title="Direct link to Agent/Character Refactor and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agentcharacter-refactor-and-development-updates">Agent/Character Refactor and Development Updates<a href="https://eliza.how/news/2025/02/22#agentcharacter-refactor-and-development-updates" class="hash-link" aria-label="Direct link to Agent/Character Refactor and Development Updates" title="Direct link to Agent/Character Refactor and Development Updates">​</a></h2>
 <ul>
 <li><strong>Refactoring and Improvements</strong>: New endpoint for agents by character name, CLI improvements, enhanced file processing, and six bug fixes across eight pull requests by 10 developers.<br>
 <a href="https://github.com/elizaOS/eliza/pull/3613" target="_blank" rel="noopener noreferrer">GitHub Pull Request #3613</a></li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-fixes-in-elizaos-and-related-discussions">Recent Updates and Fixes in ElizaOS and Related Discussions<a href="https://elizaos.github.io/news/2025/02/22#recent-updates-and-fixes-in-elizaos-and-related-discussions" class="hash-link" aria-label="Direct link to Recent Updates and Fixes in ElizaOS and Related Discussions" title="Direct link to Recent Updates and Fixes in ElizaOS and Related Discussions">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-fixes-in-elizaos-and-related-discussions">Recent Updates and Fixes in ElizaOS and Related Discussions<a href="https://eliza.how/news/2025/02/22#recent-updates-and-fixes-in-elizaos-and-related-discussions" class="hash-link" aria-label="Direct link to Recent Updates and Fixes in ElizaOS and Related Discussions" title="Direct link to Recent Updates and Fixes in ElizaOS and Related Discussions">​</a></h2>
 <ul>
 <li>
 <p><strong>Multiple System Fixes</strong>: Enhanced stability and functionality through fixes for initialization, registry package installs, and plugin imports.<br>
@@ -2307,11 +2307,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-21]]></title>
-            <link>https://elizaos.github.io/news/2025/02/21</link>
-            <guid>https://elizaos.github.io/news/2025/02/21</guid>
+            <link>https://eliza.how/news/2025/02/21</link>
+            <guid>https://eliza.how/news/2025/02/21</guid>
             <pubDate>Fri, 21 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[Developments in AI Agents and Confidential AI]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="developments-in-ai-agents-and-confidential-ai">Developments in AI Agents and Confidential AI<a href="https://elizaos.github.io/news/2025/02/21#developments-in-ai-agents-and-confidential-ai" class="hash-link" aria-label="Direct link to Developments in AI Agents and Confidential AI" title="Direct link to Developments in AI Agents and Confidential AI">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="developments-in-ai-agents-and-confidential-ai">Developments in AI Agents and Confidential AI<a href="https://eliza.how/news/2025/02/21#developments-in-ai-agents-and-confidential-ai" class="hash-link" aria-label="Direct link to Developments in AI Agents and Confidential AI" title="Direct link to Developments in AI Agents and Confidential AI">​</a></h2>
 <ul>
 <li>
 <p><strong>New Team Member</strong>: Esk3nder joins the ElizaOS team to innovate AI agents.<br>
@@ -2330,7 +2330,7 @@
 <a href="https://github.com/elizaOS/eliza/pull/3615" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-in-elizaos">Recent Fixes in ElizaOS<a href="https://elizaos.github.io/news/2025/02/21#recent-fixes-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes in ElizaOS" title="Direct link to Recent Fixes in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-fixes-in-elizaos">Recent Fixes in ElizaOS<a href="https://eliza.how/news/2025/02/21#recent-fixes-in-elizaos" class="hash-link" aria-label="Direct link to Recent Fixes in ElizaOS" title="Direct link to Recent Fixes in ElizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Agent Re-initialization</strong>: Bug fix enabling agent restart through the client API.<br>
@@ -2353,7 +2353,7 @@
 <a href="https://github.com/elizaOS/eliza/pull/3616" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-builders-chat-announcement">ElizaOS Builder’s Chat Announcement<a href="https://elizaos.github.io/news/2025/02/21#elizaos-builders-chat-announcement" class="hash-link" aria-label="Direct link to ElizaOS Builder’s Chat Announcement" title="Direct link to ElizaOS Builder’s Chat Announcement">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-builders-chat-announcement">ElizaOS Builder’s Chat Announcement<a href="https://eliza.how/news/2025/02/21#elizaos-builders-chat-announcement" class="hash-link" aria-label="Direct link to ElizaOS Builder’s Chat Announcement" title="Direct link to ElizaOS Builder’s Chat Announcement">​</a></h2>
 <ul>
 <li>
 <p><strong>Community Engagement</strong>: Launch of ElizaOS Builder's Chat on Telegram for developers and AI enthusiasts to collaborate.<br>
@@ -2364,7 +2364,7 @@
 <a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-fixes-in-elizaos">Recent Updates and Fixes in ElizaOS<a href="https://elizaos.github.io/news/2025/02/21#recent-updates-and-fixes-in-elizaos" class="hash-link" aria-label="Direct link to Recent Updates and Fixes in ElizaOS" title="Direct link to Recent Updates and Fixes in ElizaOS">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-updates-and-fixes-in-elizaos">Recent Updates and Fixes in ElizaOS<a href="https://eliza.how/news/2025/02/21#recent-updates-and-fixes-in-elizaos" class="hash-link" aria-label="Direct link to Recent Updates and Fixes in ElizaOS" title="Direct link to Recent Updates and Fixes in ElizaOS">​</a></h2>
 <ul>
 <li>
 <p><strong>Documentation Update</strong>: Enhanced readability and conceptual explanations in documentation with updated API pages.<br>
@@ -2379,7 +2379,7 @@
 <a href="https://github.com/elizaOS/eliza/pull/3607" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="wallet-development-and-features">Wallet Development and Features<a href="https://elizaos.github.io/news/2025/02/21#wallet-development-and-features" class="hash-link" aria-label="Direct link to Wallet Development and Features" title="Direct link to Wallet Development and Features">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="wallet-development-and-features">Wallet Development and Features<a href="https://eliza.how/news/2025/02/21#wallet-development-and-features" class="hash-link" aria-label="Direct link to Wallet Development and Features" title="Direct link to Wallet Development and Features">​</a></h2>
 <ul>
 <li>
 <p><strong>Wallet DevOps Certification</strong>: Suggested idea for wallet development certification.<br>
@@ -2390,7 +2390,7 @@
 <a href="https://twitter.com/dankvr/status/1893013219771310166" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="being-a-dao-contributor-and-future-dao-partnerships">Being a DAO Contributor and Future DAO Partnerships<a href="https://elizaos.github.io/news/2025/02/21#being-a-dao-contributor-and-future-dao-partnerships" class="hash-link" aria-label="Direct link to Being a DAO Contributor and Future DAO Partnerships" title="Direct link to Being a DAO Contributor and Future DAO Partnerships">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="being-a-dao-contributor-and-future-dao-partnerships">Being a DAO Contributor and Future DAO Partnerships<a href="https://eliza.how/news/2025/02/21#being-a-dao-contributor-and-future-dao-partnerships" class="hash-link" aria-label="Direct link to Being a DAO Contributor and Future DAO Partnerships" title="Direct link to Being a DAO Contributor and Future DAO Partnerships">​</a></h2>
 <ul>
 <li>
 <p><strong>DAO Contributor Experience</strong>: Commentary on the overwhelming nature of contributing to DAOs.<br>
@@ -2401,7 +2401,7 @@
 <a href="https://twitter.com/dankvr/status/1892953416873214114" target="_blank" rel="noopener noreferrer">Source</a></p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="kaito-airdrop-and-development-updates">Kaito Airdrop and Development Updates<a href="https://elizaos.github.io/news/2025/02/21#kaito-airdrop-and-development-updates" class="hash-link" aria-label="Direct link to Kaito Airdrop and Development Updates" title="Direct link to Kaito Airdrop and Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="kaito-airdrop-and-development-updates">Kaito Airdrop and Development Updates<a href="https://eliza.how/news/2025/02/21#kaito-airdrop-and-development-updates" class="hash-link" aria-label="Direct link to Kaito Airdrop and Development Updates" title="Direct link to Kaito Airdrop and Development Updates">​</a></h2>
 <ul>
 <li>
 <p><strong>Kaito Airdrop</strong>: Utilizes on-chain transactions; LLMs capability for structured data analysis.<br>
@@ -2411,12 +2411,12 @@
 <p><strong>Development Contributions</strong>: Package improvements including features and bug fixes by multiple contributors.</p>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussion-on-web3-and-recent-events">Discussion on Web3 and Recent Events<a href="https://elizaos.github.io/news/2025/02/21#discussion-on-web3-and-recent-events" class="hash-link" aria-label="Direct link to Discussion on Web3 and Recent Events" title="Direct link to Discussion on Web3 and Recent Events">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discussion-on-web3-and-recent-events">Discussion on Web3 and Recent Events<a href="https://eliza.how/news/2025/02/21#discussion-on-web3-and-recent-events" class="hash-link" aria-label="Direct link to Discussion on Web3 and Recent Events" title="Direct link to Discussion on Web3 and Recent Events">​</a></h2>
 <ul>
 <li><strong>Web3 Discussion</strong>: Participants included @blendino*, @malik672*, and @elizaOS discussing their engagement in Web3.<br>
 <a href="https://twitter.com/shawmakesmagic/status/1892776488488878496" target="_blank" rel="noopener noreferrer">Source</a></li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agent-and-memory-system-refactor">Agent and Memory System Refactor<a href="https://elizaos.github.io/news/2025/02/21#agent-and-memory-system-refactor" class="hash-link" aria-label="Direct link to Agent and Memory System Refactor" title="Direct link to Agent and Memory System Refactor">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="agent-and-memory-system-refactor">Agent and Memory System Refactor<a href="https://eliza.how/news/2025/02/21#agent-and-memory-system-refactor" class="hash-link" aria-label="Direct link to Agent and Memory System Refactor" title="Direct link to Agent and Memory System Refactor">​</a></h2>
 <ul>
 <li>
 <p><strong>Agent System Overhaul</strong>: Enhancements in character management and logging, CLI improvements, and file processing.<br>
@@ -2432,11 +2432,11 @@
         </item>
         <item>
             <title><![CDATA[Daily Report - 2025-02-20]]></title>
-            <link>https://elizaos.github.io/news/2025/02/20</link>
-            <guid>https://elizaos.github.io/news/2025/02/20</guid>
+            <link>https://eliza.how/news/2025/02/20</link>
+            <guid>https://eliza.how/news/2025/02/20</guid>
             <pubDate>Thu, 20 Feb 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[1. Recent Discussions and Updates]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="1-recent-discussions-and-updates">1. Recent Discussions and Updates<a href="https://elizaos.github.io/news/2025/02/20#1-recent-discussions-and-updates" class="hash-link" aria-label="Direct link to 1. Recent Discussions and Updates" title="Direct link to 1. Recent Discussions and Updates">​</a></h2>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="1-recent-discussions-and-updates">1. Recent Discussions and Updates<a href="https://eliza.how/news/2025/02/20#1-recent-discussions-and-updates" class="hash-link" aria-label="Direct link to 1. Recent Discussions and Updates" title="Direct link to 1. Recent Discussions and Updates">​</a></h2>
 <ul>
 <li><strong>General Information:</strong>
 <ul>
@@ -2448,7 +2448,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="2-clank-tank-game-show-updates">2. Clank Tank Game Show Updates<a href="https://elizaos.github.io/news/2025/02/20#2-clank-tank-game-show-updates" class="hash-link" aria-label="Direct link to 2. Clank Tank Game Show Updates" title="Direct link to 2. Clank Tank Game Show Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="2-clank-tank-game-show-updates">2. Clank Tank Game Show Updates<a href="https://eliza.how/news/2025/02/20#2-clank-tank-game-show-updates" class="hash-link" aria-label="Direct link to 2. Clank Tank Game Show Updates" title="Direct link to 2. Clank Tank Game Show Updates">​</a></h2>
 <ul>
 <li><strong>Hints and Premier:</strong>
 <ul>
@@ -2458,7 +2458,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="3-collaboration-discussions-and-nft-purchase">3. Collaboration Discussions and NFT Purchase<a href="https://elizaos.github.io/news/2025/02/20#3-collaboration-discussions-and-nft-purchase" class="hash-link" aria-label="Direct link to 3. Collaboration Discussions and NFT Purchase" title="Direct link to 3. Collaboration Discussions and NFT Purchase">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="3-collaboration-discussions-and-nft-purchase">3. Collaboration Discussions and NFT Purchase<a href="https://eliza.how/news/2025/02/20#3-collaboration-discussions-and-nft-purchase" class="hash-link" aria-label="Direct link to 3. Collaboration Discussions and NFT Purchase" title="Direct link to 3. Collaboration Discussions and NFT Purchase">​</a></h2>
 <ul>
 <li><strong>Engagement and Collaboration:</strong>
 <ul>
@@ -2468,7 +2468,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="4-clank-tank-ai-generated-game-show">4. Clank Tank: AI-Generated Game Show<a href="https://elizaos.github.io/news/2025/02/20#4-clank-tank-ai-generated-game-show" class="hash-link" aria-label="Direct link to 4. Clank Tank: AI-Generated Game Show" title="Direct link to 4. Clank Tank: AI-Generated Game Show">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="4-clank-tank-ai-generated-game-show">4. Clank Tank: AI-Generated Game Show<a href="https://eliza.how/news/2025/02/20#4-clank-tank-ai-generated-game-show" class="hash-link" aria-label="Direct link to 4. Clank Tank: AI-Generated Game Show" title="Direct link to 4. Clank Tank: AI-Generated Game Show">​</a></h2>
 <ul>
 <li><strong>Show Details:</strong>
 <ul>
@@ -2477,7 +2477,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="5-development-updates">5. Development Updates<a href="https://elizaos.github.io/news/2025/02/20#5-development-updates" class="hash-link" aria-label="Direct link to 5. Development Updates" title="Direct link to 5. Development Updates">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="5-development-updates">5. Development Updates<a href="https://eliza.how/news/2025/02/20#5-development-updates" class="hash-link" aria-label="Direct link to 5. Development Updates" title="Direct link to 5. Development Updates">​</a></h2>
 <ul>
 <li><strong>Release and Contributions:</strong>
 <ul>
@@ -2486,7 +2486,7 @@
 </ul>
 </li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="6-miscellaneous">6. Miscellaneous<a href="https://elizaos.github.io/news/2025/02/20#6-miscellaneous" class="hash-link" aria-label="Direct link to 6. Miscellaneous" title="Direct link to 6. Miscellaneous">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="6-miscellaneous">6. Miscellaneous<a href="https://eliza.how/news/2025/02/20#6-miscellaneous" class="hash-link" aria-label="Direct link to 6. Miscellaneous" title="Direct link to 6. Miscellaneous">​</a></h2>
 <ul>
 <li><strong>Clank Tank Synopsis and Updates:</strong>
 <ul>
