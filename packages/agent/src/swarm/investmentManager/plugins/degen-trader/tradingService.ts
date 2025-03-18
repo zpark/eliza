@@ -107,7 +107,7 @@ interface CacheEntry<T> {
 export class DegenTradingService extends Service {
   private isRunning = false;
   private processId: string;
-  
+
   // Service instances
   private buyService: BuyService;
   private sellService: SellService;
@@ -123,7 +123,7 @@ export class DegenTradingService extends Service {
   constructor(public runtime: IAgentRuntime) {
     super(runtime);
     this.processId = `sol-process-${Date.now()}`;
-    
+
     // Initialize services
     this.dataService = new DataService(runtime);
     this.analyticsService = new AnalyticsService(runtime);
@@ -132,12 +132,37 @@ export class DegenTradingService extends Service {
     this.sellService = new SellService(runtime, this.walletService, this.dataService, this.analyticsService);
     this.taskService = new TaskService(runtime, this.buyService, this.sellService);
     this.monitoringService = new MonitoringService(
-      runtime, 
+      runtime,
       this.dataService,
       this.walletService,
       this.analyticsService
     );
   }
+
+  /**
+   * Start the scenario service with the given runtime.
+   * @param {IAgentRuntime} runtime - The agent runtime
+   * @returns {Promise<ScenarioService>} - The started scenario service
+   */
+  static async start(runtime: IAgentRuntime) {
+    const service = new DegenTradingService(runtime);
+    service.start();
+    return service;
+  }
+  /**
+   * Stops the Scenario service associated with the given runtime.
+   *
+   * @param {IAgentRuntime} runtime The runtime to stop the service for.
+   * @throws {Error} When the Scenario service is not found.
+   */
+  static async stop(runtime: IAgentRuntime) {
+    const service = runtime.getService(DegenTradingService.serviceType);
+    if (!service) {
+      throw new Error('DegenTradingService service not found');
+    }
+    service.stop();
+  }
+
 
   async start(): Promise<void> {
     if (this.isRunning) {
@@ -147,7 +172,7 @@ export class DegenTradingService extends Service {
 
     try {
       logger.info("Starting trading service...");
-      
+
       // Initialize all services
       await Promise.all([
         this.dataService.initialize(),
@@ -160,7 +185,7 @@ export class DegenTradingService extends Service {
 
       // Register tasks after services are initialized
       await this.taskService.registerTasks();
-      
+
       this.isRunning = true;
       logger.info("Trading service started successfully");
     } catch (error) {
@@ -177,7 +202,7 @@ export class DegenTradingService extends Service {
 
     try {
       logger.info("Stopping trading service...");
-      
+
       // Stop all services
       await Promise.all([
         this.dataService.stop(),

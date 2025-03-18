@@ -177,7 +177,7 @@ export class BuyService {
 
       // Calculate base position size based on wallet balance and risk limits
       const maxPosition = walletBalance * this.tradingConfig.riskLimits.maxPositionSize;
-      
+
       // Adjust for volatility
       let adjustedAmount = maxPosition;
       if (tokenData.priceHistory) {
@@ -342,7 +342,7 @@ export class BuyService {
 
       // ... rest of the analysis logic ...
       const suggestedAmount = tokenRecommendation.buy_amount || walletBalance * defaultPercentage;
-      
+
       logger.info("Final suggested amount:", { suggestedAmount });
       return Math.min(suggestedAmount, walletBalance);
     } catch (error) {
@@ -359,7 +359,7 @@ export class BuyService {
   }
 
   public getDataService() {
-    return this.dataService; 
+    return this.dataService;
   }
 
   public getAnalyticsService() {
@@ -413,4 +413,4 @@ export class BuyService {
       logger.error("Error creating buy task:", error);
     }
   }
-} 
+}

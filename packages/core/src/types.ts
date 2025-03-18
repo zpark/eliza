@@ -250,12 +250,12 @@ export enum MemoryType {
 }
 
 export interface BaseMetadata {
-    type: MemoryTypeAlias;          
-    source?: string;           
-    sourceId?: UUID;           
-    scope?: string;            
-    timestamp?: number;        
-    tags?: string[];          
+    type: MemoryTypeAlias;
+    source?: string;
+    sourceId?: UUID;
+    scope?: string;
+    timestamp?: number;
+    tags?: string[];
 }
 
 export interface DocumentMetadata extends BaseMetadata {
@@ -264,8 +264,8 @@ export interface DocumentMetadata extends BaseMetadata {
 
 export interface FragmentMetadata extends BaseMetadata {
     type: MemoryType.FRAGMENT;
-    documentId: UUID;      
-    position: number;      
+    documentId: UUID;
+    position: number;
 }
 
 export interface MessageMetadata extends BaseMetadata {
@@ -281,10 +281,10 @@ export interface CustomMetadata extends BaseMetadata {
     [key: string]: unknown;
 }
 
-export type MemoryMetadata = 
-    | DocumentMetadata 
-    | FragmentMetadata 
-    | MessageMetadata 
+export type MemoryMetadata =
+    | DocumentMetadata
+    | FragmentMetadata
+    | MessageMetadata
     | DescriptionMetadata
     | CustomMetadata;
 
@@ -573,7 +573,7 @@ export abstract class Service extends EventEmitter {
       this.runtime = runtime;
     }
   }
-  
+
   abstract stop(): Promise<void>;
 
   /** Service type */
@@ -587,12 +587,12 @@ export abstract class Service extends EventEmitter {
 
   /** Start service connection */
   static async start(_runtime: IAgentRuntime): Promise<Service> {
-    throw new Error('Not implemented');
+    throw new Error('Start not implemented for service type: ' + this.serviceType);
   }
 
   /** Stop service connection */
   static async stop(_runtime: IAgentRuntime): Promise<unknown> {
-    throw new Error('Not implemented');
+    throw new Error('Stop not implemented for service type: ' + this.serviceType);
   }
 }
 
@@ -609,25 +609,25 @@ export type Route = {
 export interface Plugin {
   name: string;
   description: string;
-  
+
   // Initialize plugin with runtime services
   init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
-  
+
   // Configuration
   config?: { [key: string]: any };
-  
+
   // Core plugin components
   memoryManagers?: IMemoryManager[];
-  
+
   services?: (typeof Service)[];
-  
+
   // Entity component definitions
   componentTypes?: {
     name: string;
     schema: Record<string, unknown>;
     validator?: (data: any) => boolean;
   }[];
-  
+
   // Optional plugin features
   actions?: Action[];
   providers?: Provider[];
@@ -764,7 +764,7 @@ export interface IDatabaseAdapter {
 
   /** Create component */
   createComponent(component: Component): Promise<boolean>;
-  
+
   /** Update component */
   updateComponent(component: Component): Promise<void>;
 
@@ -883,7 +883,7 @@ export interface IDatabaseAdapter {
   getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
 
   getRooms(worldId: UUID): Promise<RoomData[]>;
-  
+
   addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
   removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
@@ -943,7 +943,7 @@ export interface IDatabaseAdapter {
   }): Promise<Relationship[]>;
 
   ensureEmbeddingDimension(dimension: number): void;
-  
+
   getCache<T>(key: string): Promise<T | undefined>;
   setCache<T>(key: string, value: T): Promise<boolean>;
   deleteCache(key: string): Promise<boolean>;
@@ -1443,7 +1443,7 @@ export interface WorldSettings {
 }
 
 export interface OnboardingConfig {
-  settings: { 
-      [key: string]: Omit<OnboardingSetting, 'value'>; 
+  settings: {
+      [key: string]: Omit<OnboardingSetting, 'value'>;
   };
 }

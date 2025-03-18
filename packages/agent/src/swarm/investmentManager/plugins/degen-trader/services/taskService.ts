@@ -17,7 +17,7 @@ export class TaskService extends TradeExecutionService {
   ) {
     // Get protected services from buyService via public methods
     super(
-      runtime, 
+      runtime,
       buyService.getWalletService(),
       buyService.getDataService(),
       buyService.getAnalyticsService()
@@ -175,7 +175,8 @@ export class TaskService extends TradeExecutionService {
 
       return result;
     } catch (error) {
-      logger.error("Error executing buy task:", error);
+      console.log("Error executing buy task:", error)
+      //logger.error("Error executing buy task:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -249,4 +250,4 @@ export class TaskService extends TradeExecutionService {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
-} 
+}

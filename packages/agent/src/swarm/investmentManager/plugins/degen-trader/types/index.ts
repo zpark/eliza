@@ -42,7 +42,7 @@ export enum ServiceTypes {
     positionId: UUID;
     tokenAddress: string;
     entityId: string;
-    expectedOutAmount?: string;
+    expectedOutAmount: string;
   }
   
   export interface SellSignalMessage {
