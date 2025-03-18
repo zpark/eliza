@@ -103,7 +103,7 @@ export class MonitoringService implements TradeExecutionService {
     // Add monitoring intervals here
     const priceMonitorInterval = setInterval(() => {
       this.monitorPrices().catch(error => 
-        logger.error("Price monitoring error:", error)
+        console.log("Price monitoring error:", error)
       );
     }, 60000); // Every minute
 
@@ -122,7 +122,7 @@ export class MonitoringService implements TradeExecutionService {
       const currentBalance = await getTokenBalance(this.runtime, tokenAddress);
 
       if (!currentBalance || BigInt(currentBalance.toString()) <= BigInt(0)) {
-        logger.info("No position to monitor", { tokenAddress });
+        console.log("No position to monitor", { tokenAddress });
         return;
       }
 
@@ -180,7 +180,7 @@ export class MonitoringService implements TradeExecutionService {
         priceChangePercent
       };
     } catch (error) {
-      logger.error("Error monitoring token:", error);
+      console.log("Error monitoring token:", error);
       return { error: true, message: String(error) };
     }
   }
@@ -209,7 +209,7 @@ export class MonitoringService implements TradeExecutionService {
 
       logger.info("Sell signal created", { tokenAddress, amount, reason });
     } catch (error) {
-      logger.error("Error creating sell signal:", error);
+      console.log("Error creating sell signal:", error);
     }
   }
 
@@ -248,7 +248,7 @@ export class MonitoringService implements TradeExecutionService {
 
       logger.info("Trailing stop set", trailingStopData);
     } catch (error) {
-      logger.error("Error setting trailing stop:", error);
+      console.log("Error setting trailing stop:", error);
     }
   }
 
@@ -266,7 +266,7 @@ export class MonitoringService implements TradeExecutionService {
         }
       }
     } catch (error) {
-      logger.error("Error monitoring prices:", error);
+      console.log("Error monitoring prices:", error);
     }
   }
 } 

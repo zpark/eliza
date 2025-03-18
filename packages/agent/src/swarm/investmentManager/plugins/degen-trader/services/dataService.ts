@@ -41,7 +41,7 @@ export class DataService {
         })
       );
     } catch (error) {
-      logger.error("Error getting Birdeye signals:", error);
+      console.log("Error getting Birdeye signals:", error);
       return [];
     }
   }
@@ -66,7 +66,7 @@ export class DataService {
         },
       }));
     } catch (error) {
-      logger.error("Error getting Twitter signals:", error);
+      console.log("Error getting Twitter signals:", error);
       return [];
     }
   }
@@ -91,7 +91,7 @@ export class DataService {
         }
       }));
     } catch (error) {
-      logger.error("Error getting CMC signals:", error);
+      console.log("Error getting CMC signals:", error);
       return [];
     }
   }
@@ -147,7 +147,7 @@ export class DataService {
       await this.cacheManager.set(cacheKey, result, 60000);
       return result;
     } catch (error) {
-      logger.error("Error fetching token market data:", error);
+      console.log("Error fetching token market data:", error);
       return {
         price: 0,
         marketCap: 0,
@@ -230,7 +230,7 @@ export class DataService {
         buy_amount: await this.calculateOptimalBuyAmount(bestToken),
       };
     } catch (error) {
-      logger.error("Failed to get token recommendation:", error);
+      console.log("Failed to get token recommendation:", error);
       return this.getDefaultRecommendation();
     }
   }
@@ -315,7 +315,7 @@ export class DataService {
         drawdown
       };
     } catch (error) {
-      logger.error("Error getting portfolio status:", error);
+      console.log("Error getting portfolio status:", error);
       throw error;
     }
   }
@@ -346,7 +346,7 @@ export class DataService {
 
       return { isValid: true };
     } catch (error) {
-      logger.error("Error validating token for trading:", error);
+      console.log("Error validating token for trading:", error);
       return {
         isValid: false,
         reason: `Validation error: ${error instanceof Error ? error.message : String(error)}`,
@@ -384,7 +384,7 @@ export class DataService {
 
       return Math.min(availableCapital * basePercentage, token.liquidity * 0.02);
     } catch (error) {
-      logger.error("Error calculating optimal buy amount:", error);
+      console.log("Error calculating optimal buy amount:", error);
       return 0;
     }
   }
@@ -407,7 +407,7 @@ export class DataService {
 
       return positions;
     } catch (error) {
-      logger.error("Error getting positions:", error);
+      console.log("Error getting positions:", error);
       return {};
     }
   }

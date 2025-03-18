@@ -146,7 +146,7 @@ export class SellService {
         }
       }
     } catch (error) {
-      logger.error("Failed to process sell signal:", error);
+      console.log("Failed to process sell signal:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -192,7 +192,7 @@ export class SellService {
       // Convert to basis points
       return Math.floor(finalSlippage * 100);
     } catch (error) {
-      logger.error("Error calculating dynamic slippage:", error);
+      console.log("Error calculating dynamic slippage:", error);
       return 100; // Default to 1% slippage
     }
   }
@@ -214,7 +214,7 @@ export class SellService {
       const data = await response.json();
       return data.outAmount || "0";
     } catch (error) {
-      logger.error("Error getting expected amount:", error);
+      console.log("Error getting expected amount:", error);
       return "0";
     }
   }
@@ -250,7 +250,7 @@ export class SellService {
       if (priceChange < -5) return "bearish";
       return "neutral";
     } catch (error) {
-      logger.error("Error assessing market condition:", error);
+      console.log("Error assessing market condition:", error);
       return "neutral";
     }
   }

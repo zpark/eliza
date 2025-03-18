@@ -37,7 +37,7 @@ export class WalletService {
 
       logger.info("Wallet service initialized successfully");
     } catch (error) {
-      logger.error("Failed to initialize wallet service:", error);
+      console.log("Failed to initialize wallet service:", error);
       throw error;
     }
   }
@@ -88,7 +88,7 @@ export class WalletService {
 
           return result;
         } catch (error) {
-          logger.error("Error executing sell in wallet", error);
+          console.log("Error executing sell in wallet", error);
           return { 
             success: false, 
             error: error instanceof Error ? error.message : String(error) 
@@ -107,7 +107,7 @@ export class WalletService {
       const balance = await this.connection.getBalance(this.keypair.publicKey);
       return balance / 1e9; // Convert lamports to SOL
     } catch (error) {
-      logger.error("Error getting wallet balance:", error);
+      console.log("Error getting wallet balance:", error);
       throw error;
     }
   }

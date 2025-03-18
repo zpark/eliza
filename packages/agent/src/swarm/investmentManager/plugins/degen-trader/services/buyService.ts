@@ -105,7 +105,7 @@ export class BuyService {
 
       return result;
     } catch (error) {
-      logger.error("Error handling buy signal:", error);
+      console.log("Error handling buy signal:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -154,7 +154,7 @@ export class BuyService {
 
       return { isValid: true };
     } catch (error) {
-      logger.error("Error validating token:", error);
+      console.log("Error validating token:", error);
       return {
         isValid: false,
         reason: `Validation error: ${error instanceof Error ? error.message : String(error)}`,
@@ -200,7 +200,7 @@ export class BuyService {
       const minTradeSize = 0.05; // Minimum 0.05 SOL
       return Math.max(minTradeSize, finalAmount);
     } catch (error) {
-      logger.error("Error calculating optimal buy amount:", error);
+      console.log("Error calculating optimal buy amount:", error);
       return 0;
     }
   }
@@ -236,7 +236,7 @@ export class BuyService {
       // Convert to basis points
       return Math.floor(finalSlippage * 100);
     } catch (error) {
-      logger.error("Error calculating dynamic slippage:", error);
+      console.log("Error calculating dynamic slippage:", error);
       return 100; // Default to 1% slippage
     }
   }
@@ -272,7 +272,7 @@ export class BuyService {
       if (priceChange < -5) return "bearish";
       return "neutral";
     } catch (error) {
-      logger.error("Error assessing market condition:", error);
+      console.log("Error assessing market condition:", error);
       return "neutral";
     }
   }
@@ -299,11 +299,11 @@ export class BuyService {
       const recommendation = await this.dataService.getTokenRecommendation();
 
       if (!recommendation) {
-        logger.info("No token recommendation available");
+        console.log("No token recommendation available");
         return;
       }
 
-      logger.info("Token recommendation:", recommendation);
+      console.log("Token recommendation:", recommendation);
 
       // Create buy signal
       const signal: BuySignalMessage = {
@@ -316,7 +316,7 @@ export class BuyService {
       // Create buy task with the recommended amount
       await this.createBuyTask(signal, recommendation.buy_amount);
     } catch (error) {
-      logger.error("Error generating buy signal:", error);
+      console.log("Error generating buy signal:", error);
     }
   }
 
@@ -346,7 +346,7 @@ export class BuyService {
       logger.info("Final suggested amount:", { suggestedAmount });
       return Math.min(suggestedAmount, walletBalance);
     } catch (error) {
-      logger.error("Trade analysis failed:", {
+      console.log("Trade analysis failed:", {
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -410,7 +410,7 @@ export class BuyService {
 
       logger.info("Buy task created");
     } catch (error) {
-      logger.error("Error creating buy task:", error);
+      console.log("Error creating buy task:", error);
     }
   }
 }

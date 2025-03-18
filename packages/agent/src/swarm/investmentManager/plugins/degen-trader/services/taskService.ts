@@ -125,7 +125,7 @@ export class TaskService extends TradeExecutionService {
           });
         }
       } catch (error) {
-        logger.warn("Failed to fetch expected receive amount for sell", error);
+        console.log("Failed to fetch expected receive amount for sell", error);
       }
 
       // Calculate slippage using parent class method
@@ -147,7 +147,7 @@ export class TaskService extends TradeExecutionService {
       logger.info("Sell task created", { taskId });
       return { success: true, taskId };
     } catch (error) {
-      logger.error("Error creating sell task", error);
+      console.log("Error creating sell task", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -201,7 +201,7 @@ export class TaskService extends TradeExecutionService {
 
       return result;
     } catch (error) {
-      logger.error("Error executing sell task:", error);
+      console.log("Error executing sell task:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -213,7 +213,7 @@ export class TaskService extends TradeExecutionService {
       logger.info("Position monitoring completed");
       return { success: true };
     } catch (error) {
-      logger.error("Error monitoring positions:", error);
+      console.log("Error monitoring positions:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -224,7 +224,7 @@ export class TaskService extends TradeExecutionService {
       logger.info("Slippage parameters optimized");
       return { success: true };
     } catch (error) {
-      logger.error("Error optimizing slippage parameters:", error);
+      console.log("Error optimizing slippage parameters:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -235,7 +235,7 @@ export class TaskService extends TradeExecutionService {
       logger.info("Buy parameters optimized");
       return { success: true };
     } catch (error) {
-      logger.error("Error optimizing buy parameters:", error);
+      console.log("Error optimizing buy parameters:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -246,7 +246,7 @@ export class TaskService extends TradeExecutionService {
       logger.info("Performance analysis completed");
       return { success: true };
     } catch (error) {
-      logger.error("Error analyzing performance:", error);
+      console.log("Error analyzing performance:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }

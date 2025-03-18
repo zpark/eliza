@@ -131,7 +131,7 @@ export class AnalyticsService {
         efficiency: actualSlippageBps / slippageBps
       });
     } catch (error) {
-      logger.error('Error tracking slippage impact', error);
+      console.log('Error tracking slippage impact', error);
     }
   }
 
@@ -243,7 +243,7 @@ export class AnalyticsService {
         amount: data.amount
       });
     } catch (error) {
-      logger.error("Error tracking trade execution:", error);
+      console.log("Error tracking trade execution:", error);
     }
   }
 
@@ -275,7 +275,7 @@ export class AnalyticsService {
 
       return tradeData;
     } catch (error) {
-      logger.error("Error adding trade performance:", error);
+      console.log("Error adding trade performance:", error);
       throw error;
     }
   }
@@ -303,7 +303,7 @@ export class AnalyticsService {
 
       await this.runtime.databaseAdapter.setCache(`token_stats:${tokenAddress}`, stats);
     } catch (error) {
-      logger.error("Error updating token statistics:", error);
+      console.log("Error updating token statistics:", error);
     }
   }
 } 

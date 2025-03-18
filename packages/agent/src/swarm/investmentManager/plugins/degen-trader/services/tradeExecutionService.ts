@@ -56,7 +56,7 @@ export class TradeExecutionService {
 
       return result;
     } catch (error) {
-      logger.error("Buy trade execution failed:", error);
+      console.log("Buy trade execution failed:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -100,7 +100,7 @@ export class TradeExecutionService {
 
       return result;
     } catch (error) {
-      logger.error("Sell trade execution failed:", error);
+      console.log("Sell trade execution failed:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -121,7 +121,7 @@ export class TradeExecutionService {
       
       return expectedAmount.toString();
     } catch (error) {
-      logger.error("Error calculating expected amount:", error);
+      console.log("Error calculating expected amount:", error);
       return "0";
     }
   }
