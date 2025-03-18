@@ -2,6 +2,9 @@
 
 Plugins (or packages) are modular extensions that enhance the capabilities of ElizaOS agents. They provide a flexible way to add new functionality, integrate external services, and customize agent behavior across different platforms.
 
+**Browse the various plugins the eliza dev community made here: [Package Showcase](/showcase)**
+
+[![](/img/plugins.png)](/showcase)
 > elizaOS maintains an official package registry at [github.com/elizaos-plugins/registry](https://github.com/elizaos-plugins/registry).
 
 ---
@@ -232,7 +235,7 @@ When submitting a plugin to the [elizaOS Registry](https://github.com/elizaos-pl
    - [ ] Tests are passing
    - [ ] Demo evidence is provided
 
-Visit the [Elizaos Plugin Development Guide]([https://github.com/elizaos-plugins/plugin-image](https://github.com/elizaOS/eliza/blob/main/docs/docs/packages/plugins.md) for detailed information on creating new plugins.
+Visit the [Elizaos Plugin Development Guide]([https://github.com/elizaos-plugins/plugin-image](https://github.com/elizaOS/eliza/blob/main/docs/notes/packages/plugins.md) for detailed information on creating new plugins.
 
 ### Plugin Branding and Images
 
@@ -261,46 +264,6 @@ To maintain a consistent and professional appearance across the ElizaOS ecosyste
    - Include alt text for accessibility
 
 ---
-
-## Using Your Custom Plugins
-Plugins that are not in the official registry for ElizaOS can be used as well. Here's how:
-
-### Installation
-
-1. Upload the custom plugin to the packages folder:
-
-```
-packages/
-├─plugin-example/
-├── package.json
-├── tsconfig.json
-├── src/
-│   ├── index.ts        # Main plugin entry
-│   ├── actions/        # Custom actions
-│   ├── providers/      # Data providers
-│   ├── types.ts        # Type definitions
-│   └── environment.ts  # Configuration
-├── README.md
-└── LICENSE
-```
-
-2. Add the custom plugin to your project's dependencies in the agent's package.json:
-
-```json
-{
-  "dependencies": {
-    "@elizaos/plugin-example": "workspace:*"
-  }
-}
-```
-
-3. Import the custom plugin to your agent's character.json
-
-```json
-  "plugins": [
-    "@elizaos/plugin-example",
-  ],
-```
 
 ## Using Your Custom Plugins
 Plugins that are not in the official registry for ElizaOS can be used as well. Here's how:

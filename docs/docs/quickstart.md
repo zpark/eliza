@@ -200,9 +200,22 @@ Simply click the link or open your browser to `http://localhost:5173/`. You'll s
 
 ## Additional Configuration
 
+You can load plugins or additional client support with your character file to unlock more capabilities for your agent. 
+
 ### Add Plugins and Clients
 
-You can load plugins or additional client support with your character file to unlock more capabilities for your agent. There are two ways to get a list of available plugins:
+Here's how to import and register plugins in your character file:
+
+```typescript
+{
+    "name": "Eliza",
+    "clients": ["telegram"],
+    // ... other config options
+    "plugins": ["@elizaos/plugin-image"],
+}
+```
+
+There are two ways to get a list of available plugins:
 
 1. Web Interface
 
@@ -228,16 +241,6 @@ Here's a sample list of plugins you can check out!
 | [`@elizaos/plugin-pdf`](https://github.com/elizaos-plugins/plugin-pdf) | PDF processing
 
 
-Here's how to import and register plugins in your character file:
-
-```typescript
-{
-    "name": "Eliza",
-    "clients": ["telegram"],
-    // ... other config options
-    "plugins": ["@elizaos/plugin-image"],
-}
-```
 
 ### Configure Environment
 
@@ -290,6 +293,7 @@ Add to your `.env`:
 TWITTER_USERNAME=  # Account username
 TWITTER_PASSWORD=  # Account password
 TWITTER_EMAIL=    # Account email
+TWITTER_2FA_SECRET=    # In order to avoid X preventing the login, it is better to activate 2fa in the target account, copy the 2fa secret and paste it here
 ```
 
 **Important:** Log in to the [Twitter Developer Portal](https://developer.twitter.com) and enable the "Automated" label for your account to avoid being flagged as inauthentic.

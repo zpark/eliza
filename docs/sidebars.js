@@ -20,11 +20,6 @@ const sidebars = {
                     id: "faq",
                     label: "❓ FAQ",
                 },
-                {
-                    type: "doc",
-                    id: "changelog",
-                    label: "CHANGELOG",
-                },
 		{
 		    type: "category",
 		    label: "Tutorials",
@@ -32,29 +27,28 @@ const sidebars = {
                         {
                             type: "category",
                             label: "AI Agent Dev School",
+                            link: { 
+                              type: 'doc', 
+                              id: 'tutorials/devschool/index' 
+                            },
+                            collapsed: false,
                             items: [
                                 {
                                     type: "doc",
-                                    id: "tutorials/index",
-                                    label: "Overview",
-                                },                            
-                                {
-                                    type: "doc",
-                                    id: "tutorials/part1",
+                                    id: "tutorials/devschool/part1",
                                     label: "Part 1",
                                 },
                                 {
                                     type: "doc",
-                                    id: "tutorials/part2",
+                                    id: "tutorials/devschool/part2",
                                     label: "Part 2",
                                 },
                                 {
                                     type: "doc",
-                                    id: "tutorials/part3",
+                                    id: "tutorials/devschool/part3",
                                     label: "Part 3",
                                 },
                             ],
-                            collapsed: true, // Expand by default
                         },
                         {
                             type: "doc",
@@ -114,6 +108,11 @@ const sidebars = {
                 },
                 {
                     type: "doc",
+                    id: "core/knowledge",
+                    label: "RAG Knowledge",
+                },
+                {
+                    type: "doc",
                     id: "core/actions",
                     label: "Actions",
                 },
@@ -147,7 +146,7 @@ const sidebars = {
                 {
                     type: "doc",
                     id: "guides/fine-tuning",
-                    label: "Fine-tuning",
+                    label: "Fine Tuning",
                 },
                 {
                     type: "doc",
@@ -192,6 +191,16 @@ const sidebars = {
                     label: "Verified Inference",
                 },
             ],
+        },
+        {
+            type: "doc",
+            id: "awesome-eliza",
+            label: "Awesome elizaOS",
+        },
+        {
+            type: "doc",
+            id: "changelog",
+            label: "CHANGELOG",
         },
     ],
 };

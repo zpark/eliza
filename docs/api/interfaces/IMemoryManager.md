@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / IMemoryManager
+[@elizaos/core v0.25.9](../index.md) / IMemoryManager
 
 # Interface: IMemoryManager
 
@@ -98,6 +98,24 @@
 
 ***
 
+### getMemoriesByIds()
+
+> **getMemoriesByIds**(`ids`): `Promise`\<[`Memory`](Memory.md)[]\>
+
+#### Parameters
+
+• **ids**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`[]
+
+#### Returns
+
+`Promise`\<[`Memory`](Memory.md)[]\>
+
+#### Defined in
+
+[packages/core/src/types.ts:1194](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1194)
+
+***
+
 ### getMemoryById()
 
 > **getMemoryById**(`id`): `Promise`\<[`Memory`](Memory.md)\>
@@ -112,7 +130,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1194](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1194)
+[packages/core/src/types.ts:1195](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1195)
 
 ***
 
@@ -134,7 +152,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1195](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1195)
+[packages/core/src/types.ts:1196](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1196)
 
 ***
 
@@ -162,7 +180,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1199](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1199)
+[packages/core/src/types.ts:1200](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1200)
 
 ***
 
@@ -182,7 +200,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1209](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1209)
+[packages/core/src/types.ts:1210](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1210)
 
 ***
 
@@ -200,7 +218,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1211](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1211)
+[packages/core/src/types.ts:1212](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1212)
 
 ***
 
@@ -218,7 +236,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1213](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1213)
+[packages/core/src/types.ts:1214](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1214)
 
 ***
 
@@ -238,4 +256,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1215](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1215)
+[packages/core/src/types.ts:1216](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1216)

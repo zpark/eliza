@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / splitText
+[@elizaos/core v0.25.9](../index.md) / splitText
 
 # Function: splitText()
 
@@ -18,4 +18,4 @@
 
 ## Defined in
 
-[packages/core/src/generation.ts:1462](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1462)
+[packages/core/src/generation.ts:1495](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1495)

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / MemoryCacheAdapter
+[@elizaos/core v0.25.9](../index.md) / MemoryCacheAdapter
 
 # Class: MemoryCacheAdapter
 
@@ -10,11 +10,11 @@
 
 ### new MemoryCacheAdapter()
 
-> **new MemoryCacheAdapter**(`initalData`?): [`MemoryCacheAdapter`](MemoryCacheAdapter.md)
+> **new MemoryCacheAdapter**(`initialData`?): [`MemoryCacheAdapter`](MemoryCacheAdapter.md)
 
 #### Parameters
 
-• **initalData?**: `Map`\<`string`, `string`\>
+• **initialData?**: `Map`\<`string`, `string`\>
 
 #### Returns
 

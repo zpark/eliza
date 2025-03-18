@@ -1165,10 +1165,30 @@ export async function generateText({
 
             case ModelProviderName.VENICE: {
                 elizaLogger.debug("Initializing Venice model.");
-                const venice = createOpenAI({
+                
+                const bypass = parseBooleanFromText(
+                    runtime.getSetting("BYPASS_VENICE_SYSTEM_PROMPT")
+                )
+                    ? async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                        const options: RequestInit = { ...init };
+                        if (options?.body) {
+                            const body = JSON.parse(options.body as string);
+                            body.venice_parameters = {
+                                include_venice_system_prompt: false
+                            };
+                            options.body = JSON.stringify(body);
+                        }
+                        return runtime.fetch(input, options);
+                    }
+                    : undefined;
+
+                const veniceConfig = {
                     apiKey: apiKey,
                     baseURL: endpoint,
-                });
+                    ...(bypass ? { fetch: bypass } : {})
+                };
+
+                const venice = createOpenAI(veniceConfig);
 
                 const { text: veniceResponse } = await aiGenerateText({
                     model: venice.languageModel(model),
@@ -1183,17 +1203,10 @@ export async function generateText({
                     maxSteps: maxSteps,
                     maxTokens: max_response_length,
                 });
-
-                // console.warn("veniceResponse:")
-                // console.warn(veniceResponse)
+            
                 //rferrari: remove all text from <think> to </think>\n\n
-                response = veniceResponse.replace(
-                    /<think>[\s\S]*?<\/think>\s*\n*/g,
-                    ""
-                );
-                // console.warn(response)
-
-                // response = veniceResponse;
+                response = veniceResponse
+                    .replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
                 elizaLogger.debug("Received response from Venice model.");
                 break;
             }
@@ -1353,7 +1366,7 @@ export async function generateText({
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
                     experimental_telemetry: experimental_telemetry,
-                    prompt: context,
+                    prompt: context
                 });
 
                 response = bedrockResponse;
@@ -1446,8 +1459,8 @@ export async function generateShouldRespond({
  */
 export async function splitChunks(
     content: string,
-    chunkSize = 1500,
-    bleed = 100
+    chunkSize = 1500, // in tokens
+    bleed = 100 // in tokens
 ): Promise<string[]> {
     elizaLogger.debug(`[splitChunks] Starting text split`);
 
@@ -1483,23 +1496,38 @@ export async function splitChunks(
     return chunks;
 }
 
-export function splitText(
-    content: string,
-    chunkSize: number,
-    bleed: number
-): string[] {
+
+function estimateTokensFromEnglishLength(stringLength) {
+    return Math.round(stringLength / 4); // Rough estimate: 1 token ≈ 4 characters in English
+}
+
+function estimateEnglishLengthFromTokens(tokenCount) {
+    return tokenCount * 4; // Reverse estimate: 1 token ≈ 4 characters in English
+}
+
+export function splitText(content: string, chunkSize: number, bleed: number): string[] {
+    // Convert chunk size and bleed from tokens to approximate character length
+    const chunkCharSize = estimateEnglishLengthFromTokens(chunkSize);
+    const bleedCharSize = estimateEnglishLengthFromTokens(bleed);
+
+    // If content is smaller than estimated chunk size, return it as a single chunk
+    if (content.length <= chunkCharSize) {
+        return [content];
+    }
+
     const chunks: string[] = [];
     let start = 0;
 
     while (start < content.length) {
-        const end = Math.min(start + chunkSize, content.length);
-        // Ensure we're not creating empty or invalid chunks
-        if (end > start) {
-            chunks.push(content.substring(start, end));
-        }
+        const end = Math.min(start + chunkCharSize, content.length);
+        chunks.push(content.substring(start, end));
 
-        // Ensure forward progress while preventing infinite loops
-        start = Math.max(end - bleed, start + 1);
+        // Move forward by (chunkSize - bleed), converted to character length
+        const nextStart = start + (chunkCharSize - bleedCharSize);
+        if (nextStart >= content.length || nextStart <= start) {
+            break; // Stop if no progress is made
+        }
+        start = nextStart;
     }
 
     return chunks;
@@ -1939,13 +1967,13 @@ export const generateImage = async (
                 seed: data.seed ?? 6252023,
                 ...(runtime.getSetting("FAL_AI_LORA_PATH")
                     ? {
-                          loras: [
-                              {
-                                  path: runtime.getSetting("FAL_AI_LORA_PATH"),
-                                  scale: 1,
-                              },
-                          ],
-                      }
+                        loras: [
+                            {
+                                path: runtime.getSetting("FAL_AI_LORA_PATH"),
+                                scale: 1,
+                            },
+                        ],
+                    }
                     : {}),
             };
 
@@ -2111,6 +2139,33 @@ export const generateImage = async (
                 console.error(error);
                 return { success: false, error: error };
             }
+        } else if (runtime.imageModelProvider === ModelProviderName.NEARAI) {
+            let targetSize = `${data.width}x${data.height}`;
+            if (
+                targetSize !== "1024x1024" &&
+                targetSize !== "1792x1024" &&
+                targetSize !== "1024x1792" &&
+                targetSize !== "512x512" &&
+                targetSize !== "256x256"
+            ) {
+                targetSize = "1024x1024";
+            }
+            // NEAR AI uses OpenAI compatible API
+            const openai = new OpenAI({
+                baseURL: getEndpoint(ModelProviderName.NEARAI),
+                apiKey,
+            });
+            const response = await openai.images.generate({
+                model,
+                prompt: data.prompt,
+                size: targetSize as "1024x1024" | "1792x1024" | "1024x1792" | "512x512" | "256x256",
+                n: data.count,
+                response_format: "b64_json",
+            });
+            const base64s = response.data.map(
+                (image) => `data:image/png;base64,${image.b64_json}`
+            );
+            return { success: true, data: base64s };
         } else {
             let targetSize = `${data.width}x${data.height}`;
             if (
@@ -2362,10 +2417,10 @@ async function handleOpenAI({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const endpoint = runtime.character.modelEndpointOverride || getEndpoint(provider);
     const baseURL = getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
-    const openai = createOpenAI({ 
-        apiKey, 
+    const openai = createOpenAI({
+        apiKey,
         baseURL,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: openai.languageModel(model),
@@ -2401,10 +2456,10 @@ async function handleAnthropic({
     const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
     elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
 
-    const anthropic = createAnthropic({ 
-        apiKey, 
+    const anthropic = createAnthropic({
+        apiKey,
         baseURL,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return await aiGenerateObject({
         model: anthropic.languageModel(model),
@@ -2432,10 +2487,10 @@ async function handleGrok({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const grok = createOpenAI({ 
-        apiKey, 
+    const grok = createOpenAI({
+        apiKey,
         baseURL: models.grok.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: grok.languageModel(model, { parallelToolCalls: false }),
@@ -2467,10 +2522,10 @@ async function handleGroq({
     const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
     elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
 
-    const groq = createGroq({ 
-        apiKey, 
+    const groq = createGroq({
+        apiKey,
         baseURL,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return await aiGenerateObject({
         model: groq.languageModel(model),
@@ -2500,7 +2555,7 @@ async function handleGoogle({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const google = createGoogleGenerativeAI({
         apiKey,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: google(model),
@@ -2554,10 +2609,10 @@ async function handleRedPill({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const redPill = createOpenAI({ 
-        apiKey, 
+    const redPill = createOpenAI({
+        apiKey,
         baseURL: models.redpill.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: redPill.languageModel(model),
@@ -2647,10 +2702,10 @@ async function handleDeepSeek({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const openai = createOpenAI({ 
-        apiKey, 
+    const openai = createOpenAI({
+        apiKey,
         baseURL: models.deepseek.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     return aiGenerateObject({
         model: openai.languageModel(model),
@@ -2773,10 +2828,10 @@ async function handleNearAi({
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerationResult> {
-    const nearai = createOpenAI({ 
-        apiKey, 
+    const nearai = createOpenAI({
+        apiKey,
         baseURL: models.nearai.endpoint,
-        fetch: runtime.fetch 
+        fetch: runtime.fetch
     });
     const settings = schema ? { structuredOutputs: true } : undefined;
     return aiGenerateObject({

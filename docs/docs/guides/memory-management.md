@@ -357,5 +357,3 @@ Check runtime logs, verify database connections, and consider clearing cache and
 ## Further Reading
 
 - [Configuration Guide](./configuration.md)
-- [Database Adapters](../packages/database-adapters.md)
-- [Knowledge Base Management](./knowledge-base.md)

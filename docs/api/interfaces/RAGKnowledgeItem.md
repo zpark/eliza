@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / RAGKnowledgeItem
+[@elizaos/core v0.25.9](../index.md) / RAGKnowledgeItem
 
 # Interface: RAGKnowledgeItem
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1557](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1557)
+[packages/core/src/types.ts:1558](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1558)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1558](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1558)
+[packages/core/src/types.ts:1559](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1559)
 
 ***
 
@@ -70,7 +70,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1559](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1559)
+[packages/core/src/types.ts:1560](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1560)
 
 ***
 
@@ -80,7 +80,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1572](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1572)
+[packages/core/src/types.ts:1573](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1573)
 
 ***
 
@@ -90,7 +90,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1573](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1573)
+[packages/core/src/types.ts:1574](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1574)
 
 ***
 
@@ -100,7 +100,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1574](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1574)
+[packages/core/src/types.ts:1575](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1575)
 
 ***
 
@@ -110,4 +110,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1575](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1575)
+[packages/core/src/types.ts:1576](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1576)

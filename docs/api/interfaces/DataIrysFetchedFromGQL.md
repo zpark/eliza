@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / DataIrysFetchedFromGQL
+[@elizaos/core v0.25.9](../index.md) / DataIrysFetchedFromGQL
 
 # Interface: DataIrysFetchedFromGQL
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1461](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1461)
+[packages/core/src/types.ts:1462](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1462)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1462](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1462)
+[packages/core/src/types.ts:1463](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1463)
 
 ***
 
@@ -30,4 +30,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1463](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1463)
+[packages/core/src/types.ts:1464](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1464)

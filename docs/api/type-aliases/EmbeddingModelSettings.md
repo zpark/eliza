@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / EmbeddingModelSettings
+[@elizaos/core v0.25.9](../index.md) / EmbeddingModelSettings
 
 # Type Alias: EmbeddingModelSettings
 

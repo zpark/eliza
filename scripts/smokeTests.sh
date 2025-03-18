@@ -48,7 +48,7 @@ trap 'rm -f "$OUTFILE"' EXIT
 echo "Using temporary output file: $OUTFILE"
 
 # Add timeout configuration
-TIMEOUT=1200  # 60 seconds represented as 600 tenths of a second
+TIMEOUT=1200  # 120 seconds represented as 1200 tenths of a second
 INTERVAL=5   # Represent 0.5 seconds as 5 tenths of a second
 TIMER=0
 

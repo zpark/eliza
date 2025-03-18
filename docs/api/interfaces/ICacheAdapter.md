@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / ICacheAdapter
+[@elizaos/core v0.25.9](../index.md) / ICacheAdapter
 
 # Interface: ICacheAdapter
 

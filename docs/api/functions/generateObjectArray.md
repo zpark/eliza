@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / generateObjectArray
+[@elizaos/core v0.25.9](../index.md) / generateObjectArray
 
 # Function: generateObjectArray()
 
@@ -20,4 +20,4 @@
 
 ## Defined in
 
-[packages/core/src/generation.ts:1613](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1613)
+[packages/core/src/generation.ts:1661](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1661)

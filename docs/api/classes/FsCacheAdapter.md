@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / FsCacheAdapter
+[@elizaos/core v0.25.9](../index.md) / FsCacheAdapter
 
 # Class: FsCacheAdapter
 
