@@ -12,9 +12,9 @@ export class BuyService {
 
   constructor(
     private runtime: IAgentRuntime,
-    private walletService: WalletService,
-    private dataService: DataService,
-    private analyticsService: AnalyticsService
+    protected walletService: WalletService,
+    protected dataService: DataService,
+    protected analyticsService: AnalyticsService
   ) {
     this.tradingConfig = {
       intervals: {
@@ -94,10 +94,9 @@ export class BuyService {
       });
 
       if (result.success && result.outAmount) {
-        // Track slippage impact
         await this.analyticsService.trackSlippageImpact(
           signal.tokenAddress,
-          signal.expectedAmount || "0",
+          signal.expectedOutAmount || "0",
           result.outAmount,
           slippageBps,
           false
@@ -311,6 +310,7 @@ export class BuyService {
         positionId: uuidv4() as UUID,
         tokenAddress: recommendation.recommend_buy_address,
         entityId: "default",
+        expectedOutAmount: "0"
       };
 
       // Create buy task with the recommended amount
@@ -351,6 +351,66 @@ export class BuyService {
         stack: error instanceof Error ? error.stack : undefined,
       });
       return walletBalance * defaultPercentage;
+    }
+  }
+
+  public getWalletService() {
+    return this.walletService;
+  }
+
+  public getDataService() {
+    return this.dataService; 
+  }
+
+  public getAnalyticsService() {
+    return this.analyticsService;
+  }
+
+  async createBuyTask(signal: BuySignalMessage, tradeAmount?: number) {
+    try {
+      logger.info("Creating buy task:", { signal, tradeAmount });
+
+      // Add expected out amount based on quote
+      let expectedOutAmount = null;
+
+      // Only try to get expected amount if we have a trade amount
+      if (tradeAmount) {
+        try {
+          // Get a quote to determine expected amount
+          const quoteResponse = await fetch(
+            `https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${
+              signal.tokenAddress
+            }&amount=${Math.round(tradeAmount * 1e9)}&slippageBps=0`
+          );
+
+          if (quoteResponse.ok) {
+            const quoteData = await quoteResponse.json();
+            expectedOutAmount = quoteData.outAmount;
+          }
+        } catch (error) {
+          logger.warn("Failed to get expected out amount for buy", {
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
+
+      await this.runtime.databaseAdapter.createTask({
+        id: uuidv4() as UUID,
+        roomId: this.runtime.agentId,
+        name: "BUY_SIGNAL",
+        description: `Buy token ${signal.tokenAddress}`,
+        tags: ["queue", ServiceTypes.DEGEN_TRADING],
+        metadata: {
+          signal,
+          tradeAmount,
+          expectedOutAmount,
+          updatedAt: new Date().toISOString(),
+        },
+      });
+
+      logger.info("Buy task created");
+    } catch (error) {
+      logger.error("Error creating buy task:", error);
     }
   }
 } 

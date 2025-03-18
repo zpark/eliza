@@ -1,5 +1,6 @@
 import { type IAgentRuntime, logger } from "@elizaos/core";
-import { TokenSignal } from '../types/trading';
+import { TokenSignal, TradePerformanceData } from '../types/index';
+import { v4 as uuidv4 } from "uuid";
 
 export class AnalyticsService {
   constructor(private runtime: IAgentRuntime) {}
@@ -17,39 +18,32 @@ export class AnalyticsService {
 
     let score = 0;
 
-    // RSI Analysis (0-10 points)
-    if (signals.rsi) {
-      if (signals.rsi < 30) score += 8; // Oversold
-      else if (signals.rsi > 70) score += 2; // Overbought
-      else score += 5; // Neutral
+    // RSI scoring (0-10)
+    if (signals.rsi < 30) score += 10; // Oversold
+    else if (signals.rsi > 70) score -= 5; // Overbought
+    else score += 5; // Neutral
+
+    // MACD scoring (0-10)
+    if (signals.macd.value > 0 && signals.macd.value > signals.macd.signal) {
+      score += 10; // Strong uptrend
+    } else if (
+      signals.macd.value < 0 &&
+      Math.abs(signals.macd.value) > Math.abs(signals.macd.signal)
+    ) {
+      score -= 5; // Strong downtrend
     }
 
-    // MACD Analysis (0-10 points)
-    if (signals.macd) {
-      if (signals.macd.histogram > 0 && signals.macd.value > signals.macd.signal) {
-        score += 10; // Strong bullish signal
-      } else if (signals.macd.histogram > 0) {
-        score += 7; // Bullish signal
-      } else {
-        score += 3; // Bearish signal
-      }
+    // Volume profile scoring (0-10)
+    if (
+      signals.volumeProfile?.trend === "increasing" &&
+      !signals.volumeProfile.unusualActivity
+    ) {
+      score += 10;
     }
 
-    // Volume Profile (0-10 points)
-    if (signals.volumeProfile) {
-      if (signals.volumeProfile.trend === "increasing") {
-        score += 10;
-      } else if (signals.volumeProfile.trend === "stable") {
-        score += 5;
-      }
-      if (signals.volumeProfile.unusualActivity) score += 5;
-    }
-
-    // Volatility adjustment (-5 to +5 points)
-    if (signals.volatility) {
-      const volatilityScore = 5 - (signals.volatility * 10);
-      score += Math.max(-5, Math.min(5, volatilityScore));
-    }
+    // Volatility scoring (0-10)
+    if (signals.volatility < 0.2) score += 10;
+    else if (signals.volatility > 0.5) score -= 5;
 
     return score;
   }
@@ -224,5 +218,92 @@ export class AnalyticsService {
     }
 
     return ema;
+  }
+
+  async trackTradeExecution(data: {
+    type: 'buy' | 'sell';
+    tokenAddress: string;
+    amount: string;
+    signature: string;
+  }): Promise<void> {
+    try {
+      const tradeData = {
+        id: uuidv4(),
+        ...data,
+        timestamp: new Date().toISOString()
+      };
+
+      await this.runtime.databaseAdapter.setCache(
+        `trade_execution:${tradeData.id}`,
+        tradeData
+      );
+
+      logger.info(`Trade execution tracked: ${data.type}`, {
+        tokenAddress: data.tokenAddress,
+        amount: data.amount
+      });
+    } catch (error) {
+      logger.error("Error tracking trade execution:", error);
+    }
+  }
+
+  async addTradePerformance(data: TradePerformanceData, isSimulation: boolean): Promise<any> {
+    try {
+      const id = uuidv4() as `${string}-${string}-${string}-${string}-${string}`;
+      const tradeData = {
+        id,
+        ...data,
+        isSimulation,
+        created_at: new Date().toISOString()
+      };
+
+      await this.runtime.databaseAdapter.setCache(
+        `trade_performance:${data.token_address}:${data.buy_timeStamp}`,
+        tradeData
+      );
+
+      const allTradesKey = isSimulation ? "all_simulation_trades" : "all_trades";
+      const allTrades = await this.runtime.databaseAdapter.getCache<string[]>(allTradesKey) || [];
+      allTrades.push(`${data.token_address}:${data.buy_timeStamp}`);
+      await this.runtime.databaseAdapter.setCache(allTradesKey, allTrades);
+
+      await this.updateTokenStatistics(data.token_address, {
+        profit_usd: data.profit_usd,
+        profit_percent: data.profit_percent,
+        rapidDump: data.rapidDump
+      });
+
+      return tradeData;
+    } catch (error) {
+      logger.error("Error adding trade performance:", error);
+      throw error;
+    }
+  }
+
+  private async updateTokenStatistics(
+    tokenAddress: string,
+    data: {
+      profit_usd: number;
+      profit_percent: number;
+      rapidDump: boolean;
+    }
+  ): Promise<void> {
+    try {
+      const stats = await this.runtime.databaseAdapter.getCache<any>(`token_stats:${tokenAddress}`) || {
+        trades: 0,
+        total_profit_usd: 0,
+        average_profit_percent: 0,
+        rapid_dumps: 0
+      };
+
+      stats.trades += 1;
+      stats.total_profit_usd += data.profit_usd;
+      stats.average_profit_percent = (stats.average_profit_percent * (stats.trades - 1) + data.profit_percent) / stats.trades;
+      if (data.rapidDump) stats.rapid_dumps += 1;
+
+      await this.runtime.databaseAdapter.setCache(`token_stats:${tokenAddress}`, stats);
+    } catch (error) {
+      logger.error("Error updating token statistics:", error);
+    }
   }
 } 

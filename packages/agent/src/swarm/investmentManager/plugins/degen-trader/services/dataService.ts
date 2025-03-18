@@ -74,8 +74,8 @@ export class DataService {
   async getCMCSignals(): Promise<TokenSignal[]> {
     try {
       const cmcTokens = await this.runtime.databaseAdapter.getCache<any[]>("cmc_trending_tokens") || [];
-
-      return cmcTokens.map((token) => ({
+      
+      return cmcTokens.map(token => ({
         address: token.address,
         symbol: token.symbol,
         marketCap: token.marketCap,
@@ -87,8 +87,8 @@ export class DataService {
         cmcMetrics: {
           rank: token.cmcRank,
           priceChange24h: token.priceChange24h,
-          volumeChange24h: token.volumeChange24h,
-        },
+          volumeChange24h: token.volumeChange24h
+        }
       }));
     } catch (error) {
       logger.error("Error getting CMC signals:", error);
@@ -101,18 +101,23 @@ export class DataService {
     marketCap: number;
     liquidity: number;
     volume24h: number;
-    priceHistory?: number[];
+    priceHistory: number[];
+    volumeHistory: number[];
   }> {
-    const cacheKey = `market_data:${tokenAddress}`;
+    const cacheKey = `market_data_${tokenAddress}`;
     const cached = await this.cacheManager.get<any>(cacheKey);
     if (cached) return cached;
 
     try {
-      const apiKey = this.runtime.getSetting("BIRDEYE_API_KEY");
+      const apiKey = process.env.BIRDEYE_API_KEY;
+      if (!apiKey) {
+        throw new Error("Birdeye API key not found");
+      }
+
       const response = await fetch(
-        `https://public-api.birdeye.so/defi/v3/token/market-data?address=${tokenAddress}`,
+        `https://api.birdeye.so/v1/token/price?address=${tokenAddress}`,
         {
-          headers: { "X-API-KEY": apiKey || "" },
+          headers: { "X-API-KEY": apiKey }
         }
       );
 
@@ -121,19 +126,36 @@ export class DataService {
       }
 
       const data = await response.json();
+      const historyResponse = await fetch(
+        `https://api.birdeye.so/v1/token/price_history?address=${tokenAddress}&type=hour&limit=24`,
+        {
+          headers: { "X-API-KEY": apiKey }
+        }
+      );
+
+      const historyData = await historyResponse.json();
+
       const result = {
-        price: data?.data?.price || 0,
-        marketCap: data?.data?.marketCap || 0,
-        liquidity: data?.data?.liquidity?.usd || 0,
-        volume24h: data?.data?.volume24h || 0,
-        priceHistory: data?.data?.priceHistory || [],
+        price: data.data.value,
+        marketCap: data.data.marketCap || 0,
+        liquidity: data.data.liquidity || 0,
+        volume24h: data.data.volume24h || 0,
+        priceHistory: historyData.data.items.map((item: any) => item.value),
+        volumeHistory: historyData.data.items.map((item: any) => item.volume || 0)
       };
 
-      await this.cacheManager.set(cacheKey, result, 300000); // 5 minute cache
+      await this.cacheManager.set(cacheKey, result, 60000);
       return result;
     } catch (error) {
       logger.error("Error fetching token market data:", error);
-      throw error;
+      return {
+        price: 0,
+        marketCap: 0,
+        liquidity: 0,
+        volume24h: 0,
+        priceHistory: [],
+        volumeHistory: []
+      };
     }
   }
 
@@ -271,5 +293,122 @@ export class DataService {
       marketcap: 0,
       buy_amount: 0.1,
     };
+  }
+
+  async getPortfolioStatus(): Promise<PortfolioStatus> {
+    try {
+      const walletBalance = await getWalletBalance(this.runtime);
+      const positions = await this.getPositions();
+      const totalValue = walletBalance + Object.values(positions)
+        .reduce((sum, pos) => sum + pos.value, 0);
+      
+      const drawdown = await this.calculateDrawdown({
+        totalValue,
+        positions,
+        solBalance: walletBalance
+      });
+
+      return {
+        totalValue,
+        positions,
+        solBalance: walletBalance,
+        drawdown
+      };
+    } catch (error) {
+      logger.error("Error getting portfolio status:", error);
+      throw error;
+    }
+  }
+
+  async validateTokenForTrading(tokenAddress: string): Promise<{
+    isValid: boolean;
+    reason?: string;
+  }> {
+    try {
+      // Get token market data
+      const marketData = await this.getTokenMarketData(tokenAddress);
+
+      // Check if token has sufficient liquidity
+      if (marketData.liquidity < this.tradingConfig.thresholds.minLiquidity) {
+        return {
+          isValid: false,
+          reason: `Insufficient liquidity: ${marketData.liquidity} < ${this.tradingConfig.thresholds.minLiquidity}`,
+        };
+      }
+
+      // Check if token has sufficient volume
+      if (marketData.volume24h < this.tradingConfig.thresholds.minVolume) {
+        return {
+          isValid: false,
+          reason: `Insufficient 24h volume: ${marketData.volume24h} < ${this.tradingConfig.thresholds.minVolume}`,
+        };
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      logger.error("Error validating token for trading:", error);
+      return {
+        isValid: false,
+        reason: `Validation error: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  async calculateOptimalBuyAmount(token: TokenSignal): Promise<number> {
+    try {
+      // Get wallet balance
+      const walletBalance = await getWalletBalance(this.runtime);
+
+      // Get portfolio status to check current exposure
+      const portfolio = await this.getPortfolioStatus();
+
+      // Calculate available capital based on max drawdown limit
+      const availableCapital =
+        walletBalance *
+        (1 - portfolio.drawdown / this.tradingConfig.riskLimits.maxDrawdown);
+
+      // Skip if we're already at max drawdown
+      if (availableCapital <= 0) {
+        logger.warn("Max drawdown reached, skipping trade", {
+          drawdown: portfolio.drawdown,
+          maxDrawdown: this.tradingConfig.riskLimits.maxDrawdown,
+        });
+        return 0;
+      }
+
+      // Base percentage based on score
+      const basePercentage = Math.min(
+        token.score / 200, // 0.3 to 0.5 for scores 60-100
+        this.tradingConfig.riskLimits.maxPositionSize
+      );
+
+      return Math.min(availableCapital * basePercentage, token.liquidity * 0.02);
+    } catch (error) {
+      logger.error("Error calculating optimal buy amount:", error);
+      return 0;
+    }
+  }
+
+  async getPositions(): Promise<{ [tokenAddress: string]: { amount: number; value: number } }> {
+    try {
+      const monitoredTokens = await this.getMonitoredTokens();
+      const positions: { [tokenAddress: string]: { amount: number; value: number } } = {};
+
+      for (const token of monitoredTokens) {
+        const balance = await getTokenBalance(this.runtime, token.address);
+        if (balance > 0) {
+          const marketData = await this.getTokenMarketData(token.address);
+          positions[token.address] = {
+            amount: Number(balance),
+            value: Number(balance) * marketData.price
+          };
+        }
+      }
+
+      return positions;
+    } catch (error) {
+      logger.error("Error getting positions:", error);
+      return {};
+    }
   }
 } 
