@@ -1,15 +1,20 @@
-import { elizaLogger, IAgentRuntime, Memory, Provider, settings, State } from "@elizaos/core";
-import { createSolanaRpc } from "@solana/web3.js";
-import { Address, Rpc, SolanaRpcApi } from "@solana/web3.js";
-import { fetchPositionsForOwner, HydratedPosition } from "@orca-so/whirlpools";
-import { fetchWhirlpool, Whirlpool } from "@orca-so/whirlpools-client";
-import { sqrtPriceToPrice, tickIndexToPrice } from "@orca-so/whirlpools-core";
-import { fetchMint, Mint } from "@solana-program/token-2022";
+import { elizaLogger, AgentRuntime, providers, AgentState as State } from "@elizaos/core";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { 
+  WhirlpoolClient, 
+  buildWhirlpoolClient,
+  PDAUtil,
+  PoolUtil,
+  Position
+} from "@orca-so/whirlpools-sdk";
+import { getMint } from "@solana/spl-token";
 import { loadWallet } from "../../utils/loadWallet";
+import { Memory } from "@elizaos/core";
+import { Provider } from "@elizaos/core";
 
 export interface FetchedPositionStatistics {
-  whirlpoolAddress: Address;
-  positionMint: Address;
+  whirlpoolAddress: PublicKey;
+  positionMint: PublicKey;
   inRange: boolean;
   distanceCenterPositionFromPoolPriceBps: number;
   positionWidthBps: number;
@@ -32,8 +37,8 @@ export const positionProvider: Provider = {
         runtime,
         false
       );
-      const rpc = createSolanaRpc(settings.SOLANA_RPC_URL!);
-      const positions = await fetchPositions(rpc, ownerAddress);
+      const connection = new Connection(settings.SOLANA_RPC_URL!);
+      const positions = await fetchPositions(connection, ownerAddress);
       const positionsString = JSON.stringify(positions);
       return positionsString;
     } catch (error) {
@@ -43,41 +48,44 @@ export const positionProvider: Provider = {
   },
 };
 
-const fetchPositions = async (rpc: Rpc<SolanaRpcApi>, ownerAddress: Address): Promise<FetchedPositionStatistics[]> => {
+const fetchPositions = async (connection: Connection, ownerAddress: PublicKey): Promise<FetchedPositionStatistics[]> => {
   try {
-    const positions = await fetchPositionsForOwner(rpc, ownerAddress);
-    const fetchedWhirlpools: Map<string, Whirlpool> = new Map();
-    const fetchedMints: Map<string, Mint> = new Map();
+    const client = buildWhirlpoolClient(connection);
+    const positions = await client.getUserPositions(ownerAddress);
+    const fetchedWhirlpools = new Map();
+    const fetchedMints = new Map();
     const FetchedPositionsStatistics: FetchedPositionStatistics[] = await Promise.all(positions.map(async (position) => {
-      const positionData = (position as HydratedPosition).data;
-      const positionMint = positionData.positionMint;
-      const whirlpoolAddress = positionData.whirlpool;
+      const positionData = position.getData();
+      const positionMint = position.getAddress();
+      const whirlpoolAddress = position.getWhirlpoolAddress();
 
-      if (!fetchedWhirlpools.has(whirlpoolAddress)) {
-        const whirlpool = await fetchWhirlpool(rpc, whirlpoolAddress);
+      if (!fetchedWhirlpools.has(whirlpoolAddress.toString())) {
+        const whirlpool = await client.getWhirlpool(whirlpoolAddress);
         if (whirlpool) {
-          fetchedWhirlpools.set(whirlpoolAddress, whirlpool.data);
+          fetchedWhirlpools.set(whirlpoolAddress.toString(), whirlpool);
         }
       }
-      const whirlpool = fetchedWhirlpools.get(whirlpoolAddress);
-      const { tokenMintA, tokenMintB } = whirlpool;
+      const whirlpool = fetchedWhirlpools.get(whirlpoolAddress.toString());
+      const tokenMintA = whirlpool.getTokenAMint();
+      const tokenMintB = whirlpool.getTokenBMint();
 
-      if (!fetchedMints.has(tokenMintA)) {
-        const mintA = await fetchMint(rpc, tokenMintA);
-        fetchedMints.set(tokenMintA, mintA.data);
+      if (!fetchedMints.has(tokenMintA.toString())) {
+        const mintA = await getMint(connection, tokenMintA);
+        fetchedMints.set(tokenMintA.toString(), mintA);
       }
-      if (!fetchedMints.has(tokenMintB)) {
-        const mintB = await fetchMint(rpc, tokenMintB);
-        fetchedMints.set(tokenMintB, mintB.data);
+      if (!fetchedMints.has(tokenMintB.toString())) {
+        const mintB = await getMint(connection, tokenMintB);
+        fetchedMints.set(tokenMintB.toString(), mintB);
       }
-      const mintA = fetchedMints.get(tokenMintA);
-      const mintB = fetchedMints.get(tokenMintB);
+      const mintA = fetchedMints.get(tokenMintA.toString());
+      const mintB = fetchedMints.get(tokenMintB.toString());
 
-      const currentPrice = sqrtPriceToPrice(whirlpool.sqrtPrice, mintA.decimals, mintB.decimals);
-      const positionLowerPrice = tickIndexToPrice(positionData.tickLowerIndex, mintA.decimals, mintB.decimals);
-      const positionUpperPrice = tickIndexToPrice(positionData.tickUpperIndex, mintA.decimals, mintB.decimals);
+      const currentPrice = PoolUtil.sqrtPriceX64ToPrice(whirlpool.getData().sqrtPrice, mintA.decimals, mintB.decimals);
+      const positionLowerPrice = PoolUtil.tickIndexToPrice(positionData.tickLowerIndex, mintA.decimals, mintB.decimals);
+      const positionUpperPrice = PoolUtil.tickIndexToPrice(positionData.tickUpperIndex, mintA.decimals, mintB.decimals);
 
-      const inRange = whirlpool.tickCurrentIndex >= positionData.tickLowerIndex && whirlpool.tickCurrentIndex <= positionData.tickUpperIndex;
+      const currentTick = whirlpool.getData().tickCurrentIndex;
+      const inRange = currentTick >= positionData.tickLowerIndex && currentTick <= positionData.tickUpperIndex;
       const positionCenterPrice = (positionLowerPrice + positionUpperPrice) / 2;
       const distanceCenterPositionFromPoolPriceBps = Math.abs(currentPrice - positionCenterPrice) / currentPrice * 10000;
       const positionWidthBps = ((positionUpperPrice - positionLowerPrice) / positionCenterPrice * 10000) / 2;

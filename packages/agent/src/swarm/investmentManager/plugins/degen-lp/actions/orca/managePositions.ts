@@ -1,23 +1,23 @@
 import {
-    Action,
+    actions,
     elizaLogger,
-    generateText,
+    composeContext,
     HandlerCallback,
-    IAgentRuntime,
+    AgentRuntime,
+    ModelTypes,
     Memory,
-    ModelClass,
     parseJSONObjectFromText,
     settings,
     State,
 } from "@elizaos/core";
 import {
-    address,
-    createSolanaRpc,
-    KeyPairSigner,
-    Rpc,
-    SolanaRpcApi
+    Connection as SolanaRpc,
+    Keypair as KeyPairSigner,
+    Connection as Rpc,
+    Connection as SolanaRpcApi,
+    PublicKey
 } from "@solana/web3.js";
-import { fetchMint } from "@solana-program/token-2022";
+import { getMint } from "@solana/spl-token";
 import {
     fetchPosition,
     fetchWhirlpool,
@@ -32,6 +32,7 @@ import {
     setDefaultFunder,
     setDefaultSlippageToleranceBps,
 } from "@orca-so/whirlpools";
+import { loadWallet } from "../../utils/loadWallet";
 
 interface FetchedPosition {
     whirlpoolAddress: string;
@@ -52,12 +53,12 @@ interface ManagePositionsInput {
     slippageToleranceBps: number;
 }
 
-export const managePositions: Action = {
+export const managePositions: typeof actions = {
     name: 'manage_positions',
     similes: ["AUTOMATE_REBALANCING", "AUTOMATE_POSITIONS", "START_MANAGING_POSITIONS"],
     description: "Automatically manage positions by rebalancing them when they drift too far from the pool price",
 
-    validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
+    validate: async (runtime: AgentRuntime, message: Memory): Promise<boolean> => {
         const config = await extractAndValidateConfiguration(message.content.text, runtime);
         if (!config) {
             elizaLogger.warn("Validation failed: No valid configuration provided.");
@@ -67,7 +68,7 @@ export const managePositions: Action = {
     },
 
     handler: async (
-        runtime: IAgentRuntime,
+        runtime: AgentRuntime,
         message: Memory,
         state: State,
         params: { [key: string]: unknown },
@@ -103,7 +104,7 @@ export const managePositions: Action = {
 
 async function extractFetchedPositions(
     text: string,
-    runtime: IAgentRuntime
+    runtime: AgentRuntime
 ): Promise<FetchedPosition[]> {
     const prompt = `Given this message: "${text}", extract the available data and return a JSON object with the following structure:
         [
@@ -116,11 +117,13 @@ async function extractFetchedPositions(
             },
         ]
     `;
-    const content = await generateText({
-        runtime,
-        context: prompt,
-        modelClass: ModelClass.LARGE,
+    
+    const content = await composeContext({
+        state: runtime.state,
+        template: prompt,
+        modelClass: ModelTypes.LARGE,
     });
+    
     const fetchedPositions = parseJSONObjectFromText(content) as FetchedPosition[];
     return fetchedPositions;
 }
@@ -141,7 +144,7 @@ function validateManagePositionsInput(obj: Record<string, any>): ManagePositions
 
 export async function extractAndValidateConfiguration(
     text: string,
-    runtime: IAgentRuntime
+    runtime: AgentRuntime
 ): Promise<ManagePositionsInput | null> {
     elizaLogger.log("Extracting and validating configuration from text:", text);
 
@@ -156,10 +159,10 @@ export async function extractAndValidateConfiguration(
         }
     `;
 
-    const content = await generateText({
-        runtime,
-        context: prompt,
-        modelClass: ModelClass.SMALL,
+    const content = await composeContext({
+        state: runtime.state,
+        template: prompt,
+        modelClass: ModelTypes.SMALL,
     });
 
     try {
@@ -199,12 +202,12 @@ async function handleRepositioning(
                 let positionData = await fetchPosition(rpc, positionAddress);
                 const whirlpoolAddress = positionData.data.whirlpool;
                 let whirlpool = await fetchWhirlpool(rpc, whirlpoolAddress);
-                const mintA = await fetchMint(rpc, whirlpool.data.tokenMintA);
-                const mintB = await fetchMint(rpc, whirlpool.data.tokenMintB);
+                const mintA = await getMint(rpc, whirlpool.data.tokenMintA);
+                const mintB = await getMint(rpc, whirlpool.data.tokenMintB);
                 const newPriceBounds: NewPriceBounds = calculatePriceBounds(
                     whirlpool.data.sqrtPrice,
-                    mintA.data.decimals,
-                    mintB.data.decimals,
+                    mintA.decimals,
+                    mintB.decimals,
                     position.positionWidthBps
                 );
                 let newLowerPrice = newPriceBounds.newLowerPrice;
@@ -230,8 +233,8 @@ async function handleRepositioning(
                         whirlpool = await fetchWhirlpool(rpc, whirlpoolAddress);
                         const newPriceBounds: NewPriceBounds = calculatePriceBounds(
                             whirlpool.data.sqrtPrice,
-                            mintA.data.decimals,
-                            mintB.data.decimals,
+                            mintA.decimals,
+                            mintB.decimals,
                             position.positionWidthBps
                         );
                         newLowerPrice = newPriceBounds.newLowerPrice;
@@ -259,8 +262,8 @@ async function handleRepositioning(
                                 whirlpool = await fetchWhirlpool(rpc, whirlpoolAddress);
                                 const newPriceBounds: NewPriceBounds = calculatePriceBounds(
                                     whirlpool.data.sqrtPrice,
-                                    mintA.data.decimals,
-                                    mintB.data.decimals,
+                                    mintA.decimals,
+                                    mintB.decimals,
                                     position.positionWidthBps
                                 );
                                 newLowerPrice = newPriceBounds.newLowerPrice;
@@ -274,8 +277,8 @@ async function handleRepositioning(
                         whirlpool = await fetchWhirlpool(rpc, whirlpoolAddress);
                         const newPriceBounds: NewPriceBounds = calculatePriceBounds(
                             whirlpool.data.sqrtPrice,
-                            mintA.data.decimals,
-                            mintB.data.decimals,
+                            mintA.decimals,
+                            mintB.decimals,
                             position.positionWidthBps
                         );
                         newLowerPrice = newPriceBounds.newLowerPrice;
@@ -288,4 +291,8 @@ async function handleRepositioning(
             }
         })
     );
-} 
+}
+
+const createSolanaRpc = (url: string) => new SolanaRpc(url);
+
+const address = (addressString: string) => new PublicKey(addressString); 

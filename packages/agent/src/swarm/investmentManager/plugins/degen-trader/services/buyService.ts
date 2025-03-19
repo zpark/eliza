@@ -1,4 +1,4 @@
-import { type IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger, ServiceTypes } from "@elizaos/core";
 import { WalletService } from './walletService';
 import { DataService } from './dataService';
 import { AnalyticsService } from './analyticsService';

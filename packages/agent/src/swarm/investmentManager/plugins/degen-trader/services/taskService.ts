@@ -46,7 +46,10 @@ export class TaskService extends TradeExecutionService {
       name: "BUY_SIGNAL",
       execute: async (_runtime: typeof IAgentRuntime, options: any) => {
         logger.info("Executing BUY_SIGNAL task");
-        return await this.executeBuyTask(options);
+        if (!options?.metadata?.signal) {
+          throw new Error("No signal data in buy task");
+        }
+        return await this.executeBuyTask(options.metadata);
       },
       validate: async () => true,
     });
