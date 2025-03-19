@@ -4,6 +4,7 @@ import { initCharacter } from "../settings";
 import { degenIntelPlugin } from "./plugins/degen-intel";
 import { degenTraderPlugin } from "./plugins/degen-trader";
 import { communityTraderPlugin } from "./plugins/community-investor";
+import { degenLPPlugin } from "./plugins/degen-lp";
 
 dotenv.config({ path: "../../.env" });
 
@@ -173,9 +174,7 @@ const config: OnboardingConfig = {
 
 export default {
   plugins: [
-    degenIntelPlugin,
-    degenTraderPlugin,
-    communityTraderPlugin,
+    degenLPPlugin,
   ],
   character,
   init: (runtime: IAgentRuntime) => initCharacter({ runtime, config }),

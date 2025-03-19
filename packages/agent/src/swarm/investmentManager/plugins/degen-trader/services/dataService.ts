@@ -1,6 +1,7 @@
 import { type IAgentRuntime, logger } from "@elizaos/core";
 import { CacheManager } from '../utils/cacheManager';
-import { TokenSignal } from '../types/trading';
+import { PortfolioStatus, TokenSignal } from '../types/trading';
+import { getWalletBalance } from "../utils/wallet";
 
 export class DataService {
   private cacheManager: CacheManager;
@@ -389,26 +390,63 @@ export class DataService {
     }
   }
 
-  async getPositions(): Promise<{ [tokenAddress: string]: { amount: number; value: number } }> {
+  async getMonitoredTokens(): Promise<string[]> {
     try {
-      const monitoredTokens = await this.getMonitoredTokens();
-      const positions: { [tokenAddress: string]: { amount: number; value: number } } = {};
+      // Get all tasks with EXECUTE_SELL tag
+      const tasks = await this.runtime.databaseAdapter.getTasks({
+        tags: ["degen_trader"],
+        name: "EXECUTE_SELL"
+      });
 
-      for (const token of monitoredTokens) {
-        const balance = await getTokenBalance(this.runtime, token.address);
-        if (balance > 0) {
-          const marketData = await this.getTokenMarketData(token.address);
-          positions[token.address] = {
-            amount: Number(balance),
-            value: Number(balance) * marketData.price
-          };
+      // Extract unique token addresses from tasks
+      const tokenAddresses = new Set<string>();
+      tasks.forEach(task => {
+        if (task.metadata?.signal?.tokenAddress) {
+          tokenAddresses.add(task.metadata.signal.tokenAddress);
         }
+      });
+
+      return Array.from(tokenAddresses);
+    } catch (error) {
+      console.log("Error getting monitored tokens:", error);
+      return [];
+    }
+  }
+
+  async getPositions(): Promise<any[]> {
+    try {
+      // Get list of tokens we're monitoring
+      const monitoredTokens = await this.getMonitoredTokens();
+      
+      if (!monitoredTokens.length) {
+        return [];
       }
 
-      return positions;
+      // Get positions for each token
+      const positions = await Promise.all(
+        monitoredTokens.map(async (tokenAddress) => {
+          try {
+            const balance = await this.walletService.getTokenBalance(tokenAddress);
+            const marketData = await this.getTokenMarketData(tokenAddress);
+            
+            return {
+              tokenAddress,
+              balance,
+              currentPrice: marketData.price,
+              value: balance * marketData.price,
+              lastUpdated: new Date().toISOString()
+            };
+          } catch (error) {
+            console.log(`Error getting position for token ${tokenAddress}:`, error);
+            return null;
+          }
+        })
+      );
+
+      return positions.filter(position => position !== null);
     } catch (error) {
       console.log("Error getting positions:", error);
-      return {};
+      return [];
     }
   }
 } 
