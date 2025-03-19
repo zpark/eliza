@@ -15,7 +15,8 @@ import {
     Keypair as KeyPairSigner,
     Connection as Rpc,
     Connection as SolanaRpcApi,
-    PublicKey
+    PublicKey,
+    Connection
 } from "@solana/web3.js";
 import { getMint } from "@solana/spl-token";
 import {
@@ -190,7 +191,7 @@ function calculatePriceBounds(
 async function handleRepositioning(
     fetchedPositions: FetchedPosition[],
     repositionThresholdBps: number,
-    rpc: Rpc<SolanaRpcApi>,
+    rpc: Connection,
     wallet: KeyPairSigner
 ) {
     return await Promise.all(
