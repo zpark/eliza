@@ -41,7 +41,7 @@ import {
 } from "./types";
 
 // Event types
-export type TradingEvent = 
+export type TradingEvent =
     | { type: 'position_opened', position: Position }
     | { type: 'position_closed', position: Position }
     | { type: 'transaction_added', transaction: Transaction }
@@ -61,16 +61,16 @@ export class TrustTradingService extends Service {
     private transactionMemoryManager: IMemoryManager;
     private recommendationMemoryManager: IMemoryManager;
     private recommenderMemoryManager: IMemoryManager;
-    
+
     // Client instances
     private birdeyeClient: BirdeyeClient;
     private dexscreenerClient: DexscreenerClient;
     private coingeckoClient: CoingeckoClient | null = null;
     private heliusClient: HeliusClient | null = null;
-    
+
     // Configuration
     tradingConfig: TradingConfig;
-    
+
     // Event listeners
     private eventListeners: Map<string, ((event: TradingEvent) => void)[]> = new Map();
 
@@ -78,30 +78,32 @@ export class TrustTradingService extends Service {
         protected runtime: IAgentRuntime,
     ) {
         super(runtime);
-        
+
         // Register memory managers
         this.tokenMemoryManager = this.registerMemoryManager("tokens");
         this.positionMemoryManager = this.registerMemoryManager("positions");
         this.transactionMemoryManager = this.registerMemoryManager("transactions");
         this.recommendationMemoryManager = this.registerMemoryManager("recommendations");
         this.recommenderMemoryManager = this.registerMemoryManager("recommenders");
-        
+
         // Initialize API clients
         this.birdeyeClient = BirdeyeClient.createFromRuntime(runtime);
         this.dexscreenerClient = DexscreenerClient.createFromRuntime(runtime);
-        
+
         try {
             this.coingeckoClient = CoingeckoClient.createFromRuntime(runtime);
         } catch (error) {
+            console.error('err', error)
             logger.warn("Failed to initialize Coingecko client, prices may be limited:", error);
         }
-        
+
         try {
             this.heliusClient = HeliusClient.createFromRuntime(runtime);
         } catch (error) {
+            console.error('err', error)
             logger.warn("Failed to initialize Helius client, holder data will be limited:", error);
         }
-        
+
         // Merge provided config with defaults
         this.tradingConfig = DEFAULT_TRADING_CONFIG;
     }
@@ -135,8 +137,8 @@ export class TrustTradingService extends Service {
             tableName: name,
             runtime: this.runtime,
         });
-        
-        
+
+
         this.runtime.registerMemoryManager(memoryManager);
         return memoryManager;
     }
@@ -189,18 +191,18 @@ export class TrustTradingService extends Service {
                 buySignal.tokenAddress,
                 buySignal.chain || this.tradingConfig.defaultChain
             );
-            
+
             if (!tokenPerformance) {
                 logger.error(`Token not found: ${buySignal.tokenAddress}`);
                 return null;
             }
-            
+
             // Check if token meets criteria
             if (!this.validateToken(tokenPerformance)) {
                 logger.error(`Token failed validation: ${buySignal.tokenAddress}`);
                 return null;
             }
-            
+
             // Create recommendation
             const recommendation = await this.createTokenRecommendation(
                 entity.id,
@@ -208,19 +210,19 @@ export class TrustTradingService extends Service {
                 buySignal.conviction || Conviction.MEDIUM,
                 RecommendationType.BUY
             );
-            
+
             if (!recommendation) {
                 logger.error(`Failed to create recommendation for token: ${buySignal.tokenAddress}`);
                 return null;
             }
-            
+
             // Calculate buy amount
             const buyAmount = this.calculateBuyAmount(
                 entity,
                 buySignal.conviction || Conviction.MEDIUM,
                 tokenPerformance
             );
-            
+
             // Create position
             const position = await this.createPosition(
                 recommendation.id,
@@ -231,12 +233,12 @@ export class TrustTradingService extends Service {
                 tokenPerformance.price?.toString() || "0",
                 buySignal.isSimulation || this.tradingConfig.forceSimulation
             );
-            
+
             if (!position) {
                 logger.error(`Failed to create position for token: ${buySignal.tokenAddress}`);
                 return null;
             }
-            
+
             // Record transaction
             await this.recordTransaction(
                 position.id as UUID,
@@ -246,10 +248,10 @@ export class TrustTradingService extends Service {
                 tokenPerformance.price || 0,
                 position.isSimulation
             );
-            
+
             // Emit event
             this.emitEvent({ type: 'position_opened', position });
-            
+
             return position;
         } catch (error) {
             logger.error("Error processing buy signal:", error);
@@ -272,39 +274,39 @@ export class TrustTradingService extends Service {
                 logger.error(`Position not found: ${positionId}`);
                 return false;
             }
-            
+
             // Check if position is already closed
             if (position.closedAt) {
                 logger.error(`Position already closed: ${positionId}`);
                 return false;
             }
-            
+
             // Get token performance
             const tokenPerformance = await this.getOrFetchTokenPerformance(
                 position.tokenAddress,
                 position.chain
             );
-            
+
             if (!tokenPerformance) {
                 logger.error(`Token not found: ${position.tokenAddress}`);
                 return false;
             }
-            
+
             // Calculate performance metrics
             const initialPrice = Number.parseFloat(position.initialPrice);
             const currentPrice = tokenPerformance.price || 0;
             const priceChange = initialPrice > 0 ? (currentPrice - initialPrice) / initialPrice : 0;
-            
+
             // Update position
             const updatedPosition: Position = {
                 ...position,
                 currentPrice: currentPrice.toString(),
                 closedAt: new Date(),
             };
-            
+
             // Store updated position
             await this.storePosition(updatedPosition);
-            
+
             // Record transaction
             await this.recordTransaction(
                 position.id as UUID,
@@ -314,13 +316,13 @@ export class TrustTradingService extends Service {
                 currentPrice,
                 position.isSimulation
             );
-            
+
             // Update entity metrics
             await this.updateRecommenderMetrics(position.entityId, priceChange * 100);
-            
+
             // Emit event
             this.emitEvent({ type: 'position_closed', position: updatedPosition });
-            
+
             return true;
         } catch (error) {
             logger.error("Error processing sell signal:", error);
@@ -349,12 +351,12 @@ export class TrustTradingService extends Service {
                 recommendation.tokenAddress,
                 recommendation.chain
             );
-            
+
             if (!tokenPerformance) {
                 logger.error(`Token not found: ${recommendation.tokenAddress}`);
                 return null;
             }
-            
+
             // Create recommendation
             const tokenRecommendation = await this.createTokenRecommendation(
                 entity.id,
@@ -362,12 +364,12 @@ export class TrustTradingService extends Service {
                 recommendation.conviction,
                 recommendation.type
             );
-            
+
             if (!tokenRecommendation) {
                 logger.error(`Failed to create recommendation for token: ${recommendation.tokenAddress}`);
                 return null;
             }
-            
+
             // For buy recommendations, create a position
             if (recommendation.type === RecommendationType.BUY) {
                 // Calculate buy amount
@@ -376,7 +378,7 @@ export class TrustTradingService extends Service {
                     recommendation.conviction,
                     tokenPerformance
                 );
-                
+
                 // Create position
                 const position = await this.createPosition(
                     tokenRecommendation.id,
@@ -387,12 +389,12 @@ export class TrustTradingService extends Service {
                     tokenPerformance.price?.toString() || "0",
                     true // Simulation by default
                 );
-                
+
                 if (!position) {
                     logger.error(`Failed to create position for token: ${recommendation.tokenAddress}`);
                     return null;
                 }
-                
+
                 // Record transaction
                 await this.recordTransaction(
                     position.id as UUID,
@@ -402,11 +404,11 @@ export class TrustTradingService extends Service {
                     tokenPerformance.price || 0,
                     true // Simulation by default
                 );
-                
+
                 // Return position
                 return position;
             }
-            
+
             return null;
         } catch (error) {
             logger.error("Error handling recommendation:", error);
@@ -429,8 +431,8 @@ export class TrustTradingService extends Service {
      * Get token overview data
      */
     async getTokenOverview(
-        chain: string, 
-        tokenAddress: string, 
+        chain: string,
+        tokenAddress: string,
         forceRefresh = false
     ): Promise<TokenMetadata & TokenMarketData> {
         try {
@@ -439,11 +441,11 @@ export class TrustTradingService extends Service {
             if (!forceRefresh) {
                 const cacheKey = `token:${chain}:${tokenAddress}:overview`;
                 const cachedData = await this.runtime.databaseAdapter.getCache<TokenMetadata & TokenMarketData>(cacheKey);
-                
+
                 if (cachedData) {
                     return cachedData;
                 }
-                
+
                 // Also check in memory
                 const tokenPerformance = await this.getTokenPerformance(tokenAddress, chain);
                 if (tokenPerformance) {
@@ -463,25 +465,25 @@ export class TrustTradingService extends Service {
                         volume24hChange: tokenPerformance.volume24hChange || 0,
                         trades: tokenPerformance.trades || 0,
                         trades24hChange: tokenPerformance.trades24hChange || 0,
-                        uniqueWallet24h: 0, // Would need to be fetched 
+                        uniqueWallet24h: 0, // Would need to be fetched
                         uniqueWallet24hChange: 0, // Would need to be fetched
                         holders: tokenPerformance.holders || 0
                     };
-                    
+
                     // Cache the token data
                     await this.runtime.databaseAdapter.setCache<TokenMetadata & TokenMarketData>(cacheKey, tokenData); // Cache for 5 minutes
-                    
+
                     return tokenData;
                 }
             }
-            
+
             // Need to fetch fresh data
             if (chain.toLowerCase() === "solana") {
                 const [dexScreenerData, birdeyeData] = await Promise.all([
                     this.dexscreenerClient.searchForHighestLiquidityPair(tokenAddress, chain, { expires: "5m" }),
                     this.birdeyeClient.fetchTokenOverview(tokenAddress, { expires: "5m" }, forceRefresh)
                 ]);
-                
+
                 // If we have DexScreener data, it's typically more reliable for prices and liquidity
                 const tokenData = {
                     chain,
@@ -507,11 +509,11 @@ export class TrustTradingService extends Service {
                     uniqueWallet24hChange: 0, // Would need additional data
                     holders: 0
                 };
-                
+
                 // Cache the token data
                 const cacheKey = `token:${chain}:${tokenAddress}:overview`;
                 await this.runtime.databaseAdapter.setCache<TokenMetadata & TokenMarketData>(cacheKey, tokenData); // Cache for 5 minutes
-                
+
                 return tokenData;
             }
                 throw new Error(`Chain ${chain} not supported`);
@@ -529,23 +531,23 @@ export class TrustTradingService extends Service {
         // Check cache first
         const cacheKey = `ticker:${chain}:${ticker}`;
         const cachedAddress = await this.runtime.databaseAdapter.getCache<string>(cacheKey);
-        
+
         if (cachedAddress) {
             return cachedAddress;
         }
-        
+
         if (chain.toLowerCase() === "solana") {
             const result = await this.dexscreenerClient.searchForHighestLiquidityPair(ticker, chain, {
                 expires: "5m"
             });
-            
+
             const address = result?.baseToken?.address || null;
-            
+
             // Cache the result if found
             if (address) {
                 await this.runtime.databaseAdapter.setCache<string>(cacheKey, address); // Cache for 1 hour
             }
-            
+
             return address;
         }
             throw new Error(`Chain ${chain} not supported for ticker resolution`);
@@ -560,11 +562,11 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = `token:${chain}:${tokenAddress}:price`;
             const cachedPrice = await this.runtime.databaseAdapter.getCache<string>(cacheKey);
-            
+
             if (cachedPrice) {
                 return Number.parseFloat(cachedPrice);
             }
-            
+
             // Try to get from token performance
             const token = await this.getTokenPerformance(tokenAddress, chain);
             if (token?.price) {
@@ -572,16 +574,16 @@ export class TrustTradingService extends Service {
                 await this.runtime.databaseAdapter.setCache<string>(cacheKey, token.price.toString()); // Cache for 1 minute
                 return token.price;
             }
-            
+
             // Fetch fresh price
             if (chain.toLowerCase() === "solana") {
                 const price = await this.birdeyeClient.fetchPrice(tokenAddress, {
                     chain: "solana"
                 });
-                
+
                 // Cache the price
                 await this.runtime.databaseAdapter.setCache<string>(cacheKey, price.toString()); // Cache for 1 minute
-                
+
                 return price;
             }
                 throw new Error(`Chain ${chain} not supported for price fetching`);
@@ -598,38 +600,38 @@ export class TrustTradingService extends Service {
         logger.debug("shouldTradeToken", chain, tokenAddress);
         try {
             const tokenData = await this.getProcessedTokenData(chain, tokenAddress);
-            
+
             if (!tokenData) return false;
-            
+
             // Get the key metrics
             const { tradeData, security, dexScreenerData } = tokenData;
-            
+
             if (!dexScreenerData || !dexScreenerData.pairs || dexScreenerData.pairs.length === 0) {
                 return false;
             }
-            
+
             const pair = dexScreenerData.pairs[0];
-            
+
             // Check liquidity
             if (!pair.liquidity || pair.liquidity.usd < this.tradingConfig.minLiquidityUsd) {
                 return false;
             }
-            
+
             // Check market cap
             if (!pair.marketCap || pair.marketCap > this.tradingConfig.maxMarketCapUsd) {
                 return false;
             }
-            
+
             // Check for suspicious holder distribution
             if (security && security.top10HolderPercent > 80) {
                 return false;
             }
-            
+
             // Check for suspicious volume
             if (tradeData && tradeData.volume_24h_usd < 1000) {
                 return false;
             }
-            
+
             return true;
         } catch (error) {
             logger.error(`Error checking if token ${tokenAddress} should be traded:`, error);
@@ -646,28 +648,28 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = `token:${chain}:${tokenAddress}:processed`;
             const cachedData = await this.runtime.databaseAdapter.getCache<ProcessedTokenData>(cacheKey);
-            
+
             if (cachedData) {
                 return cachedData;
             }
-            
+
             // Use token provider functionality to get complete token data
             if (chain.toLowerCase() === "solana") {
                 // Get DexScreener data
                 const dexScreenerData = await this.dexscreenerClient.search(tokenAddress, {
                     expires: "5m"
                 });
-                
+
                 // Try to get token data from Birdeye
                 let tokenTradeData: TokenTradeData;
                 let tokenSecurityData: TokenSecurityData;
-                
+
                 try {
                     tokenTradeData = await this.birdeyeClient.fetchTokenTradeData(tokenAddress, {
                         chain: "solana",
                         expires: "5m"
                     });
-                    
+
                     tokenSecurityData = await this.birdeyeClient.fetchTokenSecurity(tokenAddress, {
                         chain: "solana",
                         expires: "5m"
@@ -676,22 +678,22 @@ export class TrustTradingService extends Service {
                     logger.error(`Error fetching token data for ${tokenAddress}:`, error);
                     return null;
                 }
-                
+
                 let tokenInfo;
-                
+
                 // Analyze holder distribution
                 const holderDistributionTrend = await this.analyzeHolderDistribution(tokenTradeData);
-                
+
                 // Try to get holder data if Helius client is available
                 let highValueHolders = [];
                 let highSupplyHoldersCount = 0;
-                
+
                 if (this.heliusClient) {
                     try {
                         const holders = await this.heliusClient.fetchHolderList(tokenAddress, {
                             expires: "30m"
                         });
-                        
+
                         // Calculate high value holders
                         const tokenPrice = Number.parseFloat(tokenTradeData.price.toString());
                         highValueHolders = holders
@@ -704,7 +706,7 @@ export class TrustTradingService extends Service {
                                 holderAddress: holder.address,
                                 balanceUsd: (Number.parseFloat(holder.balance) * tokenPrice).toFixed(2)
                             }));
-                        
+
                         // Calculate high supply holders
                         const totalSupply = tokenInfo?.totalSupply || "0";
                         highSupplyHoldersCount = holders.filter(holder => {
@@ -716,16 +718,16 @@ export class TrustTradingService extends Service {
                         // Continue without holder data
                     }
                 }
-                
+
                 // Check if there were any trades in last 24h
                 const recentTrades = tokenTradeData.volume_24h > 0;
-                
+
                 // Check if token is listed on DexScreener
                 const isDexScreenerListed = dexScreenerData.pairs.length > 0;
                 const isDexScreenerPaid = dexScreenerData.pairs.some(
                     pair => pair.boosts && pair.boosts.active > 0
                 );
-                
+
                 const processedData: ProcessedTokenData = {
                     token: {
                         address: tokenAddress,
@@ -744,10 +746,10 @@ export class TrustTradingService extends Service {
                     isDexScreenerListed,
                     isDexScreenerPaid
                 };
-                
+
                 // Cache the processed data
                 await this.runtime.databaseAdapter.setCache<ProcessedTokenData>(cacheKey, processedData); // Cache for 5 minutes
-                
+
                 return processedData;
             }
                 throw new Error(`Chain ${chain} not supported for processed token data`);
@@ -756,7 +758,7 @@ export class TrustTradingService extends Service {
             return null;
         }
     }
-    
+
     /**
      * Analyze holder distribution trend
      */
@@ -816,7 +818,7 @@ export class TrustTradingService extends Service {
         logger.debug("updating token performance", chain, tokenAddress);
         try {
             const tokenData = await this.getTokenOverview(chain, tokenAddress, true);
-            
+
             const performance: TokenPerformance = {
                 chain,
                 address: tokenAddress,
@@ -834,16 +836,16 @@ export class TrustTradingService extends Service {
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
-            
+
             // Store in memory
             await this.storeTokenPerformance(performance);
-            
+
             // Emit event
-            this.emitEvent({ 
-                type: 'token_performance_updated', 
-                performance 
+            this.emitEvent({
+                type: 'token_performance_updated',
+                performance
             });
-            
+
             return performance;
         } catch (error) {
             logger.error(`Error updating token performance for ${tokenAddress}:`, error);
@@ -857,25 +859,25 @@ export class TrustTradingService extends Service {
     calculateRiskScore(token: TokenPerformance): number {
         logger.debug("calculating risk score", token);
         let score = 50; // Base score
-        
+
         // Adjust based on liquidity
         const liquidity = token.liquidity || 0;
         score -= getLiquidityMultiplier(liquidity);
-        
+
         // Adjust based on market cap
         const marketCap = token.currentMarketCap || 0;
         score += getMarketCapMultiplier(marketCap);
-        
+
         // Adjust based on volume
         const volume = token.volume || 0;
         score -= getVolumeMultiplier(volume);
-        
+
         // Risk adjustments for known issues
         if (token.rugPull) score += 30;
         if (token.isScam) score += 30;
         if (token.rapidDump) score += 15;
         if (token.suspiciousVolume) score += 15;
-        
+
         // Clamp between 0-100
         return Math.max(0, Math.min(100, score));
     }
@@ -886,13 +888,13 @@ export class TrustTradingService extends Service {
     async updateRecommenderMetrics(entityId: UUID, performance = 0): Promise<void> {
         logger.debug("updating recommender metrics", entityId, performance);
         const metrics = await this.getRecommenderMetrics(entityId);
-        
+
         if (!metrics) {
             // Initialize metrics if they don't exist
             await this.initializeRecommenderMetrics(entityId, "default");
             return;
         }
-        
+
         // Update metrics
         const updatedMetrics: RecommenderMetrics = {
             ...metrics,
@@ -901,20 +903,20 @@ export class TrustTradingService extends Service {
             avgTokenPerformance: ((metrics.avgTokenPerformance * metrics.totalRecommendations) + performance) / (metrics.totalRecommendations + 1),
             trustScore: this.calculateTrustScore(metrics, performance)
         };
-        
+
         // Store updated metrics
         await this.storeRecommenderMetrics(updatedMetrics);
-        
+
         // Also store in history
         const historyEntry: RecommenderMetricsHistory = {
             entityId,
             metrics: updatedMetrics,
             timestamp: new Date()
         };
-        
+
         await this.storeRecommenderMetricsHistory(historyEntry);
     }
-    
+
     /**
      * Calculate trust score based on metrics and new performance
      */
@@ -923,25 +925,25 @@ export class TrustTradingService extends Service {
         // Weight factors
         const HISTORY_WEIGHT = 0.7;
         const NEW_PERFORMANCE_WEIGHT = 0.3;
-        
+
         // Calculate success rate
-        const newSuccessRate = (metrics.successfulRecs + (newPerformance > 0 ? 1 : 0)) / 
+        const newSuccessRate = (metrics.successfulRecs + (newPerformance > 0 ? 1 : 0)) /
                                (metrics.totalRecommendations + 1);
-        
-        // Calculate consistency (based on standard deviation of performance) 
+
+        // Calculate consistency (based on standard deviation of performance)
         // This is a simplified approach
         const consistencyScore = metrics.consistencyScore || 50;
-        
+
         // Calculate new trust score
-        const newTrustScore = (metrics.trustScore * HISTORY_WEIGHT) + 
+        const newTrustScore = (metrics.trustScore * HISTORY_WEIGHT) +
                               (newPerformance > 0 ? 100 : 0) * NEW_PERFORMANCE_WEIGHT;
-        
+
         // Adjust based on success rate
         const successFactor = newSuccessRate * 100;
-        
+
         // Combine scores with weights
         const combinedScore = (newTrustScore * 0.6) + (successFactor * 0.3) + (consistencyScore * 0.1);
-        
+
         // Clamp between 0-100
         return Math.max(0, Math.min(100, combinedScore));
     }
@@ -959,11 +961,11 @@ export class TrustTradingService extends Service {
         try {
             // Try to get from memory first
             let tokenPerformance = await this.getTokenPerformance(tokenAddress, chain);
-            
+
             // If not found, fetch from API
             if (!tokenPerformance) {
                 const tokenOverview = await this.getTokenOverview(chain, tokenAddress);
-                
+
                 // Convert token overview to token performance
                 tokenPerformance = {
                     chain,
@@ -979,13 +981,13 @@ export class TrustTradingService extends Service {
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
-                
+
                 // Store in memory if found
                 if (tokenPerformance) {
                     await this.storeTokenPerformance(tokenPerformance);
                 }
             }
-            
+
             return tokenPerformance;
         } catch (error) {
             logger.error(`Error fetching token performance for ${tokenAddress}:`, error);
@@ -1001,24 +1003,24 @@ export class TrustTradingService extends Service {
         if (token.address?.startsWith("sim_")) {
             return true;
         }
-        
+
         // Check for scam or rug pull flags
         if (token.isScam || token.rugPull) {
             return false;
         }
-        
+
         // Check liquidity
         const liquidity = token.liquidity || 0;
         if (liquidity < this.tradingConfig.minLiquidityUsd) {
             return false;
         }
-        
+
         // Check market cap
         const marketCap = token.currentMarketCap || 0;
         if (marketCap > this.tradingConfig.maxMarketCapUsd) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -1055,16 +1057,16 @@ export class TrustTradingService extends Service {
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
-            
+
             // Store in memory
             await this.storeTokenRecommendation(recommendation);
-            
+
             // Emit event
-            this.emitEvent({ 
-                type: 'recommendation_added', 
-                recommendation 
+            this.emitEvent({
+                type: 'recommendation_added',
+                recommendation
             });
-            
+
             return recommendation;
         } catch (error) {
             logger.error("Error creating token recommendation:", error);
@@ -1083,7 +1085,7 @@ export class TrustTradingService extends Service {
         logger.debug("calculating buy amount", entity, conviction, token);
         // Get entity trust score from metrics
         let trustScore = 50; // Default value
-        
+
         // Try to get actual metrics
         const metricsPromise = this.getRecommenderMetrics(entity.id);
         metricsPromise.then(metrics => {
@@ -1093,26 +1095,26 @@ export class TrustTradingService extends Service {
         }).catch(error => {
             logger.error(`Error getting entity metrics for ${entity.id}:`, error);
         });
-        
+
         // Get base amount from config
-        const { baseAmount, minAmount, maxAmount, trustScoreMultiplier, convictionMultiplier } = 
+        const { baseAmount, minAmount, maxAmount, trustScoreMultiplier, convictionMultiplier } =
             this.tradingConfig.buyAmountConfig;
-        
+
         // Calculate multipliers
         const trustMultiplier = 1 + (trustScore / 100) * trustScoreMultiplier;
         const convMultiplier = getConvictionMultiplier(conviction);
-        
+
         // Apply multipliers to base amount
         let amount = baseAmount * trustMultiplier * convMultiplier;
-        
+
         // Apply token-specific multipliers
         if (token.liquidity) {
             amount *= getLiquidityMultiplier(token.liquidity);
         }
-        
+
         // Ensure amount is within bounds
         amount = Math.max(minAmount, Math.min(maxAmount, amount));
-        
+
         // Convert to bigint (in smallest units)
         return BigInt(Math.floor(amount * 1e9)); // Convert to lamports (SOL smallest unit)
     }
@@ -1145,10 +1147,10 @@ export class TrustTradingService extends Service {
                 amount: amount.toString(),
                 createdAt: new Date(),
             };
-            
+
             // Store in memory
             await this.storePosition(position);
-            
+
             return position;
         } catch (error) {
             logger.error("Error creating position:", error);
@@ -1180,13 +1182,13 @@ export class TrustTradingService extends Service {
                 isSimulation,
                 timestamp: new Date()
             };
-            
+
             // Store in memory
             await this.storeTransaction(transaction);
-            
+
             // Emit event
             this.emitEvent({ type: 'transaction_added', transaction });
-            
+
             return true;
         } catch (error) {
             logger.error("Error recording transaction:", error);
@@ -1202,18 +1204,18 @@ export class TrustTradingService extends Service {
         try {
             const recommendations = await this.getRecommendationsByRecommender(entityId);
             const positions: Position[] = [];
-            
+
             for (const recommendation of recommendations) {
                 const positionMatches = await this.getPositionsByToken(recommendation.tokenAddress);
-                
+
                 // Filter for positions associated with this entity
                 const entityPositions = positionMatches.filter(
                     position => position.entityId === entityId
                 );
-                
+
                 positions.push(...entityPositions);
             }
-            
+
             return positions;
         } catch (error) {
             logger.error("Error getting positions by entity:", error);
@@ -1246,22 +1248,22 @@ export class TrustTradingService extends Service {
             // Search for transactions with this position ID
             const query = `transactions for position ${positionId}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.transactionMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 20
             });
-            
+
             const transactions: Transaction[] = [];
-            
+
             for (const memory of memories) {
-                if (memory.content.transaction && 
+                if (memory.content.transaction &&
                     (memory.content.transaction as Transaction).positionId === positionId) {
                     transactions.push(memory.content.transaction as Transaction);
                 }
             }
-            
+
             return transactions;
         } catch (error) {
             logger.error("Error getting transactions by position:", error);
@@ -1278,22 +1280,22 @@ export class TrustTradingService extends Service {
             // Search for transactions with this token address
             const query = `transactions for token ${tokenAddress}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.transactionMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 50
             });
-            
+
             const transactions: Transaction[] = [];
-            
+
             for (const memory of memories) {
-                if (memory.content.transaction && 
+                if (memory.content.transaction &&
                     (memory.content.transaction as Transaction).tokenAddress === tokenAddress) {
                     transactions.push(memory.content.transaction as Transaction);
                 }
             }
-            
+
             return transactions;
         } catch (error) {
             logger.error("Error getting transactions by token:", error);
@@ -1310,30 +1312,30 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = `position:${positionId}`;
             const cachedPosition = await this.runtime.databaseAdapter.getCache<Position>(cacheKey);
-            
+
             if (cachedPosition) {
                 return cachedPosition;
             }
-            
+
             // Search for position in memory
             const query = `position with ID ${positionId}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.positionMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 1
             });
-            
+
             if (memories.length > 0 && memories[0].content.position) {
                 const position = memories[0].content.position as Position;
-                
+
                 // Cache the position
                 await this.runtime.databaseAdapter.setCache<Position>(cacheKey, position); // Cache for 5 minutes
-                
+
                 return position;
             }
-            
+
             return null;
         } catch (error) {
             logger.error("Error getting position:", error);
@@ -1350,22 +1352,22 @@ export class TrustTradingService extends Service {
             // Search for recommendations by this entity
             const query = `recommendations by entity ${entityId}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.recommendationMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 50
             });
-            
+
             const recommendations: TokenRecommendation[] = [];
-            
+
             for (const memory of memories) {
-                if (memory.content.recommendation && 
+                if (memory.content.recommendation &&
                     (memory.content.recommendation as TokenRecommendation).entityId === entityId) {
                     recommendations.push(memory.content.recommendation as TokenRecommendation);
                 }
             }
-            
+
             return recommendations;
         } catch (error) {
             logger.error("Error getting recommendations by entity:", error);
@@ -1423,9 +1425,9 @@ export class TrustTradingService extends Service {
         const _totalSellAmount = sellTxs.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
 
         position.amount = totalBuyAmount.toString();
-        
+
         const avgBuyPrice = buyTxs.reduce((sum, tx) => sum + Number(tx.price), 0) / buyTxs.length;
-        const avgSellPrice = sellTxs.length ? 
+        const avgSellPrice = sellTxs.length ?
             sellTxs.reduce((sum, tx) => sum + Number(tx.price), 0) / sellTxs.length :
             await this.getCurrentPrice(position.chain, position.tokenAddress);
 
@@ -1451,14 +1453,14 @@ export class TrustTradingService extends Service {
                 },
                 createdAt: Date.now()
             };
-            
+
             // Add embedding to memory
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
-            
+
             // Store in memory manager
             await this.tokenMemoryManager.createMemory(memoryWithEmbedding, true);
-            
+
             // Also cache for quick access
             const cacheKey = `token:${token.chain}:${token.address}:performance`;
             await this.runtime.databaseAdapter.setCache<TokenPerformance>(cacheKey, token); // Cache for 5 minutes
@@ -1484,17 +1486,17 @@ export class TrustTradingService extends Service {
                 },
                 createdAt: Date.now()
             };
-            
+
             // Add embedding to memory
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
-            
+
             // Store in memory manager
             await this.positionMemoryManager.createMemory(memoryWithEmbedding, true);
-            
+
             // Also cache for quick access
             const cacheKey = `position:${position.id}`;
-            await this.runtime.databaseAdapter.setCache<Position>(cacheKey, position); 
+            await this.runtime.databaseAdapter.setCache<Position>(cacheKey, position);
         } catch (error) {
             logger.error(`Error storing position for ${position.tokenAddress}:`, error);
         }
@@ -1517,18 +1519,18 @@ export class TrustTradingService extends Service {
                 },
                 createdAt: Date.now()
             };
-            
+
             // Add embedding to memory
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
-            
+
             // Store in memory manager
             await this.transactionMemoryManager.createMemory(memoryWithEmbedding, true);
-            
+
             // Also cache transaction list for position
             const cacheKey = `position:${transaction.positionId}:transactions`;
             const cachedTxs = await this.runtime.databaseAdapter.getCache<Transaction[]>(cacheKey);
-            
+
             if (cachedTxs) {
                 const txs = cachedTxs as Transaction[];
                 txs.push(transaction);
@@ -1558,14 +1560,14 @@ export class TrustTradingService extends Service {
                 },
                 createdAt: Date.now()
             };
-            
+
             // Add embedding to memory
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
-            
+
             // Store in memory manager
             await this.recommendationMemoryManager.createMemory(memoryWithEmbedding, true);
-            
+
             // Also cache for quick access
             const cacheKey = `recommendation:${recommendation.id}`;
             await this.runtime.databaseAdapter.setCache<TokenRecommendation>(cacheKey, recommendation); // Cache for 5 minutes
@@ -1591,14 +1593,14 @@ export class TrustTradingService extends Service {
                 },
                 createdAt: Date.now()
             };
-            
+
             // Add embedding to memory
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
-            
+
             // Store in memory manager
             await this.recommenderMemoryManager.createMemory(memoryWithEmbedding, true);
-            
+
             // Also cache for quick access
             const cacheKey = `entity:${metrics.entityId}:metrics`;
             await this.runtime.databaseAdapter.setCache<RecommenderMetrics>(cacheKey, metrics); // Cache for 5 minutes
@@ -1624,23 +1626,23 @@ export class TrustTradingService extends Service {
                 },
                 createdAt: Date.now()
             };
-            
+
             // Add embedding to memory
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
-            
+
             // Store in memory manager
             await this.recommenderMemoryManager.createMemory(memoryWithEmbedding, true);
-            
+
             // Also update history list in cache
             const cacheKey = `entity:${history.entityId}:history`;
             const cachedHistory = await this.runtime.databaseAdapter.getCache<RecommenderMetricsHistory[]>(cacheKey);
-            
+
             if (cachedHistory) {
                 const histories = cachedHistory as RecommenderMetricsHistory[];
                 histories.push(history);
                 // Keep only the last 10 entries
-                const recentHistories = histories.sort((a, b) => 
+                const recentHistories = histories.sort((a, b) =>
                     b.timestamp.getTime() - a.timestamp.getTime()
                 ).slice(0, 10);
                 await this.runtime.databaseAdapter.setCache<RecommenderMetricsHistory[]>(cacheKey, recentHistories); // Cache for 1 hour
@@ -1661,30 +1663,30 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = `entity:${entityId}:metrics`;
             const cachedMetrics = await this.runtime.databaseAdapter.getCache<RecommenderMetrics>(cacheKey);
-            
+
             if (cachedMetrics) {
                 return cachedMetrics as RecommenderMetrics;
             }
-            
+
             // Search for metrics in memory
             const query = `entity metrics for entity ${entityId}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.recommenderMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 1
             });
-            
+
             if (memories.length > 0 && memories[0].content.metrics) {
                 const metrics = memories[0].content.metrics as RecommenderMetrics;
-                
+
                 // Cache the metrics
                 await this.runtime.databaseAdapter.setCache<RecommenderMetrics>(cacheKey, metrics); // Cache for 5 minutes
-                
+
                 return metrics;
             }
-            
+
             return null;
         } catch (error) {
             logger.error(`Error getting entity metrics for ${entityId}:`, error);
@@ -1701,38 +1703,38 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = `entity:${entityId}:history`;
             const cachedHistory = await this.runtime.databaseAdapter.getCache<RecommenderMetricsHistory[]>(cacheKey);
-            
+
             if (cachedHistory) {
                 return cachedHistory as RecommenderMetricsHistory[];
             }
-            
+
             // Search for history in memory
             const query = `entity metrics history for entity ${entityId}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.recommenderMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 10
             });
-            
+
             const historyEntries: RecommenderMetricsHistory[] = [];
-            
+
             for (const memory of memories) {
-                if (memory.content.history && 
+                if (memory.content.history &&
                     (memory.content.history as RecommenderMetricsHistory).entityId === entityId) {
                     historyEntries.push(memory.content.history as RecommenderMetricsHistory);
                 }
             }
-            
+
             // Sort by timestamp, newest first
-            const sortedEntries = historyEntries.sort((a, b) => 
+            const sortedEntries = historyEntries.sort((a, b) =>
                 b.timestamp.getTime() - a.timestamp.getTime()
             );
-            
+
             // Cache the history
             await this.runtime.databaseAdapter.setCache<RecommenderMetricsHistory[]>(cacheKey, sortedEntries); // Cache for 1 hour
-            
+
             return sortedEntries;
         } catch (error) {
             logger.error(`Error getting entity metrics history for ${entityId}:`, error);
@@ -1759,16 +1761,16 @@ export class TrustTradingService extends Service {
                 lastUpdated: new Date(),
                 createdAt: new Date()
             };
-            
+
             await this.storeRecommenderMetrics(initialMetrics);
-            
+
             // Also create initial history entry
             const historyEntry: RecommenderMetricsHistory = {
                 entityId,
                 metrics: initialMetrics,
                 timestamp: new Date()
             };
-            
+
             await this.storeRecommenderMetricsHistory(historyEntry);
         } catch (error) {
             logger.error(`Error initializing entity metrics for ${entityId}:`, error);
@@ -1784,30 +1786,30 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = `token:${chain}:${tokenAddress}:performance`;
             const cachedToken = await this.runtime.databaseAdapter.getCache<TokenPerformance>(cacheKey);
-            
+
             if (cachedToken) {
                 return cachedToken as TokenPerformance;
             }
-            
+
             // Search for token in memory
             const query = `token performance for ${tokenAddress}`;
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.tokenMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 1
             });
-            
+
             if (memories.length > 0 && memories[0].content.token) {
                 const token = memories[0].content.token as TokenPerformance;
-                
+
                 // Cache the token
                 await this.runtime.databaseAdapter.setCache<TokenPerformance>(cacheKey, token); // Cache for 5 minutes
-                
+
                 return token;
             }
-            
+
             return null;
         } catch (error) {
             logger.error(`Error getting token performance for ${tokenAddress}:`, error);
@@ -1824,27 +1826,27 @@ export class TrustTradingService extends Service {
             // Check cache first
             const cacheKey = "positions:open:with-balance";
             const cachedPositions = await this.runtime.databaseAdapter.getCache<PositionWithBalance[]>(cacheKey);
-            
+
             if (cachedPositions) {
                 return cachedPositions as PositionWithBalance[];
             }
-            
+
             // Search for open positions in memory
             const query = "open positions with balance";
             const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
-            
+
             const memories = await this.positionMemoryManager.searchMemories({
                 embedding,
                 match_threshold: 0.7,
                 count: 50
             });
-            
+
             const positions: PositionWithBalance[] = [];
-            
+
             for (const memory of memories) {
                 if (memory.content.position) {
                     const position = memory.content.position as Position;
-                    
+
                     // Check if position is open
                     if (position.status === 'OPEN') {
                         // Convert to PositionWithBalance
@@ -1855,10 +1857,10 @@ export class TrustTradingService extends Service {
                     }
                 }
             }
-            
+
             // Cache the positions
             await this.runtime.databaseAdapter.setCache<PositionWithBalance[]>(cacheKey, positions); // Cache for 5 minutes
-            
+
             return positions;
         } catch (error) {
             logger.error("Error getting open positions with balance:", error);
@@ -1873,12 +1875,12 @@ export class TrustTradingService extends Service {
         logger.debug("getting positions transactions", positionIds);
         try {
             const allTransactions: Transaction[] = [];
-            
+
             for (const positionId of positionIds) {
                 const transactions = await this.getTransactionsByPosition(positionId);
                 allTransactions.push(...transactions);
             }
-            
+
             return allTransactions;
         } catch (error) {
             logger.error("Error getting transactions for positions:", error);
@@ -1894,37 +1896,37 @@ export class TrustTradingService extends Service {
         try {
             // Get positions
             const positions = await this.getOpenPositionsWithBalance();
-            
+
             // Filter by entity if provided
-            const filteredPositions = entityId ? 
-                positions.filter(p => p.entityId === entityId) : 
+            const filteredPositions = entityId ?
+                positions.filter(p => p.entityId === entityId) :
                 positions;
-            
+
             if (filteredPositions.length === 0) {
                 return "No open positions found.";
             }
-            
+
             // Get tokens and transactions
             const tokens: TokenPerformance[] = [];
             const tokenSet = new Set<string>();
-            
+
             for (const position of filteredPositions) {
                 if (tokenSet.has(`${position.chain}:${position.tokenAddress}`)) continue;
-                
+
                 const token = await this.getTokenPerformance(position.tokenAddress, position.chain);
                 if (token) tokens.push(token);
-                
+
                 tokenSet.add(`${position.chain}:${position.tokenAddress}`);
             }
-            
+
             // Get transactions
             const transactions = await this.getPositionsTransactions(
                 filteredPositions.map(p => p.id)
             );
-            
+
             // Format the report
             const report = formatFullReport(tokens, filteredPositions, transactions);
-            
+
             return `
 Portfolio Summary:
 Total Current Value: ${report.totalCurrentValue}
