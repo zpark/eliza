@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_elizaos_docs=self.webpackChunk_elizaos_docs||[]).push([[39817],{12938:e=>{e.exports=JSON.parse('{"metadata":{"permalink":"/news","page":1,"postsPerPage":10,"totalPages":15,"totalCount":142,"nextPage":"/news/page/2","blogDescription":"Automated aggregating and summarization of elizaOS ecosystem updates","blogTitle":"AI News"}}')}}]);

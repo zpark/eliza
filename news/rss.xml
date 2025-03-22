@@ -4,10 +4,142 @@
         <title>ElizaOS Updates</title>
         <link>https://eliza.how/news</link>
         <description>Stay up to date with the latest from ElizaOS</description>
-        <lastBuildDate>Wed, 19 Mar 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Fri, 21 Mar 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[Daily Report – 2025-03-21]]></title>
+            <link>https://eliza.how/news/2025/03/21</link>
+            <guid>https://eliza.how/news/2025/03/21</guid>
+            <pubDate>Fri, 21 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Discord Testing Channel and X (Twitter) Strategy Proposal]]></description>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-testing-channel-and-x-twitter-strategy-proposal">Discord Testing Channel and X (Twitter) Strategy Proposal<a href="https://eliza.how/news/2025/03/21#discord-testing-channel-and-x-twitter-strategy-proposal" class="hash-link" aria-label="Direct link to Discord Testing Channel and X (Twitter) Strategy Proposal" title="Direct link to Discord Testing Channel and X (Twitter) Strategy Proposal">​</a></h2>
+<ul>
+<li>
+<p><strong>Closed Discord Testing Channel</strong></p>
+<ul>
+<li>Proposal to create a private Discord channel for structured testing before public release.</li>
+<li>Similar to the existing "agent scarlett office" channel.</li>
+</ul>
+</li>
+<li>
+<p><strong>X (Twitter) Strategy</strong></p>
+<ul>
+<li>Initial post: "Spartan coming soon v2" with contract address in bio.</li>
+<li>Use an affiliate account to obtain a blue checkmark, then appeal for account merge (similar to ai16z’s ElizaOS strategy).</li>
+</ul>
+</li>
+<li>
+<p><strong>Improving Engagement on X</strong></p>
+<ul>
+<li>Attach visually appealing template images to dev update announcements.</li>
+<li>Helps differentiate automated vs. manual posts.</li>
+</ul>
+</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/03/21#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
+<ul>
+<li><strong>Wrapped Bitcoin (WBTC)</strong>: $84,046.87</li>
+<li><strong>ai16z Token</strong>: $0.1851</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-discussions-summary">Discord Discussions Summary<a href="https://eliza.how/news/2025/03/21#discord-discussions-summary" class="hash-link" aria-label="Direct link to Discord Discussions Summary" title="Direct link to Discord Discussions Summary">​</a></h2>
+<ul>
+<li>
+<p><strong>General Market Discussions</strong></p>
+<ul>
+<li>Mostly cryptocurrency price updates and token discussions.</li>
+<li>No significant technical problem-solving or implementations.</li>
+</ul>
+</li>
+<li>
+<p><strong>Technical Topics</strong></p>
+<ul>
+<li>Use of <code>LLMs.txt</code> for AI-assisted querying.</li>
+<li>Knowledge upload API and retrieval process.</li>
+<li>Twitter posting issues and action recognition bugs.</li>
+<li>Eliza V2 agent deployment.</li>
+</ul>
+</li>
+<li>
+<p><strong>Proposals &amp; Strategy Discussions</strong></p>
+<ul>
+<li>Closed Discord testing channel.</li>
+<li>X (Twitter) strategy and engagement improvements.</li>
+<li>No recorded responses or confirmations.</li>
+</ul>
+</li>
+<li>
+<p><strong>AI &amp; Tokenomics Discussions</strong></p>
+<ul>
+<li>Repurposing dead pump.fun coins.</li>
+<li>AI agent collaboration using a registry and reputation system.</li>
+<li>Bonding curve incentives for AI Take Over coin.</li>
+<li>ElizaOS AI-NFT token feature.</li>
+</ul>
+</li>
+</ul>]]></content:encoded>
+        </item>
+        <item>
+            <title><![CDATA[Daily Report – 2025-03-20]]></title>
+            <link>https://eliza.how/news/2025/03/20</link>
+            <guid>https://eliza.how/news/2025/03/20</guid>
+            <pubDate>Thu, 20 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Discord Chat Analysis Summary]]></description>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-analysis-summary">Discord Chat Analysis Summary<a href="https://eliza.how/news/2025/03/20#discord-chat-analysis-summary" class="hash-link" aria-label="Direct link to Discord Chat Analysis Summary" title="Direct link to Discord Chat Analysis Summary">​</a></h2>
+<ul>
+<li>No significant technical discussions, decisions, or problem-solving observed.</li>
+<li>Conversations focused on cryptocurrency trading, token price movements, and speculation.</li>
+<li>No concrete solutions or meaningful technical interactions recorded.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-development-and-community-discussions">ElizaOS Development and Community Discussions<a href="https://eliza.how/news/2025/03/20#elizaos-development-and-community-discussions" class="hash-link" aria-label="Direct link to ElizaOS Development and Community Discussions" title="Direct link to ElizaOS Development and Community Discussions">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="elizaos-beta-installation-and-setup">ElizaOS Beta Installation and Setup<a href="https://eliza.how/news/2025/03/20#elizaos-beta-installation-and-setup" class="hash-link" aria-label="Direct link to ElizaOS Beta Installation and Setup" title="Direct link to ElizaOS Beta Installation and Setup">​</a></h3>
+<ul>
+<li>Installation guide provided: <code>npm create eliza@beta</code>.</li>
+<li>Gitpod setup issues due to missing <code>server.allowedHosts</code> in <code>vite.config.js</code>.</li>
+<li>Debugging tips for <code>better-sqlite3</code> errors using <code>NODE_DEBUG=*</code>.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="technical-features-and-enhancements">Technical Features and Enhancements<a href="https://eliza.how/news/2025/03/20#technical-features-and-enhancements" class="hash-link" aria-label="Direct link to Technical Features and Enhancements" title="Direct link to Technical Features and Enhancements">​</a></h3>
+<ul>
+<li><strong>Entity-Component System Visualization</strong>: Modular representation of users, agents, and components.</li>
+<li><strong>Evaluators in AgentRuntime</strong>: Extract and assess conversation data for agent learning.</li>
+<li><strong>Providers in ElizaOS</strong>: Real-time data sources (news, terminal, wallet integrations).</li>
+<li><strong>Image Generation Tools</strong>: Stable Diffusion preferred over MidJourney, optimized with Flux models.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="plugin-and-api-integrations">Plugin and API Integrations<a href="https://eliza.how/news/2025/03/20#plugin-and-api-integrations" class="hash-link" aria-label="Direct link to Plugin and API Integrations" title="Direct link to Plugin and API Integrations">​</a></h3>
+<ul>
+<li><strong>Telegram Bot Multi-Instance Issue</strong>: Workaround proposed, but Railway.app config limitations remain.</li>
+<li><strong>Twitter Plugin Integration</strong>: Endpoint for tweet replies discussed, leveraging <code>twitter-client</code> plugin.</li>
+<li><strong>PDF Knowledge Ingestion</strong>: <code>Folder2knowledge</code> and <code>knowledge2character</code> recommended for processing PDFs.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="tokenomics-and-staking-discussions">Tokenomics and Staking Discussions<a href="https://eliza.how/news/2025/03/20#tokenomics-and-staking-discussions" class="hash-link" aria-label="Direct link to Tokenomics and Staking Discussions" title="Direct link to Tokenomics and Staking Discussions">​</a></h3>
+<ul>
+<li>Concerns over ElizaOS tokenomics and launchpad misuse.</li>
+<li>Liquidity extraction strategy using AI swarms to revive abandoned meme coins.</li>
+<li>Staking mechanisms for agents and plugins, with DAO-based fund allocation.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="community-and-business-development">Community and Business Development<a href="https://eliza.how/news/2025/03/20#community-and-business-development" class="hash-link" aria-label="Direct link to Community and Business Development" title="Direct link to Community and Business Development">​</a></h3>
+<ul>
+<li>Potential partnership with ChainGPT for marketing and funding, with mixed opinions.</li>
+<li>Eliza Labs BD team to explore partnership further.</li>
+<li>Open-core monetization strategies, including a paid enterprise version.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="additional-technical-discussions">Additional Technical Discussions<a href="https://eliza.how/news/2025/03/20#additional-technical-discussions" class="hash-link" aria-label="Direct link to Additional Technical Discussions" title="Direct link to Additional Technical Discussions">​</a></h3>
+<ul>
+<li><strong>Spartan V2 Launch Coordination</strong>: Enabling Spartan chat before launch, token utility considerations.</li>
+<li><strong>Public Communication Strategies</strong>: Debates on making channels public or creating new Discord/X accounts.</li>
+<li><strong>Telegram Buy Bot Update</strong>: Planned to filter transactions under $2K.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="development-updates">Development Updates<a href="https://eliza.how/news/2025/03/20#development-updates" class="hash-link" aria-label="Direct link to Development Updates" title="Direct link to Development Updates">​</a></h3>
+<ul>
+<li>Package improvements: Fixes in <code>plugin-tee</code>, three bug fixes, and five merged pull requests from six developers.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/03/20#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
+<ul>
+<li><strong>Wrapped Bitcoin (WBTC)</strong>: $86,666.89.</li>
+<li><strong>ai16z</strong>: $0.191.</li>
+</ul>]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[Daily Report - 2025-03-19]]></title>
             <link>https://eliza.how/news/2025/03/19</link>
@@ -2217,279 +2349,6 @@ npx elizaos plugins add @Elizaos-plugins/client-twitter</li>
 </ul>
 </li>
 </ul>]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[Daily Report - 2025-03-01]]></title>
-            <link>https://eliza.how/news/2025/03/01</link>
-            <guid>https://eliza.how/news/2025/03/01</guid>
-            <pubDate>Sat, 01 Mar 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[1. Crypto Market Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="1-crypto-market-update">1. Crypto Market Update<a href="https://eliza.how/news/2025/03/01#1-crypto-market-update" class="hash-link" aria-label="Direct link to 1. Crypto Market Update" title="Direct link to 1. Crypto Market Update">​</a></h2>
-<ul>
-<li>
-<p><strong>Wrapped Bitcoin (WBTC)</strong></p>
-<ul>
-<li>Price Range: $84,016.10 - $85,837.56</li>
-<li>24-hour Trading Volume: $129,257,441</li>
-<li>Market Cap: $10,849,705,987</li>
-<li>Daily Change: 0.0222%</li>
-</ul>
-</li>
-<li>
-<p><strong>Wrapped Ethereum (WETH)</strong></p>
-<ul>
-<li>Price Range: $2,216.79 - $2,236.32</li>
-<li>24-hour Trading Volume: $720,623,345</li>
-<li>Market Cap: $6,453,227,073</li>
-<li>Daily Change: 0.0095%</li>
-</ul>
-</li>
-<li>
-<p><strong>Solana (SOL)</strong></p>
-<ul>
-<li>Price Range: $143.60 - $148.06</li>
-<li>24-hour Trading Volume: $329,499,325</li>
-<li>Daily Change: 0.1193%</li>
-</ul>
-</li>
-<li>
-<p><strong>ai16z Token</strong></p>
-<ul>
-<li>Price Decline: $0.4034 to $0.3596</li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="2-elizaos-plugin-documentation-and-ui-enhancements">2. ElizaOS Plugin Documentation and UI Enhancements<a href="https://eliza.how/news/2025/03/01#2-elizaos-plugin-documentation-and-ui-enhancements" class="hash-link" aria-label="Direct link to 2. ElizaOS Plugin Documentation and UI Enhancements" title="Direct link to 2. ElizaOS Plugin Documentation and UI Enhancements">​</a></h2>
-<ul>
-<li>
-<p><strong>Documentation Improvements</strong></p>
-<ul>
-<li>Updated for custom plugin integration beyond the registry.</li>
-<li><a href="https://github.com/elizaOS/eliza/pull/3736" target="_blank" rel="noopener noreferrer">Source: GitHub Links</a></li>
-</ul>
-</li>
-<li>
-<p><strong>UI Update</strong></p>
-<ul>
-<li>Support for agent configuration with plugins and environment variables.</li>
-<li>Enhancements in plugin and secret management.</li>
-<li><a href="https://github.com/elizaOS/eliza/pull/3731" target="_blank" rel="noopener noreferrer">Source: GitHub Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Plugin Showcase and Changelog</strong></p>
-<ul>
-<li>Inclusion of new page for ElizaOS plugins, efforts in automating updates.</li>
-<li><a href="https://twitter.com/dankvr/status/1895949013293416801" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Plugin Explorer Development</strong></p>
-<ul>
-<li>Work on integration despite missing plugins.</li>
-<li><a href="https://twitter.com/dankvr/status/1895952160908857683" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="3-ai-agents-and-their-growing-ecosystem">3. AI Agents and Their Growing Ecosystem<a href="https://eliza.how/news/2025/03/01#3-ai-agents-and-their-growing-ecosystem" class="hash-link" aria-label="Direct link to 3. AI Agents and Their Growing Ecosystem" title="Direct link to 3. AI Agents and Their Growing Ecosystem">​</a></h2>
-<ul>
-<li>
-<p><strong>AI Agent Dev School</strong></p>
-<ul>
-<li>Sessions on Tuesdays and Thursdays, 6 PM PST.</li>
-<li><a href="https://twitter.com/shawmakesmagic/status/1895954475137057192" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Gelato Network Guide</strong></p>
-<ul>
-<li>Featuring AI Agent Coinflip mini-game on Inkonchain.</li>
-<li><a href="https://twitter.com/shawmakesmagic/status/1895951145446883806" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Advancements in AI Robot Dogs</strong></p>
-<ul>
-<li>Developments by Meta PARTNR.</li>
-<li><a href="https://twitter.com/dankvr/status/1895899961386242452" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Agent-to-Agent Economy Panel</strong></p>
-<ul>
-<li>Participation by Carra Wu and Eskender.</li>
-<li><a href="https://twitter.com/0xwitchy/status/1895688319046189340" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="4-future-of-entertainment-and-virtual-interaction">4. Future of Entertainment and Virtual Interaction<a href="https://eliza.how/news/2025/03/01#4-future-of-entertainment-and-virtual-interaction" class="hash-link" aria-label="Direct link to 4. Future of Entertainment and Virtual Interaction" title="Direct link to 4. Future of Entertainment and Virtual Interaction">​</a></h2>
-<ul>
-<li>
-<p><strong>Smaller AI Models</strong></p>
-<ul>
-<li>Enhancements in efficiency and device integration.</li>
-<li><a href="https://twitter.com/dankvr/status/1895880586054762790" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Virtual Hollywood Concept</strong></p>
-<ul>
-<li>Involving motion capture and real-time 3D environments.</li>
-<li><a href="https://twitter.com/dankvr/status/1895837759094604132" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="5-ranking-discussion">5. Ranking Discussion<a href="https://eliza.how/news/2025/03/01#5-ranking-discussion" class="hash-link" aria-label="Direct link to 5. Ranking Discussion" title="Direct link to 5. Ranking Discussion">​</a></h2>
-<ul>
-<li>
-<p><strong>General Commentary</strong></p>
-<ul>
-<li>"Greater than, top 3"</li>
-<li><a href="https://twitter.com/dankvr/status/1895876569517916411" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Pen Rankings</strong></p>
-<ul>
-<li>Image with rankings provided.</li>
-<li><a href="https://twitter.com/dankvr/status/1895874701882507364" target="_blank" rel="noopener noreferrer">Source: Twitter Link</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="6-discord-chat-transcript-request">6. Discord Chat Transcript Request<a href="https://eliza.how/news/2025/03/01#6-discord-chat-transcript-request" class="hash-link" aria-label="Direct link to 6. Discord Chat Transcript Request" title="Direct link to 6. Discord Chat Transcript Request">​</a></h2>
-<ul>
-<li><strong>Request for Actual Transcript</strong>
-<ul>
-<li>Placeholder provided without messages, request for full chat log.</li>
-<li><a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Discord Channel</a></li>
-</ul>
-</li>
-</ul>
-<p><strong>Date</strong>: 2025-03-01 (Unix Timestamp: 1740787200)</p>]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[Daily Report - 2025-02-28]]></title>
-            <link>https://eliza.how/news/2025/02/28</link>
-            <guid>https://eliza.how/news/2025/02/28</guid>
-            <pubDate>Fri, 28 Feb 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[Crypto Market Update]]></description>
-            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="crypto-market-update">Crypto Market Update<a href="https://eliza.how/news/2025/02/28#crypto-market-update" class="hash-link" aria-label="Direct link to Crypto Market Update" title="Direct link to Crypto Market Update">​</a></h2>
-<ul>
-<li>
-<p><strong>Wrapped Bitcoin (WBTC)</strong></p>
-<ul>
-<li>Price increased: $83,112.86 to $84,237.85</li>
-<li>24-hour Trading Volume: $76,490,845</li>
-<li>Market Capitalization: $10,733,063,375</li>
-<li>Previous Daily Change: -0.0228%</li>
-<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Wrapped Ethereum (WETH)</strong></p>
-<ul>
-<li>Price declined: $2,259.95 to $2,236.32</li>
-<li>24-hour Trading Volume: $171,444,015</li>
-<li>Market Capitalization: $6,589,499,040</li>
-<li>Previous Daily Change: -0.0417%</li>
-<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Solana (SOL)</strong></p>
-<ul>
-<li>Price increased: $134.00 to $148.06</li>
-<li>24-hour Trading Volume: $214,049,926</li>
-<li>Previous Daily Change: -0.0293%</li>
-<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
-</ul>
-</li>
-<li>
-<p><strong>ai16z Token</strong></p>
-<ul>
-<li>Recorded Price: $0.4034</li>
-<li><a href="https://eliza.how/news/2025/02/28#">Source</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ai-developments-and-security-concerns">AI Developments and Security Concerns<a href="https://eliza.how/news/2025/02/28#ai-developments-and-security-concerns" class="hash-link" aria-label="Direct link to AI Developments and Security Concerns" title="Direct link to AI Developments and Security Concerns">​</a></h2>
-<ul>
-<li>
-<p><strong>Eliza v2 Hack</strong></p>
-<ul>
-<li>Concerns over AI security</li>
-<li><a href="https://twitter.com/shawmakesmagic/status/1895276315852579188" target="_blank" rel="noopener noreferrer">Tweet</a></li>
-</ul>
-</li>
-<li>
-<p><strong>$ISAACX and ElizaOS Partnership</strong></p>
-<ul>
-<li>Integration of verified scientific research into AI agents</li>
-<li><a href="https://twitter.com/ai16zdao/status/1895418548572606935" target="_blank" rel="noopener noreferrer">Tweet with Image</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Yeti Emergence</strong></p>
-<ul>
-<li>Community-trained AI amid scams and KOL dumps</li>
-<li><a href="https://twitter.com/ai16zdao/status/1895419494614671410" target="_blank" rel="noopener noreferrer">Tweet with Video</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="recent-social-media-reactions-and-mentions">Recent Social Media Reactions and Mentions<a href="https://eliza.how/news/2025/02/28#recent-social-media-reactions-and-mentions" class="hash-link" aria-label="Direct link to Recent Social Media Reactions and Mentions" title="Direct link to Recent Social Media Reactions and Mentions">​</a></h2>
-<ul>
-<li>Comments and reactions from users on platforms like Twitter.<!-- -->
-<ul>
-<li>Examples:<!-- -->
-<ul>
-<li>"@mrwildcat7 @Dune @solana WOAH!" <a href="https://twitter.com/daosdotfun/status/1895338775758492078" target="_blank" rel="noopener noreferrer">Tweet</a></li>
-<li>"@bountybot @binji_x wow cool!" <a href="https://twitter.com/dankvr/status/1895558860750139392" target="_blank" rel="noopener noreferrer">Tweet</a></li>
-<li>"@WatcherGuru <a href="https://t.co/zwTt4J71lJ" target="_blank" rel="noopener noreferrer">Link</a>" <a href="https://twitter.com/dankvr/status/1895500761553162554" target="_blank" rel="noopener noreferrer">Tweet</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="founder-daos-and-research-on-daosdotfun">Founder DAOs and Research on DAOsdotfun<a href="https://eliza.how/news/2025/02/28#founder-daos-and-research-on-daosdotfun" class="hash-link" aria-label="Direct link to Founder DAOs and Research on DAOsdotfun" title="Direct link to Founder DAOs and Research on DAOsdotfun">​</a></h2>
-<ul>
-<li>
-<p><strong>Founders DAO Options</strong></p>
-<ul>
-<li>"Indie Mode": $250K FDV, raise $25K</li>
-<li>"Locked In Mode": $2.5M FDV</li>
-<li><a href="https://twitter.com/daosdotfun/status/1895328570140246418" target="_blank" rel="noopener noreferrer">Tweet with Image</a></li>
-</ul>
-</li>
-<li>
-<p><strong>Research on DAOsdotfun Solana</strong></p>
-<ul>
-<li>New Dune dashboard and performance insights</li>
-<li><a href="https://twitter.com/daosdotfun/status/1895338785027842270" target="_blank" rel="noopener noreferrer">Tweet with Image</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="discord-chat-transcript-placeholder">Discord Chat Transcript Placeholder<a href="https://eliza.how/news/2025/02/28#discord-chat-transcript-placeholder" class="hash-link" aria-label="Direct link to Discord Chat Transcript Placeholder" title="Direct link to Discord Chat Transcript Placeholder">​</a></h2>
-<ul>
-<li>Request for actual content to analyze in Discord chats<!-- -->
-<ul>
-<li><a href="https://discord.com/channels/1253563208833433701/1326603270893867064" target="_blank" rel="noopener noreferrer">Discord Source</a></li>
-</ul>
-</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="latest-updates-on-elizaos-daos-and-crypto-developments">Latest Updates on ElizaOS, DAOs, and Crypto Developments<a href="https://eliza.how/news/2025/02/28#latest-updates-on-elizaos-daos-and-crypto-developments" class="hash-link" aria-label="Direct link to Latest Updates on ElizaOS, DAOs, and Crypto Developments" title="Direct link to Latest Updates on ElizaOS, DAOs, and Crypto Developments">​</a></h2>
-<ul>
-<li>Various updates and discussions around ElizaOS, DAOs, and community events like hacks, partnerships, and new features.<!-- -->
-<ul>
-<li><a href="https://twitter.com/shawmakesmagic/status/1895276315852579188" target="_blank" rel="noopener noreferrer">Eliza v2 Hacking</a></li>
-<li>Founder DAOs and Solana research insights.</li>
-<li><a href="https://twitter.com/ai16zdao/status/1895419494614671410" target="_blank" rel="noopener noreferrer">Yeti AI Emergence</a></li>
-<li><a href="https://twitter.com/dankvr/status/1895558860750139392" target="_blank" rel="noopener noreferrer">New Feature on X</a></li>
-</ul>
-</li>
-</ul>
-<blockquote>
-<p><strong>Note</strong>: This summary includes essential highlights and notable mentions from various categories, comprising market updates, AI security issues, community reactions, DAO developments, and ongoing social media discussions.</p>
-</blockquote>]]></content:encoded>
         </item>
     </channel>
 </rss>
