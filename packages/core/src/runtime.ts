@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'node:crypto';
 import { bootstrapPlugin } from './bootstrap';
 import { createUniqueUuid } from './entities';
-import { handlePluginImporting } from './index';
+import { decryptSecret, handlePluginImporting } from './index';
 import logger from './logger';
 import { splitChunks } from './prompts';
 // Import enums and values that are used as values
@@ -440,15 +440,10 @@ export class AgentRuntime implements IAgentRuntime {
 
     await this.adapter.init();
 
-    // Encrypt all agent settings/secrets
-    const encryptedCharacter = await this.encryptSecrets(this.character);
-
     // First create the agent entity directly
     try {
       // Ensure agent exists first (this is critical for test mode)
-      const agentExists = await this.adapter.ensureAgentExists(
-        encryptedCharacter as Partial<Agent>
-      );
+      const agentExists = await this.adapter.ensureAgentExists(this.character as Partial<Agent>);
 
       // Verify agent exists before proceeding
       const agent = await this.adapter.getAgent(this.agentId);
@@ -542,90 +537,6 @@ export class AgentRuntime implements IAgentRuntime {
       );
       await this.processCharacterKnowledge(stringKnowledge);
     }
-  }
-
-  private async encryptSecrets(character: Character) {
-    // Encryption key and IV should be securely stored and managed
-    const ENCRYPTION_KEY = Buffer.from(
-      process.env.ENCRYPTION_KEY || 'eliza-walks-home-tonight',
-      'hex'
-    );
-    const IV_LENGTH = 16;
-
-    // Create a deep copy of the character's secrets
-    const encryptedSecrets = { ...character.secrets };
-    const encryptedSettingsSecrets = { ...character.settings?.secrets };
-
-    // Encrypt each value in the secrets object
-    for (const key in encryptedSecrets) {
-      if (encryptedSecrets[key]) {
-        // Generate a random IV for each encryption
-        const iv = crypto.randomBytes(IV_LENGTH);
-
-        // Create cipher with key and iv
-        const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
-        // Encrypt the value
-        let encrypted = cipher.update(String(encryptedSecrets[key]), 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-
-        // Store as a single string: IV + ":" + encrypted data
-        encryptedSecrets[key] = `${iv.toString('hex')}:${encrypted}`;
-      }
-    }
-
-    // Encrypt each value in the settings.secrets object
-    for (const key in encryptedSettingsSecrets) {
-      if (encryptedSettingsSecrets[key]) {
-        // Generate a random IV for each encryption
-        const iv = crypto.randomBytes(IV_LENGTH);
-
-        // Create cipher with key and iv
-        const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
-
-        // Encrypt the value
-        let encrypted = cipher.update(encryptedSettingsSecrets[key], 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-
-        // Store as a single string: IV + ":" + encrypted data
-        encryptedSettingsSecrets[key] = `${iv.toString('hex')}:${encrypted}`;
-      }
-    }
-
-    // Return character with encrypted secrets
-    return {
-      ...character,
-      secrets: encryptedSecrets,
-      settings: {
-        ...character.settings,
-        secrets: encryptedSettingsSecrets,
-      },
-    };
-  }
-
-  private async decryptSecret(encryptedString: string) {
-    // Use the same encryption key as in encryptSecrets
-    const ENCRYPTION_KEY = Buffer.from(
-      process.env.ENCRYPTION_KEY || 'eliza-walks-home-tonight',
-      'hex'
-    );
-
-    // Split the string to get IV and encrypted data
-    const parts = encryptedString.split(':');
-    if (parts.length !== 2) {
-      throw new Error('Invalid encrypted format');
-    }
-
-    const iv = Buffer.from(parts[0], 'hex');
-    const encrypted = parts[1];
-
-    // Create decipher
-    const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
-
-    // Decrypt the data
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
   }
 
   private async handleProcessingError(error: any, context: string) {
@@ -819,7 +730,7 @@ export class AgentRuntime implements IAgentRuntime {
 
     // check if the value is encrypted
     if (encryptedValue) {
-      const value = await this.decryptSecret(encryptedValue);
+      const value = await decryptSecret(encryptedValue);
       if (value === 'true') return true;
       if (value === 'false') return false;
       return value || null;

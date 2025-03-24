@@ -6,6 +6,7 @@ import {
   type Plugin,
   logger,
   stringToUuid,
+  encryptedCharacter,
 } from '@elizaos/core';
 import { Command } from 'commander';
 import fs from 'node:fs';
@@ -102,6 +103,9 @@ export async function startAgent(
 ): Promise<IAgentRuntime> {
   character.id ??= stringToUuid(character.name);
 
+  const encryptedChar = await encryptedCharacter(character);
+
+  logger.info('encryptedChar', JSON.stringify(encryptedChar, null, 2));
   // For ESM modules we need to use import.meta.url instead of __dirname
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
@@ -120,7 +124,7 @@ export async function startAgent(
   const characterPlugins: Plugin[] = [];
 
   // for each plugin, check if it installed, and install if it is not
-  for (const plugin of character.plugins) {
+  for (const plugin of encryptedChar.plugins) {
     logger.debug('Checking if plugin is installed: ', plugin);
     let pluginModule: any;
 
@@ -219,7 +223,7 @@ export async function startAgent(
   }
 
   const runtime = new AgentRuntime({
-    character,
+    character: encryptedChar,
     plugins: [...plugins, ...characterPlugins],
   });
   if (init) {

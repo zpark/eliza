@@ -43,10 +43,10 @@ type JupiterQuoteResult = {
  * @returns {Keypair} - The generated keypair.
  * @throws {Error} - If the private key format is invalid or the key length is incorrect.
  */
-export function loadPrivateKey(runtime: IAgentRuntime) {
+export async function loadPrivateKey(runtime: IAgentRuntime) {
   const privateKeyString =
     (await runtime.getSetting('SOLANA_PRIVATE_KEY')) ??
-    (await runtime.getSetting('WALLET_PRIVATE_KEY')!);
+    (await runtime.getSetting('WALLET_PRIVATE_KEY'));
 
   let secretKey: Uint8Array;
   try {
@@ -254,7 +254,7 @@ export class SolanaTrustWalletProvider implements TrustWalletProvider<JupiterQuo
     const transactionBuf = Buffer.from(swapData.swapTransaction, 'base64');
     const transaction = VersionedTransaction.deserialize(transactionBuf);
 
-    const keypair = loadPrivateKey(this.runtime);
+    const keypair = await loadPrivateKey(this.runtime);
     transaction.sign([keypair]);
 
     const latestBlockhash = await this.connection.getLatestBlockhash();

@@ -1,7 +1,14 @@
 import crypto from 'node:crypto';
 import { createUniqueUuid } from './entities';
 import { logger } from './logger';
-import type { IAgentRuntime, OnboardingConfig, Setting, World, WorldSettings } from './types';
+import type {
+  Character,
+  IAgentRuntime,
+  OnboardingConfig,
+  Setting,
+  World,
+  WorldSettings,
+} from './types';
 
 /**
  * Creates a new Setting object based on provided config settings.
@@ -276,5 +283,161 @@ export async function initializeOnboarding(
   } catch (error) {
     logger.error(`Error initializing settings config: ${error}`);
     return null;
+  }
+}
+
+// Default curve to use for ECC
+const DEFAULT_CURVE = 'secp256k1';
+
+/**
+ * Generates a deterministic private key from a seed phrase
+ * @param {string} seed - The seed phrase to derive the key from
+ * @returns {Buffer} The private key
+ */
+function getPrivateKeyFromSeed(seed: string): Buffer {
+  return crypto.createHash('sha256').update(seed).digest();
+}
+
+/**
+ * Creates an ECDH instance with keys derived from the seed
+ * @param {string} seed - The seed phrase
+ * @returns {crypto.ECDH} Configured ECDH instance
+ */
+function createECDHFromSeed(seed: string): crypto.ECDH {
+  const ecdh = crypto.createECDH(DEFAULT_CURVE);
+  const privateKey = getPrivateKeyFromSeed(seed);
+  ecdh.setPrivateKey(privateKey);
+  return ecdh;
+}
+
+/**
+ * Encrypts the secrets of a character
+ * @param {Character} character - The character to encrypt
+ * @returns {Character} The encrypted character
+ */
+export async function encryptedCharacter(character: Character) {
+  // Get seed phrase from environment or default
+  const seedPhrase = process.env.ENCRYPTION_SEED || null;
+
+  // If no seed phrase is provided, return character as is (pass-through)
+  if (!seedPhrase) {
+    return character;
+  }
+
+  // Create ECDH instance from seed
+  const ecdh = createECDHFromSeed(seedPhrase);
+  const publicKey = ecdh.getPublicKey();
+
+  // Create deep copies
+  const encryptedSecrets = character.secrets ? JSON.parse(JSON.stringify(character.secrets)) : {};
+  const characterSettings = character.settings || {};
+  const encryptedSettingsSecrets = characterSettings.secrets
+    ? JSON.parse(JSON.stringify(characterSettings.secrets))
+    : {};
+
+  // Helper function to encrypt a value using ECC
+  const encryptValue = (value: any): string => {
+    if (value === null || value === undefined) return value;
+
+    // For each encryption, create a new ephemeral ECDH instance
+    const ephemeral = crypto.createECDH(DEFAULT_CURVE);
+    ephemeral.generateKeys();
+
+    // Compute shared secret using our private key and ephemeral's public key
+    const sharedSecret = ecdh.computeSecret(ephemeral.getPublicKey());
+
+    // Derive encryption key from shared secret
+    const encryptionKey = crypto.createHash('sha256').update(sharedSecret).digest();
+
+    // Generate IV for AES
+    const iv = crypto.randomBytes(16);
+
+    // Encrypt the data with AES using the derived key
+    const cipher = crypto.createCipheriv('aes-256-cbc', encryptionKey, iv);
+    let encrypted = cipher.update(String(value), 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+
+    // Return ephemeral public key + IV + encrypted data
+    const ephemeralPublicKey = ephemeral.getPublicKey('hex');
+    return `${ephemeralPublicKey}:${iv.toString('hex')}:${encrypted}`;
+  };
+
+  // Encrypt each value in the secrets object
+  for (const key in encryptedSecrets) {
+    if (encryptedSecrets[key] !== null && encryptedSecrets[key] !== undefined) {
+      encryptedSecrets[key] = encryptValue(encryptedSecrets[key]);
+    }
+  }
+
+  // Encrypt each value in the settings.secrets object
+  for (const key in encryptedSettingsSecrets) {
+    if (encryptedSettingsSecrets[key] !== null && encryptedSettingsSecrets[key] !== undefined) {
+      encryptedSettingsSecrets[key] = encryptValue(encryptedSettingsSecrets[key]);
+    }
+  }
+
+  // Return character with encrypted secrets
+  return {
+    ...character,
+    secrets: encryptedSecrets,
+    settings: {
+      ...characterSettings,
+      secrets: encryptedSettingsSecrets,
+    },
+  };
+}
+
+/**
+ * Decrypts a secret string
+ * @param {string} encryptedString - The encrypted string to decrypt
+ * @returns {string} The decrypted string
+ */
+export async function decryptSecret(encryptedString: string) {
+  // Get seed phrase from environment or default
+  const seedPhrase = process.env.ENCRYPTION_SEED || null;
+
+  // If no seed phrase is provided, return string as is (pass-through)
+  if (!seedPhrase) {
+    return encryptedString;
+  }
+
+  // Input validation
+  if (!encryptedString) {
+    logger.warn('Empty encrypted string provided');
+    return ''; // Return empty string instead of throwing error
+  }
+
+  // Split the string to get ephemeral public key, IV and encrypted data
+  const parts = encryptedString.split(':');
+  if (parts.length !== 3) {
+    logger.error(
+      `Invalid encrypted format: "${encryptedString.substring(0, 10)}..." - expected format "ephemeralPublicKey:iv:encrypted"`
+    );
+    return encryptedString; // Return original string instead of throwing error
+  }
+
+  try {
+    const ephemeralPublicKey = Buffer.from(parts[0], 'hex');
+    const iv = Buffer.from(parts[1], 'hex');
+    const encrypted = parts[2];
+
+    // Create ECDH instance from seed
+    const ecdh = createECDHFromSeed(seedPhrase);
+
+    // Recreate the shared secret
+    const sharedSecret = ecdh.computeSecret(ephemeralPublicKey);
+
+    // Derive the same encryption key
+    const encryptionKey = crypto.createHash('sha256').update(sharedSecret).digest();
+
+    // Decrypt the data
+    const decipher = crypto.createDecipheriv('aes-256-cbc', encryptionKey, iv);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted;
+  } catch (error) {
+    logger.error(`Decryption failed: ${error.message}`);
+    return encryptedString; // Return original string on error
   }
 }
