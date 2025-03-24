@@ -37,7 +37,7 @@ export async function buildConversationThread(
     const visited: Set<string> = new Set();
 
     async function processThread(currentTweet: Tweet, depth = 0) {
-        logger.debug("Processing tweet:", {
+        logger.debug("processThread Processing tweet:", {
             id: currentTweet.id,
             inReplyToStatusId: currentTweet.inReplyToStatusId,
             depth: depth,
@@ -56,11 +56,11 @@ export async function buildConversationThread(
 
         // Handle memory storage
         const memory = await client.runtime.messageManager.getMemoryById(
-            createUniqueUuid(this.runtime, currentTweet.id)
+            createUniqueUuid(client.runtime, currentTweet.id)
         );
         if (!memory) {
-            const roomId = createUniqueUuid(this.runtime, currentTweet.conversationId);
-            const userId = createUniqueUuid(this.runtime, currentTweet.userId);
+            const roomId = createUniqueUuid(client.runtime, currentTweet.conversationId);
+            const userId = createUniqueUuid(client.runtime, currentTweet.userId);
 
             await client.runtime.ensureConnection({
                 userId,
@@ -72,7 +72,7 @@ export async function buildConversationThread(
             });
 
             await client.runtime.messageManager.createMemory({
-                id: createUniqueUuid(this.runtime, currentTweet.id),
+                id: createUniqueUuid(client.runtime, currentTweet.id),
                 agentId: client.runtime.agentId,
                 content: {
                     text: currentTweet.text,
@@ -80,7 +80,7 @@ export async function buildConversationThread(
                     url: currentTweet.permanentUrl,
                     imageUrls: currentTweet.photos.map((p) => p.url) || [],
                     inReplyTo: currentTweet.inReplyToStatusId
-                        ? createUniqueUuid(this.runtime, currentTweet.inReplyToStatusId)
+                        ? createUniqueUuid(client.runtime, currentTweet.inReplyToStatusId)
                         : undefined,
                 },
                 createdAt: currentTweet.timestamp * 1000,
@@ -88,7 +88,7 @@ export async function buildConversationThread(
                 userId:
                     currentTweet.userId === client.profile.id
                         ? client.runtime.agentId
-                        : createUniqueUuid(this.runtime, currentTweet.userId),
+                        : createUniqueUuid(client.runtime, currentTweet.userId),
             });
         }
 
@@ -273,7 +273,7 @@ export async function sendTweet(
                 : undefined,
         },
         roomId,
-        createdAt: tweet.timestamp * 1000, 
+        createdAt: tweet.timestamp * 1000,
     }));
 
     return memories;
