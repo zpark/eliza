@@ -105,7 +105,7 @@ export class WalletProvider {
     const cacheKey = path.join(this.cacheKey, 'walletBalances');
     const cachedData = await this.runtime.getCache<Record<SupportedChain, string>>(cacheKey);
     if (cachedData) {
-      elizaLogger.log(`Returning cached wallet balances`);
+      elizaLogger.log('Returning cached wallet balances');
       return cachedData;
     }
 
@@ -199,7 +199,7 @@ export class WalletProvider {
   }
 }
 
-const genChainsFromRuntime = (runtime: IAgentRuntime): Record<string, Chain> => {
+const genChainsFromRuntime = async (runtime: IAgentRuntime): Promise<Record<string, Chain>> => {
   // Get chains from settings or use default supported chains
   const configuredChains = (runtime.character.settings.chains?.evm as SupportedChain[]) || [];
 
@@ -238,7 +238,7 @@ const genChainsFromRuntime = (runtime: IAgentRuntime): Record<string, Chain> => 
 export const initWalletProvider = async (runtime: IAgentRuntime) => {
   const teeMode = (await runtime.getSetting('TEE_MODE')) || TEEMode.OFF;
 
-  const chains = genChainsFromRuntime(runtime);
+  const chains = await genChainsFromRuntime(runtime);
 
   if (teeMode !== TEEMode.OFF) {
     const walletSecretSalt = await runtime.getSetting('WALLET_SECRET_SALT');
@@ -254,7 +254,7 @@ export const initWalletProvider = async (runtime: IAgentRuntime) => {
     );
     return new WalletProvider(deriveKeyResult.keypair, runtime, chains);
   }
-  const privateKey = (await runtime.getSetting('EVM_PRIVATE_KEY')) as `0x${string}`;
+  const privateKey = await runtime.getSetting('EVM_PRIVATE_KEY');
   if (!privateKey) {
     throw new Error('EVM_PRIVATE_KEY is missing');
   }

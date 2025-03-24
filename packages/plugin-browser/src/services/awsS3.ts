@@ -54,7 +54,16 @@ export class AwsS3Service extends Service implements IFileService {
   constructor(runtime: IAgentRuntime) {
     super();
     this.runtime = runtime;
-    this.fileUploadPath = (await runtime.getSetting('AWS_S3_UPLOAD_PATH')) ?? '';
+
+    // Initialize file upload path asynchronously
+    this.initializeSettings().catch((error) => {
+      console.error('Failed to initialize settings:', error);
+    });
+  }
+
+  private async initializeSettings() {
+    // Get AWS S3 upload path asynchronously
+    this.fileUploadPath = (await this.runtime.getSetting('AWS_S3_UPLOAD_PATH')) ?? '';
   }
 
   /**

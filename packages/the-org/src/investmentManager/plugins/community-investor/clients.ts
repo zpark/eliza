@@ -822,7 +822,7 @@ export class BirdeyeClient {
    * @returns {BirdeyeClient} A new instance of BirdeyeClient initialized with the provided API key and runtime.
    * @throws {Error} Thrown if the BIRDEYE_API_KEY setting is missing in the runtime object.
    */
-  static createFromRuntime(runtime: IAgentRuntime) {
+  static async createFromRuntime(runtime: IAgentRuntime) {
     const apiKey = await runtime.getSetting('BIRDEYE_API_KEY');
 
     if (!apiKey) {

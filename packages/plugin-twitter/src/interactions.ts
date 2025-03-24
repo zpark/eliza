@@ -87,6 +87,15 @@ export class TwitterInteractionClient {
     this.client = client;
     this.runtime = runtime;
     this.state = state;
+
+    // Initialize dry run setting asynchronously
+    this.initializeDryRunSetting().catch((error) => {
+      console.error('Failed to initialize Twitter dry run setting:', error);
+    });
+  }
+
+  private async initializeDryRunSetting() {
+    // Get dry run setting asynchronously
     this.isDryRun =
       this.state?.TWITTER_DRY_RUN ||
       ((await this.runtime.getSetting('TWITTER_DRY_RUN')) as unknown as boolean);
@@ -97,7 +106,7 @@ export class TwitterInteractionClient {
    * Uses an interval based on the 'TWITTER_POLL_INTERVAL' setting, or defaults to 2 minutes if not set.
    */
   async start() {
-    const handleTwitterInteractionsLoop = () => {
+    const handleTwitterInteractionsLoop = async () => {
       // Defaults to 2 minutes
       const interactionInterval =
         (this.state?.TWITTER_POLL_INTERVAL ||
@@ -107,7 +116,7 @@ export class TwitterInteractionClient {
       this.handleTwitterInteractions();
       setTimeout(handleTwitterInteractionsLoop, interactionInterval);
     };
-    handleTwitterInteractionsLoop();
+    await handleTwitterInteractionsLoop();
   }
 
   /**

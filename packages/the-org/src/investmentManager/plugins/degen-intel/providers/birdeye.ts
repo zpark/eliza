@@ -107,14 +107,24 @@ export default class Birdeye {
   runtime: IAgentRuntime;
 
   constructor(runtime: IAgentRuntime) {
-    const apiKey = await runtime.getSetting('BIRDEYE_API_KEY');
-    if (!apiKey) {
-      throw new Error('Failed to initialize Birdeye provider due to missing API key.');
-    }
-    this.apiKey = apiKey;
+    this.runtime = runtime;
     this.sentimentRoomId = createUniqueUuid(runtime, 'sentiment-analysis');
     this.twitterFeedRoomId = createUniqueUuid(runtime, 'twitter-feed');
-    this.runtime = runtime;
+
+    // Initialize API key asynchronously
+    this.initializeApiKey().catch((error) => {
+      console.error('Failed to initialize Birdeye API key:', error);
+    });
+  }
+
+  private async initializeApiKey() {
+    const apiKey = await this.runtime.getSetting('BIRDEYE_API_KEY');
+    if (!apiKey) {
+      const error = new Error('Failed to initialize Birdeye provider due to missing API key.');
+      console.error(error);
+      throw error;
+    }
+    this.apiKey = apiKey;
   }
 
   private async syncWalletHistory() {

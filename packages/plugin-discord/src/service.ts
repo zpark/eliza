@@ -64,7 +64,14 @@ export class DiscordService extends Service implements IDiscordService {
    */
   constructor(runtime: IAgentRuntime) {
     super(runtime);
+    // Initialize using the async initialize method
+    this.runtime = runtime;
+    this.initialize(runtime).catch((error) => {
+      logger.error(`Error during Discord service initialization: ${error.message}`);
+    });
+  }
 
+  private async initialize(runtime: IAgentRuntime) {
     // Check if Discord API token is available and valid
     const token = (await runtime.getSetting('DISCORD_API_TOKEN')) as string;
     if (!token || token.trim() === '') {
@@ -90,12 +97,11 @@ export class DiscordService extends Service implements IDiscordService {
         partials: [Partials.Channel, Partials.Message, Partials.User, Partials.Reaction],
       });
 
-      this.runtime = runtime;
       this.voiceManager = new VoiceManager(this, runtime);
       this.messageManager = new MessageManager(this);
 
       this.client.once(Events.ClientReady, this.onClientReady.bind(this));
-      this.client.login(token).catch((error) => {
+      await this.client.login(token).catch((error) => {
         logger.error(`Failed to login to Discord: ${error.message}`);
         this.client = null;
       });

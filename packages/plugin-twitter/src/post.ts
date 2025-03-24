@@ -36,32 +36,49 @@ export class TwitterPostClient {
     this.client = client;
     this.state = state;
     this.runtime = runtime;
+
+    // Initialize settings asynchronously
+    this.initializeSettings().catch((error) => {
+      console.error('Failed to initialize Twitter client settings:', error);
+    });
+  }
+
+  private async initializeSettings() {
+    // Get Twitter username
     this.twitterUsername =
-      state?.TWITTER_USERNAME || ((await this.runtime.getSetting('TWITTER_USERNAME')) as string);
+      this.state?.TWITTER_USERNAME ||
+      ((await this.runtime.getSetting('TWITTER_USERNAME')) as string);
+
+    // Get dry run setting
     this.isDryRun =
       this.state?.TWITTER_DRY_RUN ||
       ((await this.runtime.getSetting('TWITTER_DRY_RUN')) as unknown as boolean);
+
+    // Get auto-post setting
+    const autoPostEnabled =
+      this.state?.TWITTER_ENABLE_POST_GENERATION ||
+      (await this.runtime.getSetting('TWITTER_ENABLE_POST_GENERATION'));
+
+    // Get post interval settings
+    const postIntervalMin =
+      this.state?.TWITTER_POST_INTERVAL_MIN ||
+      (await this.runtime.getSetting('TWITTER_POST_INTERVAL_MIN'));
+    const postIntervalMax =
+      this.state?.TWITTER_POST_INTERVAL_MAX ||
+      (await this.runtime.getSetting('TWITTER_POST_INTERVAL_MAX'));
+
+    // Get post immediately setting
+    const postImmediately =
+      this.state?.TWITTER_POST_IMMEDIATELY ||
+      (await this.runtime.getSetting('TWITTER_POST_IMMEDIATELY'));
 
     // Log configuration on initialization
     logger.log('Twitter Client Configuration:');
     logger.log(`- Username: ${this.twitterUsername}`);
     logger.log(`- Dry Run Mode: ${this.isDryRun ? 'Enabled' : 'Disabled'}`);
-
-    logger.log(
-      `- Auto-post: ${this.state?.TWITTER_ENABLE_POST_GENERATION || (await this.runtime.getSetting('TWITTER_ENABLE_POST_GENERATION')) ? 'disabled' : 'enabled'}`
-    );
-
-    logger.log(
-      `- Post Interval: ${this.state?.TWITTER_POST_INTERVAL_MIN || (await this.runtime.getSetting('TWITTER_POST_INTERVAL_MIN'))}-${this.state?.TWITTER_POST_INTERVAL_MAX || (await this.runtime.getSetting('TWITTER_POST_INTERVAL_MAX'))} minutes`
-    );
-    logger.log(
-      `- Post Immediately: ${
-        this.state?.TWITTER_POST_IMMEDIATELY ||
-        (await this.runtime.getSetting('TWITTER_POST_IMMEDIATELY'))
-          ? 'enabled'
-          : 'disabled'
-      }`
-    );
+    logger.log(`- Auto-post: ${autoPostEnabled ? 'disabled' : 'enabled'}`);
+    logger.log(`- Post Interval: ${postIntervalMin}-${postIntervalMax} minutes`);
+    logger.log(`- Post Immediately: ${postImmediately ? 'enabled' : 'disabled'}`);
 
     if (this.isDryRun) {
       logger.log('Twitter client initialized in dry run mode - no actual tweets should be posted');

@@ -37,6 +37,13 @@ export class TelegramService extends Service {
   constructor(runtime: IAgentRuntime) {
     super(runtime);
     logger.log('📱 Constructing new TelegramService...');
+
+    this.initialize(runtime).catch((error) => {
+      logger.error('Failed to initialize TelegramService:', error);
+    });
+  }
+
+  private async initialize(runtime: IAgentRuntime) {
     this.options = {
       telegram: {
         apiRoot:
@@ -45,10 +52,15 @@ export class TelegramService extends Service {
           'https://api.telegram.org',
       },
     };
+
     const botToken = await runtime.getSetting('TELEGRAM_BOT_TOKEN');
+    if (!botToken) {
+      throw new Error('TELEGRAM_BOT_TOKEN is not set');
+    }
+
     this.bot = new Telegraf(botToken, this.options);
     this.messageManager = new MessageManager(this.bot, this.runtime);
-    logger.log('✅ TelegramService constructor completed');
+    logger.log('✅ TelegramService initialization completed');
   }
 
   /**

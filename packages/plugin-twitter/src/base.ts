@@ -300,8 +300,20 @@ export class ClientBase {
   constructor(runtime: IAgentRuntime, state: any) {
     this.runtime = runtime;
     this.state = state;
+
+    // Initialize Twitter client asynchronously
+    this.initializeTwitterClient().catch((error) => {
+      console.error('Failed to initialize Twitter client:', error);
+    });
+  }
+
+  private async initializeTwitterClient() {
+    // Get Twitter username asynchronously
     const username =
-      state?.TWITTER_USERNAME || ((await this.runtime.getSetting('TWITTER_USERNAME')) as string);
+      this.state?.TWITTER_USERNAME ||
+      ((await this.runtime.getSetting('TWITTER_USERNAME')) as string);
+
+    // Set up Twitter client
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {

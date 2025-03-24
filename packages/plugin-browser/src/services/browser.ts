@@ -97,7 +97,17 @@ export class BrowserService extends Service implements IBrowserService {
     this.runtime = runtime;
     this.browser = undefined;
     this.context = undefined;
-    this.captchaSolver = new CaptchaSolver((await runtime.getSetting('CAPSOLVER_API_KEY')) || '');
+
+    // Initialize captcha solver asynchronously
+    this.initializeCaptchaSolver().catch((error) => {
+      console.error('Failed to initialize captcha solver:', error);
+    });
+  }
+
+  private async initializeCaptchaSolver() {
+    // Get captcha solver API key asynchronously
+    const apiKey = (await this.runtime.getSetting('CAPSOLVER_API_KEY')) || '';
+    this.captchaSolver = new CaptchaSolver(apiKey);
   }
 
   /**

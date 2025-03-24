@@ -72,7 +72,7 @@ export class TelegramTestSuite implements TestSuite {
    * @throws {Error} If TELEGRAM_TEST_CHAT_ID is not set in the runtime settings or environment variables.
    * @returns {string} The validated chat ID.
    */
-  validateChatId(runtime: IAgentRuntime) {
+  async validateChatId(runtime: IAgentRuntime) {
     const testChatId =
       (await runtime.getSetting('TELEGRAM_TEST_CHAT_ID')) || process.env.TELEGRAM_TEST_CHAT_ID;
     if (!testChatId) {
@@ -85,7 +85,7 @@ export class TelegramTestSuite implements TestSuite {
 
   async getChatInfo(runtime: IAgentRuntime): Promise<Context['chat']> {
     try {
-      const chatId = this.validateChatId(runtime);
+      const chatId = await this.validateChatId(runtime);
       const chat = await this.bot.telegram.getChat(chatId);
       logger.log(`Fetched real chat: ${JSON.stringify(chat)}`);
       return chat;
@@ -105,7 +105,7 @@ export class TelegramTestSuite implements TestSuite {
     try {
       if (!this.bot) throw new Error('Bot not initialized.');
 
-      const chatId = this.validateChatId(runtime);
+      const chatId = await this.validateChatId(runtime);
       await this.bot.telegram.sendMessage(chatId, 'Testing Telegram message!');
       logger.debug('Message sent successfully.');
     } catch (error) {
@@ -180,7 +180,7 @@ export class TelegramTestSuite implements TestSuite {
 
   async testProcessingImages(runtime: IAgentRuntime) {
     try {
-      const chatId = this.validateChatId(runtime);
+      const chatId = await this.validateChatId(runtime);
       const fileId = await this.getFileId(chatId, TEST_IMAGE_URL);
 
       const mockMessage = {

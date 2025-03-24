@@ -38,13 +38,28 @@ export class SolanaService extends Service {
    */
   constructor(protected runtime: IAgentRuntime) {
     super();
-    const connection = new Connection(
-      (await runtime.getSetting('SOLANA_RPC_URL')) || PROVIDER_CONFIG.DEFAULT_RPC
-    );
-    this.connection = connection;
-    getWalletKey(runtime, false).then(({ publicKey }) => {
-      this.publicKey = publicKey;
+
+    // Initialize connection and wallet without awaiting in constructor
+    this.initializeConnection(runtime).catch((error) => {
+      console.error('Failed to initialize Solana connection:', error);
     });
+  }
+
+  private async initializeConnection(runtime: IAgentRuntime) {
+    // Get RPC URL asynchronously
+    const rpcUrl = (await runtime.getSetting('SOLANA_RPC_URL')) || PROVIDER_CONFIG.DEFAULT_RPC;
+
+    // Create connection with retrieved URL
+    this.connection = new Connection(rpcUrl);
+
+    // Get wallet key
+    try {
+      const { publicKey } = await getWalletKey(runtime, false);
+      this.publicKey = publicKey;
+    } catch (error) {
+      console.error('Failed to get wallet key:', error);
+      throw error;
+    }
   }
 
   /**

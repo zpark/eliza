@@ -54,12 +54,19 @@ export class TwitterClientInstance implements ITwitterClient {
     // Mentions and interactions
     this.interaction = new TwitterInteractionClient(this.client, runtime, state);
 
+    // Initialize async components
+    this.initializeAsyncComponents(runtime).catch((error) => {
+      console.error('Failed to initialize Twitter client async components:', error);
+    });
+
+    this.service = TwitterService.getInstance();
+  }
+
+  private async initializeAsyncComponents(runtime: IAgentRuntime) {
     // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
     if ((await runtime.getSetting('TWITTER_SPACES_ENABLE')) === true) {
       this.space = new TwitterSpaceClient(this.client, runtime);
     }
-
-    this.service = TwitterService.getInstance();
   }
 }
 

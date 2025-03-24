@@ -270,7 +270,7 @@ export class DiscordTestSuite implements TestSuite {
    * @throws {Error} If no test channel is found.
    */
   async getTestChannel(runtime: IAgentRuntime) {
-    const channelId = this.validateChannelId(runtime);
+    const channelId = await this.validateChannelId(runtime);
     const channel = await this.discordClient.client.channels.fetch(channelId);
 
     if (!channel) throw new Error('no test channel found!');
@@ -378,7 +378,7 @@ export class DiscordTestSuite implements TestSuite {
    * @param {IAgentRuntime} runtime The runtime object containing the settings and environment variables.
    * @returns {string} The validated Discord test channel ID.
    */
-  private validateChannelId(runtime: IAgentRuntime) {
+  private async validateChannelId(runtime: IAgentRuntime) {
     const testChannelId =
       (await runtime.getSetting('DISCORD_TEST_CHANNEL_ID')) || process.env.DISCORD_TEST_CHANNEL_ID;
     if (!testChannelId) {

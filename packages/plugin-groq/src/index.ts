@@ -24,7 +24,10 @@ import { z } from 'zod';
  * @param provider The model provider name
  * @returns The Cloudflare Gateway base URL if enabled, undefined otherwise
  */
-function getCloudflareGatewayBaseURL(runtime: any, provider: string): string | undefined {
+async function getCloudflareGatewayBaseURL(
+  runtime: any,
+  provider: string
+): Promise<string | undefined> {
   const isCloudflareEnabled = (await runtime.getSetting('CLOUDFLARE_GW_ENABLED')) === 'true';
   const cloudflareAccountId = await runtime.getSetting('CLOUDFLARE_AI_ACCOUNT_ID');
   const cloudflareGatewayId = await runtime.getSetting('CLOUDFLARE_AI_GATEWAY_ID');
@@ -350,7 +353,7 @@ export const groqPlugin: Plugin = {
       const frequency_penalty = 0.7;
       const presence_penalty = 0.7;
       const max_response_length = 8000;
-      const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+      const baseURL = await getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
         apiKey: await runtime.getSetting('GROQ_API_KEY'),
         fetch: runtime.fetch,
@@ -394,7 +397,7 @@ export const groqPlugin: Plugin = {
         (await runtime.getSetting('GROQ_LARGE_MODEL')) ??
         (await runtime.getSetting('LARGE_MODEL')) ??
         'gpt-4444o';
-      const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+      const baseURL = await getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
         apiKey: await runtime.getSetting('GROQ_API_KEY'),
         fetch: runtime.fetch,
@@ -420,7 +423,7 @@ export const groqPlugin: Plugin = {
         size?: string;
       }
     ) => {
-      const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+      const baseURL = await getCloudflareGatewayBaseURL(runtime, 'groq');
       const response = await fetch(`${baseURL}/images/generations`, {
         method: 'POST',
         headers: {
@@ -552,7 +555,7 @@ export const groqPlugin: Plugin = {
       return data.text;
     },
     [ModelType.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
-      const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+      const baseURL = await getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
         apiKey: await runtime.getSetting('GROQ_API_KEY'),
         baseURL,
@@ -588,7 +591,7 @@ export const groqPlugin: Plugin = {
       }
     },
     [ModelType.OBJECT_LARGE]: async (runtime, params: ObjectGenerationParams) => {
-      const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+      const baseURL = await getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
         apiKey: await runtime.getSetting('GROQ_API_KEY'),
         //baseURL,
