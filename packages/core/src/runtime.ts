@@ -501,8 +501,10 @@ export class AgentRuntime implements IAgentRuntime {
     secret = false
   ) {
     if (secret) {
+      if (this.character.secrets === undefined) this.character.secrets = {}
       this.character.secrets[key] = value;
     } else {
+      if (this.character.settings === undefined) this.character.settings = {}
       this.character.settings[key] = value;
     }
   }
