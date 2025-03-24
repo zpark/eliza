@@ -37,6 +37,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
       description: "Sync trending tokens from Birdeye",
       worldId,
       metadata: {
+        createdAt: Date.now(),
         updatedAt: Date.now(),
         updateInterval: 1000 * 60 * 60, // 1 hour
       },
@@ -63,6 +64,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
       description: "Sync tokens from Coinmarketcap",
       worldId,
       metadata: {
+        createdAt: Date.now(),
         updatedAt: Date.now(),
         updateInterval: 1000 * 60 * 5, // 5 minutes
       },
@@ -89,6 +91,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
       description: "Sync raw tweets from Twitter",
       worldId,
       metadata: {
+        createdAt: Date.now(),
         updatedAt: Date.now(),
         updateInterval: 1000 * 60 * 15, // 15 minutes
       },
@@ -115,6 +118,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
       description: "Sync wallet from Birdeye",
       worldId,
       metadata: {
+        createdAt: Date.now(),
         updatedAt: Date.now(),
         updateInterval: 1000 * 60 * 5, // 5 minutes
       },
@@ -138,6 +142,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
     description: "Generate a buy signal",
     worldId,
     metadata: {
+      createdAt: Date.now(),
       updatedAt: Date.now(),
       updateInterval: 1000 * 60 * 5, // 5 minutes
     },
@@ -162,6 +167,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
       description: "Parse tweets",
       worldId,
       metadata: {
+        createdAt: Date.now(),
         updatedAt: Date.now(),
         updateInterval: 1000 * 60 * 60 * 24, // 24 hours
       },
