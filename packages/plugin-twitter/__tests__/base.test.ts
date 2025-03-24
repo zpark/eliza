@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClientBase } from '../src/base';
 import type { TwitterConfig } from '../src/environment';
 
-// TODO: Probably won't work with focus on runtime.getSetting() due to lack of defaults
+// TODO: Probably won't work with focus on await runtime.getSetting() due to lack of defaults
 
 describe('Twitter Client Base', () => {
   let mockRuntime: IAgentRuntime;
@@ -22,7 +22,7 @@ describe('Twitter Client Base', () => {
       getEnv: function (key: string) {
         return this.env[key] || null;
       },
-      getSetting: function (key: string) {
+      async getSetting(key: string) {
         return this.env[key] || null;
       },
       character: {
@@ -50,20 +50,20 @@ describe('Twitter Client Base', () => {
     };
   });
 
-  it('should create instance with correct configuration', () => {
+  it('should create instance with correct configuration', async () => {
     const client = new ClientBase(mockRuntime, mockConfig);
     expect(client).toBeDefined();
-    expect(mockRuntime.getSetting('TWITTER_USERNAME')).toBe('testuser');
+    expect(await mockRuntime.getSetting('TWITTER_USERNAME')).toBe('testuser');
     expect(client.state.TWITTER_USERNAME).toBe('testuser');
-    expect(mockRuntime.getSetting('TWITTER_DRY_RUN')).toBe('true');
+    expect(await mockRuntime.getSetting('TWITTER_DRY_RUN')).toBe('true');
     expect(client.state.TWITTER_DRY_RUN).toBe(true);
   });
 
-  it('should initialize with correct post intervals', () => {
+  it('should initialize with correct post intervals', async () => {
     const client = new ClientBase(mockRuntime, mockConfig);
-    expect(mockRuntime.getSetting('TWITTER_POST_INTERVAL_MIN')).toBe('90');
+    expect(await mockRuntime.getSetting('TWITTER_POST_INTERVAL_MIN')).toBe('90');
     expect(client.state.TWITTER_POST_INTERVAL_MIN).toBe(90);
-    expect(mockRuntime.getSetting('TWITTER_POST_INTERVAL_MAX')).toBe('180');
+    expect(await mockRuntime.getSetting('TWITTER_POST_INTERVAL_MAX')).toBe('180');
     expect(client.state.TWITTER_POST_INTERVAL_MAX).toBe(180);
   });
 });

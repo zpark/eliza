@@ -360,7 +360,7 @@ export const swapAction = {
   },
   template: swapTemplate,
   validate: async (runtime: IAgentRuntime) => {
-    const privateKey = runtime.getSetting('EVM_PRIVATE_KEY');
+    const privateKey = await runtime.getSetting('EVM_PRIVATE_KEY');
     return typeof privateKey === 'string' && privateKey.startsWith('0x');
   },
   examples: [

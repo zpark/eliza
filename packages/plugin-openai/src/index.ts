@@ -209,16 +209,16 @@ export const openaiPlugin: Plugin = {
       const presence_penalty = 0.7;
       const max_response_length = 8192;
 
-      const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const baseURL = (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
 
       const openai = createOpenAI({
-        apiKey: runtime.getSetting('OPENAI_API_KEY'),
+        apiKey: await runtime.getSetting('OPENAI_API_KEY'),
         baseURL,
       });
 
       const model =
-        runtime.getSetting('OPENAI_SMALL_MODEL') ??
-        runtime.getSetting('SMALL_MODEL') ??
+        (await runtime.getSetting('OPENAI_SMALL_MODEL')) ??
+        (await runtime.getSetting('SMALL_MODEL')) ??
         'gpt-4o-mini';
 
       logger.log('generating text');
@@ -248,15 +248,17 @@ export const openaiPlugin: Plugin = {
         presencePenalty = 0.7,
       }: GenerateTextParams
     ) => {
-      const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const baseURL = (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
 
       const openai = createOpenAI({
-        apiKey: runtime.getSetting('OPENAI_API_KEY'),
+        apiKey: await runtime.getSetting('OPENAI_API_KEY'),
         baseURL,
       });
 
       const model =
-        runtime.getSetting('OPENAI_LARGE_MODEL') ?? runtime.getSetting('LARGE_MODEL') ?? 'gpt-4o';
+        (await runtime.getSetting('OPENAI_LARGE_MODEL')) ??
+        (await runtime.getSetting('LARGE_MODEL')) ??
+        'gpt-4o';
 
       const { text: openaiResponse } = await generateText({
         model: openai.languageModel(model),
@@ -279,11 +281,11 @@ export const openaiPlugin: Plugin = {
         size?: string;
       }
     ) => {
-      const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const baseURL = (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
       const response = await fetch(`${baseURL}/images/generations`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${runtime.getSetting('OPENAI_API_KEY')}`,
+          Authorization: `Bearer ${await runtime.getSetting('OPENAI_API_KEY')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -387,7 +389,7 @@ export const openaiPlugin: Plugin = {
     },
     [ModelType.TRANSCRIPTION]: async (runtime, audioBuffer: Buffer) => {
       logger.log('audioBuffer', audioBuffer);
-      const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const baseURL = (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
       const formData = new FormData();
 
       formData.append('file', new File([audioBuffer], 'recording.mp3', { type: 'audio/mp3' }));
@@ -395,7 +397,7 @@ export const openaiPlugin: Plugin = {
       const response = await fetch(`${baseURL}/audio/transcriptions`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${runtime.getSetting('OPENAI_API_KEY')}`,
+          Authorization: `Bearer ${await runtime.getSetting('OPENAI_API_KEY')}`,
           // Note: Do not set a Content-Type header—letting fetch set it for FormData is best
         },
         body: formData,
@@ -409,14 +411,14 @@ export const openaiPlugin: Plugin = {
       return data.text;
     },
     [ModelType.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
-      const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const baseURL = (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
       const openai = createOpenAI({
-        apiKey: runtime.getSetting('OPENAI_API_KEY'),
+        apiKey: await runtime.getSetting('OPENAI_API_KEY'),
         baseURL,
       });
       const model =
-        runtime.getSetting('OPENAI_SMALL_MODEL') ??
-        runtime.getSetting('SMALL_MODEL') ??
+        (await runtime.getSetting('OPENAI_SMALL_MODEL')) ??
+        (await runtime.getSetting('SMALL_MODEL')) ??
         'gpt-4o-mini';
 
       try {
@@ -445,13 +447,15 @@ export const openaiPlugin: Plugin = {
       }
     },
     [ModelType.OBJECT_LARGE]: async (runtime, params: ObjectGenerationParams) => {
-      const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const baseURL = (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
       const openai = createOpenAI({
-        apiKey: runtime.getSetting('OPENAI_API_KEY'),
+        apiKey: await runtime.getSetting('OPENAI_API_KEY'),
         baseURL,
       });
       const model =
-        runtime.getSetting('OPENAI_LARGE_MODEL') ?? runtime.getSetting('LARGE_MODEL') ?? 'gpt-4o';
+        (await runtime.getSetting('OPENAI_LARGE_MODEL')) ??
+        (await runtime.getSetting('LARGE_MODEL')) ??
+        'gpt-4o';
 
       try {
         if (params.schema) {
@@ -486,10 +490,11 @@ export const openaiPlugin: Plugin = {
         {
           name: 'openai_test_url_and_api_key_validation',
           fn: async (runtime) => {
-            const baseURL = runtime.getSetting('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+            const baseURL =
+              (await runtime.getSetting('OPENAI_BASE_URL')) ?? 'https://api.openai.com/v1';
             const response = await fetch(`${baseURL}/models`, {
               headers: {
-                Authorization: `Bearer ${runtime.getSetting('OPENAI_API_KEY')}`,
+                Authorization: `Bearer ${await runtime.getSetting('OPENAI_API_KEY')}`,
               },
             });
             const data = await response.json();

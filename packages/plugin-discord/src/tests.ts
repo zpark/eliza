@@ -380,7 +380,7 @@ export class DiscordTestSuite implements TestSuite {
    */
   private validateChannelId(runtime: IAgentRuntime) {
     const testChannelId =
-      runtime.getSetting('DISCORD_TEST_CHANNEL_ID') || process.env.DISCORD_TEST_CHANNEL_ID;
+      (await runtime.getSetting('DISCORD_TEST_CHANNEL_ID')) || process.env.DISCORD_TEST_CHANNEL_ID;
     if (!testChannelId) {
       throw new Error(
         'DISCORD_TEST_CHANNEL_ID is not set. Please provide a valid channel ID in the environment variables.'

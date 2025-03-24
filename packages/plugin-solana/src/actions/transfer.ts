@@ -178,7 +178,7 @@ export default {
     try {
       const { keypair: senderKeypair } = await getWalletKey(runtime, true);
       const connection = new Connection(
-        runtime.getSetting('SOLANA_RPC_URL') || 'https://api.mainnet-beta.solana.com'
+        (await runtime.getSetting('SOLANA_RPC_URL')) || 'https://api.mainnet-beta.solana.com'
       );
       const recipientPubkey = new PublicKey(content.recipient);
 

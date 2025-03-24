@@ -55,7 +55,7 @@ export class TwitterClientInstance implements ITwitterClient {
     this.interaction = new TwitterInteractionClient(this.client, runtime, state);
 
     // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
-    if (runtime.getSetting('TWITTER_SPACES_ENABLE') === true) {
+    if ((await runtime.getSetting('TWITTER_SPACES_ENABLE')) === true) {
       this.space = new TwitterSpaceClient(this.client, runtime);
     }
 
@@ -81,7 +81,7 @@ export class TwitterService extends Service {
     clientId: string,
     state: any
   ): Promise<TwitterClientInstance> {
-    if (runtime.getSetting('TWITTER_2FA_SECRET') === null) {
+    if ((await runtime.getSetting('TWITTER_2FA_SECRET')) === null) {
       runtime.setSetting('TWITTER_2FA_SECRET', undefined, false);
     }
     try {
@@ -243,19 +243,19 @@ export class TwitterService extends Service {
     // Check for character-level Twitter credentials
     const twitterConfig: Partial<TwitterConfig> = {
       TWITTER_USERNAME:
-        (runtime.getSetting('TWITTER_USERNAME') as string) ||
+        ((await runtime.getSetting('TWITTER_USERNAME')) as string) ||
         runtime.character.settings?.TWITTER_USERNAME ||
         runtime.character.secrets?.TWITTER_USERNAME,
       TWITTER_PASSWORD:
-        (runtime.getSetting('TWITTER_PASSWORD') as string) ||
+        ((await runtime.getSetting('TWITTER_PASSWORD')) as string) ||
         runtime.character.settings?.TWITTER_PASSWORD ||
         runtime.character.secrets?.TWITTER_PASSWORD,
       TWITTER_EMAIL:
-        (runtime.getSetting('TWITTER_EMAIL') as string) ||
+        ((await runtime.getSetting('TWITTER_EMAIL')) as string) ||
         runtime.character.settings?.TWITTER_EMAIL ||
         runtime.character.secrets?.TWITTER_EMAIL,
       TWITTER_2FA_SECRET:
-        (runtime.getSetting('TWITTER_2FA_SECRET') as string) ||
+        ((await runtime.getSetting('TWITTER_2FA_SECRET')) as string) ||
         runtime.character.settings?.TWITTER_2FA_SECRET ||
         runtime.character.secrets?.TWITTER_2FA_SECRET,
     };

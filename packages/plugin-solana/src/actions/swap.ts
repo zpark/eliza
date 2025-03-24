@@ -302,7 +302,7 @@ export const executeSwap: Action = {
       }
 
       const connection = new Connection(
-        runtime.getSetting('SOLANA_RPC_URL') || 'https://api.mainnet-beta.solana.com'
+        (await runtime.getSetting('SOLANA_RPC_URL')) || 'https://api.mainnet-beta.solana.com'
       );
       const { publicKey: walletPublicKey } = await getWalletKey(runtime, false);
 

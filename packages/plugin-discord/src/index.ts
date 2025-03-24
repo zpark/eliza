@@ -18,7 +18,7 @@ const discordPlugin: Plugin = {
   providers: [channelStateProvider, voiceStateProvider],
   tests: [new DiscordTestSuite()],
   init: async (config: Record<string, string>, runtime: IAgentRuntime) => {
-    const token = runtime.getSetting('DISCORD_API_TOKEN') as string;
+    const token = (await runtime.getSetting('DISCORD_API_TOKEN')) as string;
 
     if (!token || token.trim() === '') {
       logger.warn(

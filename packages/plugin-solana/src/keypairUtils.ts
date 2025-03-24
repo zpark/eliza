@@ -33,7 +33,8 @@ export async function getWalletKey(
   // TEE mode is OFF
   if (requirePrivateKey) {
     const privateKeyString =
-      runtime.getSetting('SOLANA_PRIVATE_KEY') ?? runtime.getSetting('WALLET_PRIVATE_KEY');
+      (await runtime.getSetting('SOLANA_PRIVATE_KEY')) ??
+      (await runtime.getSetting('WALLET_PRIVATE_KEY'));
 
     if (!privateKeyString) {
       throw new Error('Private key not found in settings');
@@ -57,7 +58,8 @@ export async function getWalletKey(
     }
   } else {
     const publicKeyString =
-      runtime.getSetting('SOLANA_PUBLIC_KEY') ?? runtime.getSetting('WALLET_PUBLIC_KEY');
+      (await runtime.getSetting('SOLANA_PUBLIC_KEY')) ??
+      (await runtime.getSetting('WALLET_PUBLIC_KEY'));
 
     if (!publicKeyString) {
       throw new Error(

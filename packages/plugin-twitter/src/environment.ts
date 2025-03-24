@@ -116,58 +116,63 @@ export async function validateTwitterConfig(
     const twitterConfig = {
       TWITTER_DRY_RUN:
         parseBooleanFromText(
-          runtime.getSetting('TWITTER_DRY_RUN') || process.env.TWITTER_DRY_RUN
+          (await runtime.getSetting('TWITTER_DRY_RUN')) || process.env.TWITTER_DRY_RUN
         ) ?? false,
 
-      TWITTER_USERNAME: runtime.getSetting('TWITTER_USERNAME') || process.env.TWITTER_USERNAME,
+      TWITTER_USERNAME:
+        (await runtime.getSetting('TWITTER_USERNAME')) || process.env.TWITTER_USERNAME,
 
-      TWITTER_PASSWORD: runtime.getSetting('TWITTER_PASSWORD') || process.env.TWITTER_PASSWORD,
+      TWITTER_PASSWORD:
+        (await runtime.getSetting('TWITTER_PASSWORD')) || process.env.TWITTER_PASSWORD,
 
-      TWITTER_EMAIL: runtime.getSetting('TWITTER_EMAIL') || process.env.TWITTER_EMAIL,
+      TWITTER_EMAIL: (await runtime.getSetting('TWITTER_EMAIL')) || process.env.TWITTER_EMAIL,
 
       TWITTER_2FA_SECRET:
-        runtime.getSetting('TWITTER_2FA_SECRET') || process.env.TWITTER_2FA_SECRET || '',
+        (await runtime.getSetting('TWITTER_2FA_SECRET')) || process.env.TWITTER_2FA_SECRET || '',
 
       // int
       TWITTER_RETRY_LIMIT: safeParseInt(
-        runtime.getSetting('TWITTER_RETRY_LIMIT') || process.env.TWITTER_RETRY_LIMIT,
+        (await runtime.getSetting('TWITTER_RETRY_LIMIT')) || process.env.TWITTER_RETRY_LIMIT,
         5
       ),
 
       // int in seconds
       TWITTER_POLL_INTERVAL: safeParseInt(
-        runtime.getSetting('TWITTER_POLL_INTERVAL') || process.env.TWITTER_POLL_INTERVAL,
+        (await runtime.getSetting('TWITTER_POLL_INTERVAL')) || process.env.TWITTER_POLL_INTERVAL,
         120 // 2m
       ),
 
       // bool
       TWITTER_ENABLE_POST_GENERATION:
         parseBooleanFromText(
-          runtime.getSetting('TWITTER_ENABLE_POST_GENERATION') ||
+          (await runtime.getSetting('TWITTER_ENABLE_POST_GENERATION')) ||
             process.env.TWITTER_ENABLE_POST_GENERATION
         ) ?? true,
 
       // int in minutes
       TWITTER_POST_INTERVAL_MIN: safeParseInt(
-        runtime.getSetting('TWITTER_POST_INTERVAL_MIN') || process.env.TWITTER_POST_INTERVAL_MIN,
+        (await runtime.getSetting('TWITTER_POST_INTERVAL_MIN')) ||
+          process.env.TWITTER_POST_INTERVAL_MIN,
         90 // 1.5 hours
       ),
 
       // int in minutes
       TWITTER_POST_INTERVAL_MAX: safeParseInt(
-        runtime.getSetting('TWITTER_POST_INTERVAL_MAX') || process.env.TWITTER_POST_INTERVAL_MAX,
+        (await runtime.getSetting('TWITTER_POST_INTERVAL_MAX')) ||
+          process.env.TWITTER_POST_INTERVAL_MAX,
         180 // 3 hours
       ),
 
       // bool
       TWITTER_POST_IMMEDIATELY:
         parseBooleanFromText(
-          runtime.getSetting('TWITTER_POST_IMMEDIATELY') || process.env.TWITTER_POST_IMMEDIATELY
+          (await runtime.getSetting('TWITTER_POST_IMMEDIATELY')) ||
+            process.env.TWITTER_POST_IMMEDIATELY
         ) ?? false,
 
       TWITTER_SPACES_ENABLE:
         parseBooleanFromText(
-          runtime.getSetting('TWITTER_SPACES_ENABLE') || process.env.TWITTER_SPACES_ENABLE
+          (await runtime.getSetting('TWITTER_SPACES_ENABLE')) || process.env.TWITTER_SPACES_ENABLE
         ) ?? false,
       ...config,
     };

@@ -100,7 +100,7 @@ export class TwitterTestSuite implements TestSuite {
    */
   async testFetchProfile(runtime: IAgentRuntime) {
     try {
-      const username = runtime.getSetting('TWITTER_USERNAME') as string;
+      const username = (await runtime.getSetting('TWITTER_USERNAME')) as string;
       const profile = await this.twitterClient.client.fetchProfile(username);
       if (!profile || !profile.id) {
         throw new Error('Profile fetch failed.');

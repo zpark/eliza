@@ -11,7 +11,7 @@ import { PhalaRemoteAttestationProvider as RemoteAttestationProvider } from './r
  * Phala TEE Cloud Provider
  * @example
  * ```ts
- * const provider = new PhalaDeriveKeyProvider(runtime.getSetting('TEE_MODE'));
+ * const provider = new PhalaDeriveKeyProvider(await runtime.getSetting('TEE_MODE'));
  * ```
  */
 /**
@@ -169,12 +169,12 @@ interface ProviderResult {
 const phalaDeriveKeyProvider: Provider = {
   name: 'phala-derive-key',
   get: async (runtime: IAgentRuntime, _message?: Memory): Promise<ProviderResult> => {
-    const teeMode = runtime.getSetting('TEE_MODE');
+    const teeMode = await runtime.getSetting('TEE_MODE');
     const provider = new PhalaDeriveKeyProvider(teeMode);
     const agentId = runtime.agentId;
     try {
       // Validate wallet configuration
-      if (!runtime.getSetting('WALLET_SECRET_SALT')) {
+      if (!(await runtime.getSetting('WALLET_SECRET_SALT'))) {
         logger.error('Wallet secret salt is not configured in settings');
         return {
           data: null,
@@ -184,7 +184,7 @@ const phalaDeriveKeyProvider: Provider = {
       }
 
       try {
-        const secretSalt = runtime.getSetting('WALLET_SECRET_SALT') || 'secret_salt';
+        const secretSalt = (await runtime.getSetting('WALLET_SECRET_SALT')) || 'secret_salt';
         const solanaKeypair = await provider.deriveEd25519Keypair(secretSalt, 'solana', agentId);
         const evmKeypair = await provider.deriveEcdsaKeypair(secretSalt, 'evm', agentId);
 

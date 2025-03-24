@@ -800,7 +800,7 @@ export class VoiceManager extends EventEmitter {
     let chosenChannel: BaseGuildVoiceChannel | null = null;
 
     try {
-      const channelId = this.runtime.getSetting('DISCORD_VOICE_CHANNEL_ID') as string;
+      const channelId = (await this.runtime.getSetting('DISCORD_VOICE_CHANNEL_ID')) as string;
       if (channelId) {
         const channel = await guild.channels.fetch(channelId);
         if (channel?.isVoiceBased()) {

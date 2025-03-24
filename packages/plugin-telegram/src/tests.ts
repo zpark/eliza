@@ -74,7 +74,7 @@ export class TelegramTestSuite implements TestSuite {
    */
   validateChatId(runtime: IAgentRuntime) {
     const testChatId =
-      runtime.getSetting('TELEGRAM_TEST_CHAT_ID') || process.env.TELEGRAM_TEST_CHAT_ID;
+      (await runtime.getSetting('TELEGRAM_TEST_CHAT_ID')) || process.env.TELEGRAM_TEST_CHAT_ID;
     if (!testChatId) {
       throw new Error(
         'TELEGRAM_TEST_CHAT_ID is not set. Please provide a valid chat ID in the environment variables.'

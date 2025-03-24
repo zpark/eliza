@@ -107,7 +107,7 @@ export default class Birdeye {
   runtime: IAgentRuntime;
 
   constructor(runtime: IAgentRuntime) {
-    const apiKey = runtime.getSetting('BIRDEYE_API_KEY');
+    const apiKey = await runtime.getSetting('BIRDEYE_API_KEY');
     if (!apiKey) {
       throw new Error('Failed to initialize Birdeye provider due to missing API key.');
     }
@@ -129,7 +129,7 @@ export default class Birdeye {
     };
 
     const publicKey =
-      this.runtime.getSetting('SOLANA_PUBLIC_KEY') ||
+      (await this.runtime.getSetting('SOLANA_PUBLIC_KEY')) ||
       'BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq';
 
     const res = await fetch(
@@ -177,7 +177,7 @@ export default class Birdeye {
     };
 
     const publicKey =
-      this.runtime.getSetting('SOLANA_PUBLIC_KEY') ||
+      (await this.runtime.getSetting('SOLANA_PUBLIC_KEY')) ||
       'BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq';
 
     const res = await fetch(

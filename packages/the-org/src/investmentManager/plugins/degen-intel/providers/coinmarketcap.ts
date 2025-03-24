@@ -13,7 +13,7 @@ export default class CoinmarketCap {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'X-CMC_PRO_API_KEY': this.runtime.getSetting('COINMARKETCAP_API_KEY'),
+        'X-CMC_PRO_API_KEY': await this.runtime.getSetting('COINMARKETCAP_API_KEY'),
       },
     };
 

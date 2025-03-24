@@ -44,7 +44,8 @@ export async function getWalletKey(
   // TEE mode is OFF
   if (requirePrivateKey) {
     const privateKeyString =
-      runtime.getSetting('SOLANA_PRIVATE_KEY') ?? runtime.getSetting('WALLET_PRIVATE_KEY');
+      (await runtime.getSetting('SOLANA_PRIVATE_KEY')) ??
+      (await runtime.getSetting('WALLET_PRIVATE_KEY'));
 
     if (!privateKeyString) {
       throw new Error('Private key not found in settings');
@@ -68,7 +69,8 @@ export async function getWalletKey(
     }
   } else {
     const publicKeyString =
-      runtime.getSetting('SOLANA_PUBLIC_KEY') ?? runtime.getSetting('WALLET_PUBLIC_KEY');
+      (await runtime.getSetting('SOLANA_PUBLIC_KEY')) ??
+      (await runtime.getSetting('WALLET_PUBLIC_KEY'));
 
     if (!publicKeyString) {
       throw new Error('Public key not found in settings');
@@ -143,7 +145,7 @@ export async function sendTransaction(connection: Connection, transaction: Versi
 
 export class WalletProvider {
   static createFromRuntime(runtime: IAgentRuntime): WalletProvider {
-    const address = runtime.getSetting('SOLANA_PUBLIC_KEY');
+    const address = await runtime.getSetting('SOLANA_PUBLIC_KEY');
 
     if (!address) {
       throw new Error('SOLANA_PUBLIC_KEY not configured');
@@ -161,7 +163,7 @@ export class WalletProvider {
     try {
       // Create a connection to the Solana network
       const connection = new Connection(
-        this.runtime.getSetting('SOLANA_RPC_URL') || 'https://api.mainnet-beta.solana.com',
+        (await this.runtime.getSetting('SOLANA_RPC_URL')) || 'https://api.mainnet-beta.solana.com',
         'confirmed'
       );
 

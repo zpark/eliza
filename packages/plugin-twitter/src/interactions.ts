@@ -89,7 +89,7 @@ export class TwitterInteractionClient {
     this.state = state;
     this.isDryRun =
       this.state?.TWITTER_DRY_RUN ||
-      (this.runtime.getSetting('TWITTER_DRY_RUN') as unknown as boolean);
+      ((await this.runtime.getSetting('TWITTER_DRY_RUN')) as unknown as boolean);
   }
 
   /**
@@ -101,7 +101,7 @@ export class TwitterInteractionClient {
       // Defaults to 2 minutes
       const interactionInterval =
         (this.state?.TWITTER_POLL_INTERVAL ||
-          (this.runtime.getSetting('TWITTER_POLL_INTERVAL') as unknown as number) ||
+          ((await this.runtime.getSetting('TWITTER_POLL_INTERVAL')) as unknown as number) ||
           120) * 1000;
 
       this.handleTwitterInteractions();
@@ -507,7 +507,8 @@ export class TwitterInteractionClient {
 
     state.values = {
       ...state.values,
-      twitterUserName: this.state?.TWITTER_USERNAME || this.runtime.getSetting('TWITTER_USERNAME'),
+      twitterUserName:
+        this.state?.TWITTER_USERNAME || (await this.runtime.getSetting('TWITTER_USERNAME')),
       currentPost,
       formattedConversation,
     };

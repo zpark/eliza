@@ -29,7 +29,7 @@ export default {
       return false;
     }
 
-    const spaceEnable = runtime.getSetting('TWITTER_SPACES_ENABLE') === true;
+    const spaceEnable = (await runtime.getSetting('TWITTER_SPACES_ENABLE')) === true;
     return spaceEnable;
   },
   description: 'Join a Twitter Space to participate in live audio conversations.',

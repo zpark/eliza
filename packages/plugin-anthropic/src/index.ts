@@ -69,7 +69,8 @@ export const anthropicPlugin: Plugin = {
   models: {
     [ModelType.TEXT_SMALL]: async (runtime, { prompt, stopSequences = [] }: GenerateTextParams) => {
       const temperature = 0.7;
-      const smallModel = runtime.getSetting('ANTHROPIC_SMALL_MODEL') ?? 'claude-3-haiku-20240307';
+      const smallModel =
+        (await runtime.getSetting('ANTHROPIC_SMALL_MODEL')) ?? 'claude-3-haiku-20240307';
       const maxTokens = smallModel.includes('-3-') ? 4096 : 8192;
 
       const { text } = await generateText({
@@ -96,7 +97,8 @@ export const anthropicPlugin: Plugin = {
         presencePenalty = 0.7,
       }: GenerateTextParams
     ) => {
-      const largeModel = runtime.getSetting('ANTHROPIC_LARGE_MODEL') ?? 'claude-3-5-sonnet-latest';
+      const largeModel =
+        (await runtime.getSetting('ANTHROPIC_LARGE_MODEL')) ?? 'claude-3-5-sonnet-latest';
 
       const { text } = await generateText({
         model: anthropic(largeModel),
@@ -112,7 +114,8 @@ export const anthropicPlugin: Plugin = {
     },
 
     [ModelType.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
-      const smallModel = runtime.getSetting('ANTHROPIC_SMALL_MODEL') ?? 'claude-3-haiku-20240307';
+      const smallModel =
+        (await runtime.getSetting('ANTHROPIC_SMALL_MODEL')) ?? 'claude-3-haiku-20240307';
       try {
         // Check if this is a reflection schema request (has specific format)
         const isReflection = params.schema?.facts && params.schema.relationships;
@@ -268,7 +271,8 @@ export const anthropicPlugin: Plugin = {
     },
 
     [ModelType.OBJECT_LARGE]: async (runtime, params: ObjectGenerationParams) => {
-      const largeModel = runtime.getSetting('ANTHROPIC_LARGE_MODEL') ?? 'claude-3-5-sonnet-latest';
+      const largeModel =
+        (await runtime.getSetting('ANTHROPIC_LARGE_MODEL')) ?? 'claude-3-5-sonnet-latest';
       try {
         // Check if this is a reflection schema request (has specific format)
         const isReflection = params.schema?.facts && params.schema.relationships;

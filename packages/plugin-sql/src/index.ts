@@ -96,8 +96,8 @@ const sqlPlugin: Plugin = {
   description: 'SQL database adapter plugin using Drizzle ORM',
   init: async (_, runtime: IAgentRuntime) => {
     const config = {
-      dataDir: runtime.getSetting('PGLITE_DATA_DIR') ?? './pglite',
-      postgresUrl: runtime.getSetting('POSTGRES_URL'),
+      dataDir: (await runtime.getSetting('PGLITE_DATA_DIR')) ?? './pglite',
+      postgresUrl: await runtime.getSetting('POSTGRES_URL'),
     };
 
     try {

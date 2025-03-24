@@ -19,8 +19,8 @@ export type { TeeVendorConfig };
  * @returns {Promise<void>} - A promise that resolves once the TEE is initialized.
  */
 async function initializeTEE(config: Record<string, string>, runtime: IAgentRuntime) {
-  if (config.TEE_VENDOR || runtime.getSetting('TEE_VENDOR')) {
-    const vendor = config.TEE_VENDOR || runtime.getSetting('TEE_VENDOR');
+  if (config.TEE_VENDOR || (await runtime.getSetting('TEE_VENDOR'))) {
+    const vendor = config.TEE_VENDOR || (await runtime.getSetting('TEE_VENDOR'));
     logger.info(`Initializing TEE with vendor: ${vendor}`);
     let plugin: Plugin;
     switch (vendor) {

@@ -95,7 +95,7 @@ export const proposeAction = {
         description: String(options.description),
       };
 
-      const privateKey = runtime.getSetting('EVM_PRIVATE_KEY') as `0x${string}`;
+      const privateKey = (await runtime.getSetting('EVM_PRIVATE_KEY')) as `0x${string}`;
       const walletProvider = new WalletProvider(privateKey, runtime);
       const action = new ProposeAction(walletProvider);
       return await action.propose(proposeParams);
@@ -109,7 +109,7 @@ export const proposeAction = {
   },
   template: proposeTemplate,
   validate: async (runtime: IAgentRuntime) => {
-    const privateKey = runtime.getSetting('EVM_PRIVATE_KEY');
+    const privateKey = await runtime.getSetting('EVM_PRIVATE_KEY');
     return typeof privateKey === 'string' && privateKey.startsWith('0x');
   },
   examples: [

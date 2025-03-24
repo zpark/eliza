@@ -213,10 +213,10 @@ const genChainsFromRuntime = (runtime: IAgentRuntime): Record<string, Chain> => 
   for (const chainName of chainNames) {
     try {
       // Try to get RPC URL from settings using different formats
-      let rpcUrl = runtime.getSetting(`ETHEREUM_PROVIDER_${chainName.toUpperCase()}`);
+      let rpcUrl = await runtime.getSetting(`ETHEREUM_PROVIDER_${chainName.toUpperCase()}`);
 
       if (!rpcUrl) {
-        rpcUrl = runtime.getSetting(`EVM_PROVIDER_${chainName.toUpperCase()}`);
+        rpcUrl = await runtime.getSetting(`EVM_PROVIDER_${chainName.toUpperCase()}`);
       }
 
       // Skip chains that don't exist in viem
@@ -236,12 +236,12 @@ const genChainsFromRuntime = (runtime: IAgentRuntime): Record<string, Chain> => 
 };
 
 export const initWalletProvider = async (runtime: IAgentRuntime) => {
-  const teeMode = runtime.getSetting('TEE_MODE') || TEEMode.OFF;
+  const teeMode = (await runtime.getSetting('TEE_MODE')) || TEEMode.OFF;
 
   const chains = genChainsFromRuntime(runtime);
 
   if (teeMode !== TEEMode.OFF) {
-    const walletSecretSalt = runtime.getSetting('WALLET_SECRET_SALT');
+    const walletSecretSalt = await runtime.getSetting('WALLET_SECRET_SALT');
     if (!walletSecretSalt) {
       throw new Error('WALLET_SECRET_SALT required when TEE_MODE is enabled');
     }
@@ -254,7 +254,7 @@ export const initWalletProvider = async (runtime: IAgentRuntime) => {
     );
     return new WalletProvider(deriveKeyResult.keypair, runtime, chains);
   }
-  const privateKey = runtime.getSetting('EVM_PRIVATE_KEY') as `0x${string}`;
+  const privateKey = (await runtime.getSetting('EVM_PRIVATE_KEY')) as `0x${string}`;
   if (!privateKey) {
     throw new Error('EVM_PRIVATE_KEY is missing');
   }

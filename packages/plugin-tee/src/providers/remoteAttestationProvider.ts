@@ -84,7 +84,7 @@ class PhalaRemoteAttestationProvider extends RemoteAttestationProvider {
 const phalaRemoteAttestationProvider: Provider = {
   name: 'phala-remote-attestation',
   get: async (runtime: IAgentRuntime, message: Memory) => {
-    const teeMode = runtime.getSetting('TEE_MODE');
+    const teeMode = await runtime.getSetting('TEE_MODE');
     const provider = new PhalaRemoteAttestationProvider(teeMode);
     const agentId = runtime.agentId;
 

@@ -56,7 +56,7 @@ export const phalaRemoteAttestationAction = {
         },
       };
       // Get the remote attestation of the agentId
-      const teeMode = runtime.getSetting('TEE_MODE');
+      const teeMode = await runtime.getSetting('TEE_MODE');
       logger.debug(`Tee mode: ${teeMode}`);
       logger.debug(`Attestation message: ${JSON.stringify(attestationMessage)}`);
       const provider = new RemoteAttestationProvider(teeMode);

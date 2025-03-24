@@ -39,7 +39,7 @@ export class SolanaService extends Service {
   constructor(protected runtime: IAgentRuntime) {
     super();
     const connection = new Connection(
-      runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC
+      (await runtime.getSetting('SOLANA_RPC_URL')) || PROVIDER_CONFIG.DEFAULT_RPC
     );
     this.connection = connection;
     getWalletKey(runtime, false).then(({ publicKey }) => {
@@ -116,7 +116,7 @@ export class SolanaService extends Service {
           headers: {
             Accept: 'application/json',
             'x-chain': 'solana',
-            'X-API-KEY': this.runtime.getSetting('BIRDEYE_API_KEY'),
+            'X-API-KEY': await this.runtime.getSetting('BIRDEYE_API_KEY'),
             ...options.headers,
           },
         });
@@ -211,7 +211,7 @@ export class SolanaService extends Service {
 
     try {
       // Try Birdeye API first
-      const birdeyeApiKey = this.runtime.getSetting('BIRDEYE_API_KEY');
+      const birdeyeApiKey = await this.runtime.getSetting('BIRDEYE_API_KEY');
       if (birdeyeApiKey) {
         const walletData = await this.fetchWithRetry(
           `${PROVIDER_CONFIG.BIRDEYE_API}/v1/wallet/token_list?wallet=${this.publicKey.toBase58()}`

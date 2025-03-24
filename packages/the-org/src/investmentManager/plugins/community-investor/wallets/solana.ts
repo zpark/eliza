@@ -45,7 +45,8 @@ type JupiterQuoteResult = {
  */
 export function loadPrivateKey(runtime: IAgentRuntime) {
   const privateKeyString =
-    runtime.getSetting('SOLANA_PRIVATE_KEY') ?? runtime.getSetting('WALLET_PRIVATE_KEY')!;
+    (await runtime.getSetting('SOLANA_PRIVATE_KEY')) ??
+    (await runtime.getSetting('WALLET_PRIVATE_KEY')!);
 
   let secretKey: Uint8Array;
   try {
@@ -72,7 +73,8 @@ export function loadPrivateKey(runtime: IAgentRuntime) {
 
   // Verify the public key matches what we expect
   const expectedPublicKey =
-    runtime.getSetting('SOLANA_PUBLIC_KEY') ?? runtime.getSetting('WALLET_PUBLIC_KEY');
+    (await runtime.getSetting('SOLANA_PUBLIC_KEY')) ??
+    (await runtime.getSetting('WALLET_PUBLIC_KEY'));
   if (keypair.publicKey.toBase58() !== expectedPublicKey) {
     throw new Error("Generated public key doesn't match expected public key");
   }
@@ -114,7 +116,7 @@ export class SolanaTrustWalletProvider implements TrustWalletProvider<JupiterQuo
    */
   static createFromRuntime(runtime: IAgentRuntime) {
     const wallet = WalletProvider.createFromRuntime(runtime);
-    const connection = new Connection(runtime.getSetting('RPC_URL')!);
+    const connection = new Connection(await runtime.getSetting('RPC_URL')!);
     return new SolanaTrustWalletProvider(runtime, wallet, connection);
   }
 

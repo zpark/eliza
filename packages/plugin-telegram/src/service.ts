@@ -40,12 +40,12 @@ export class TelegramService extends Service {
     this.options = {
       telegram: {
         apiRoot:
-          runtime.getSetting('TELEGRAM_API_ROOT') ||
+          (await runtime.getSetting('TELEGRAM_API_ROOT')) ||
           process.env.TELEGRAM_API_ROOT ||
           'https://api.telegram.org',
       },
     };
-    const botToken = runtime.getSetting('TELEGRAM_BOT_TOKEN');
+    const botToken = await runtime.getSetting('TELEGRAM_BOT_TOKEN');
     this.bot = new Telegraf(botToken, this.options);
     this.messageManager = new MessageManager(this.bot, this.runtime);
     logger.log('✅ TelegramService constructor completed');
@@ -154,7 +154,7 @@ export class TelegramService extends Service {
       await this.handleNewChat(ctx);
     }
 
-    const allowedChats = this.runtime.getSetting('TELEGRAM_ALLOWED_CHATS');
+    const allowedChats = await this.runtime.getSetting('TELEGRAM_ALLOWED_CHATS');
     if (!allowedChats) {
       return true; // All chats are allowed if no restriction is set
     }

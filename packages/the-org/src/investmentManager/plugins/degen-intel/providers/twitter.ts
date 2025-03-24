@@ -23,7 +23,7 @@ export default class Twitter {
   }
 
   async syncRawTweets(): Promise<boolean> {
-    const username = this.runtime.getSetting('TWITTER_USERNAME');
+    const username = await this.runtime.getSetting('TWITTER_USERNAME');
 
     // Ensure feed room exists
     await this.runtime.ensureRoomExists({

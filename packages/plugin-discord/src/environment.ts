@@ -22,7 +22,7 @@ export type DiscordConfig = z.infer<typeof discordEnvSchema>;
 export async function validateDiscordConfig(runtime: IAgentRuntime): Promise<DiscordConfig> {
   try {
     const config = {
-      DISCORD_API_TOKEN: runtime.getSetting('DISCORD_API_TOKEN'),
+      DISCORD_API_TOKEN: await runtime.getSetting('DISCORD_API_TOKEN'),
     };
 
     return discordEnvSchema.parse(config);

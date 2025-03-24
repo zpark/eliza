@@ -483,7 +483,7 @@ export class HeliusClient {
    * @throws {Error} Thrown if HELIUS_API_KEY is missing from the runtime settings.
    */
   static createFromRuntime(runtime: IAgentRuntime) {
-    const apiKey = runtime.getSetting('HELIUS_API_KEY');
+    const apiKey = await runtime.getSetting('HELIUS_API_KEY');
 
     if (!apiKey) {
       throw new Error('missing HELIUS_API_KEY');
@@ -613,7 +613,7 @@ export class CoingeckoClient {
    * @returns {CoingeckoClient} A new instance of CoingeckoClient initialized with the apiKey and runtime.
    */
   static createFromRuntime(runtime: IAgentRuntime) {
-    const apiKey = runtime.getSetting('COINGECKO_API_KEY');
+    const apiKey = await runtime.getSetting('COINGECKO_API_KEY');
 
     if (!apiKey) {
       throw new Error('missing COINGECKO_API_KEY');
@@ -823,7 +823,7 @@ export class BirdeyeClient {
    * @throws {Error} Thrown if the BIRDEYE_API_KEY setting is missing in the runtime object.
    */
   static createFromRuntime(runtime: IAgentRuntime) {
-    const apiKey = runtime.getSetting('BIRDEYE_API_KEY');
+    const apiKey = await runtime.getSetting('BIRDEYE_API_KEY');
 
     if (!apiKey) {
       throw new Error('missing BIRDEYE_API_KEY');

@@ -66,7 +66,7 @@ export class DiscordService extends Service implements IDiscordService {
     super(runtime);
 
     // Check if Discord API token is available and valid
-    const token = runtime.getSetting('DISCORD_API_TOKEN') as string;
+    const token = (await runtime.getSetting('DISCORD_API_TOKEN')) as string;
     if (!token || token.trim() === '') {
       logger.warn('Discord API Token not provided - Discord functionality will be unavailable');
       this.client = null;
@@ -234,7 +234,7 @@ export class DiscordService extends Service implements IDiscordService {
    *
    */
   static async start(runtime: IAgentRuntime): Promise<DiscordService> {
-    const token = runtime.getSetting('DISCORD_API_TOKEN') as string;
+    const token = (await runtime.getSetting('DISCORD_API_TOKEN')) as string;
     if (!token || token.trim() === '') {
       throw new Error('Discord API Token not provided');
     }

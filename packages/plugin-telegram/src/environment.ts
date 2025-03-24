@@ -20,7 +20,7 @@ export async function validateTelegramConfig(runtime: IAgentRuntime): Promise<Te
   try {
     const config = {
       TELEGRAM_BOT_TOKEN:
-        runtime.getSetting('TELEGRAM_BOT_TOKEN') || process.env.TELEGRAM_BOT_TOKEN,
+        (await runtime.getSetting('TELEGRAM_BOT_TOKEN')) || process.env.TELEGRAM_BOT_TOKEN,
     };
 
     return telegramEnvSchema.parse(config);

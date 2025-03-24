@@ -141,7 +141,7 @@ export default class BuySignal {
       headers: {
         accept: 'application/json',
         'x-chain': 'solana',
-        'X-API-KEY': this.runtime.getSetting('BIRDEYE_API_KEY'),
+        'X-API-KEY': await this.runtime.getSetting('BIRDEYE_API_KEY'),
       },
     };
 

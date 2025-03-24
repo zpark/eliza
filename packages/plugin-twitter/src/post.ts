@@ -37,10 +37,10 @@ export class TwitterPostClient {
     this.state = state;
     this.runtime = runtime;
     this.twitterUsername =
-      state?.TWITTER_USERNAME || (this.runtime.getSetting('TWITTER_USERNAME') as string);
+      state?.TWITTER_USERNAME || ((await this.runtime.getSetting('TWITTER_USERNAME')) as string);
     this.isDryRun =
       this.state?.TWITTER_DRY_RUN ||
-      (this.runtime.getSetting('TWITTER_DRY_RUN') as unknown as boolean);
+      ((await this.runtime.getSetting('TWITTER_DRY_RUN')) as unknown as boolean);
 
     // Log configuration on initialization
     logger.log('Twitter Client Configuration:');
@@ -48,15 +48,16 @@ export class TwitterPostClient {
     logger.log(`- Dry Run Mode: ${this.isDryRun ? 'Enabled' : 'Disabled'}`);
 
     logger.log(
-      `- Auto-post: ${this.state?.TWITTER_ENABLE_POST_GENERATION || this.runtime.getSetting('TWITTER_ENABLE_POST_GENERATION') ? 'disabled' : 'enabled'}`
+      `- Auto-post: ${this.state?.TWITTER_ENABLE_POST_GENERATION || (await this.runtime.getSetting('TWITTER_ENABLE_POST_GENERATION')) ? 'disabled' : 'enabled'}`
     );
 
     logger.log(
-      `- Post Interval: ${this.state?.TWITTER_POST_INTERVAL_MIN || this.runtime.getSetting('TWITTER_POST_INTERVAL_MIN')}-${this.state?.TWITTER_POST_INTERVAL_MAX || this.runtime.getSetting('TWITTER_POST_INTERVAL_MAX')} minutes`
+      `- Post Interval: ${this.state?.TWITTER_POST_INTERVAL_MIN || (await this.runtime.getSetting('TWITTER_POST_INTERVAL_MIN'))}-${this.state?.TWITTER_POST_INTERVAL_MAX || (await this.runtime.getSetting('TWITTER_POST_INTERVAL_MAX'))} minutes`
     );
     logger.log(
       `- Post Immediately: ${
-        this.state?.TWITTER_POST_IMMEDIATELY || this.runtime.getSetting('TWITTER_POST_IMMEDIATELY')
+        this.state?.TWITTER_POST_IMMEDIATELY ||
+        (await this.runtime.getSetting('TWITTER_POST_IMMEDIATELY'))
           ? 'enabled'
           : 'disabled'
       }`
@@ -72,7 +73,7 @@ export class TwitterPostClient {
    */
   async start() {
     logger.log('Starting Twitter post client...');
-    const tweetGeneration = this.runtime.getSetting('TWITTER_ENABLE_TWEET_GENERATION');
+    const tweetGeneration = await this.runtime.getSetting('TWITTER_ENABLE_TWEET_GENERATION');
     if (tweetGeneration === false) {
       logger.log('Tweet generation is disabled');
       return;
@@ -82,7 +83,7 @@ export class TwitterPostClient {
       // Defaults to 30 minutes
       const interval =
         (this.state?.TWITTER_POST_INTERVAL ||
-          (this.runtime.getSetting('TWITTER_POST_INTERVAL') as unknown as number) ||
+          ((await this.runtime.getSetting('TWITTER_POST_INTERVAL')) as unknown as number) ||
           30) *
         60 *
         1000;
@@ -93,7 +94,7 @@ export class TwitterPostClient {
 
     // Start the loop after a 1 minute delay to allow other services to initialize
     setTimeout(generateNewTweetLoop, 60 * 1000);
-    if (this.runtime.getSetting('TWITTER_POST_IMMEDIATELY')) {
+    if (await this.runtime.getSetting('TWITTER_POST_IMMEDIATELY')) {
       // await 1 second
       await new Promise((resolve) => setTimeout(resolve, 1000));
       this.generateNewTweet();

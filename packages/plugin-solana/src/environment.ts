@@ -64,17 +64,18 @@ export async function validateSolanaConfig(runtime: IAgentRuntime): Promise<Sola
   try {
     const config = {
       WALLET_SECRET_SALT:
-        runtime.getSetting('WALLET_SECRET_SALT') || process.env.WALLET_SECRET_SALT,
-      WALLET_SECRET_KEY: runtime.getSetting('WALLET_SECRET_KEY') || process.env.WALLET_SECRET_KEY,
+        (await runtime.getSetting('WALLET_SECRET_SALT')) || process.env.WALLET_SECRET_SALT,
+      WALLET_SECRET_KEY:
+        (await runtime.getSetting('WALLET_SECRET_KEY')) || process.env.WALLET_SECRET_KEY,
       WALLET_PUBLIC_KEY:
-        runtime.getSetting('SOLANA_PUBLIC_KEY') ||
-        runtime.getSetting('WALLET_PUBLIC_KEY') ||
+        (await runtime.getSetting('SOLANA_PUBLIC_KEY')) ||
+        (await runtime.getSetting('WALLET_PUBLIC_KEY')) ||
         process.env.WALLET_PUBLIC_KEY,
-      SOL_ADDRESS: runtime.getSetting('SOL_ADDRESS') || process.env.SOL_ADDRESS,
-      SLIPPAGE: runtime.getSetting('SLIPPAGE') || process.env.SLIPPAGE,
-      SOLANA_RPC_URL: runtime.getSetting('SOLANA_RPC_URL') || process.env.SOLANA_RPC_URL,
-      HELIUS_API_KEY: runtime.getSetting('HELIUS_API_KEY') || process.env.HELIUS_API_KEY,
-      BIRDEYE_API_KEY: runtime.getSetting('BIRDEYE_API_KEY') || process.env.BIRDEYE_API_KEY,
+      SOL_ADDRESS: (await runtime.getSetting('SOL_ADDRESS')) || process.env.SOL_ADDRESS,
+      SLIPPAGE: (await runtime.getSetting('SLIPPAGE')) || process.env.SLIPPAGE,
+      SOLANA_RPC_URL: (await runtime.getSetting('SOLANA_RPC_URL')) || process.env.SOLANA_RPC_URL,
+      HELIUS_API_KEY: (await runtime.getSetting('HELIUS_API_KEY')) || process.env.HELIUS_API_KEY,
+      BIRDEYE_API_KEY: (await runtime.getSetting('BIRDEYE_API_KEY')) || process.env.BIRDEYE_API_KEY,
     };
 
     return solanaEnvSchema.parse(config);

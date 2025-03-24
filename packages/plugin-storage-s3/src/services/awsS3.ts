@@ -54,7 +54,7 @@ export class AwsS3Service extends Service implements IFileService {
   constructor(runtime: IAgentRuntime) {
     super();
     this.runtime = runtime;
-    this.fileUploadPath = runtime.getSetting('AWS_S3_UPLOAD_PATH') ?? '';
+    this.fileUploadPath = (await runtime.getSetting('AWS_S3_UPLOAD_PATH')) ?? '';
   }
 
   /**
@@ -66,7 +66,7 @@ export class AwsS3Service extends Service implements IFileService {
     logger.log('Initializing AwsS3Service');
     const service = new AwsS3Service(runtime);
     service.runtime = runtime;
-    service.fileUploadPath = runtime.getSetting('AWS_S3_UPLOAD_PATH') ?? '';
+    service.fileUploadPath = (await runtime.getSetting('AWS_S3_UPLOAD_PATH')) ?? '';
     return service;
   }
 
@@ -104,19 +104,19 @@ export class AwsS3Service extends Service implements IFileService {
     if (this.s3Client) return true;
     if (!this.runtime) return false;
 
-    const AWS_ACCESS_KEY_ID = this.runtime.getSetting('AWS_ACCESS_KEY_ID');
-    const AWS_SECRET_ACCESS_KEY = this.runtime.getSetting('AWS_SECRET_ACCESS_KEY');
-    const AWS_REGION = this.runtime.getSetting('AWS_REGION');
-    const AWS_S3_BUCKET = this.runtime.getSetting('AWS_S3_BUCKET');
+    const AWS_ACCESS_KEY_ID = await this.runtime.getSetting('AWS_ACCESS_KEY_ID');
+    const AWS_SECRET_ACCESS_KEY = await this.runtime.getSetting('AWS_SECRET_ACCESS_KEY');
+    const AWS_REGION = await this.runtime.getSetting('AWS_REGION');
+    const AWS_S3_BUCKET = await this.runtime.getSetting('AWS_S3_BUCKET');
 
     if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_REGION || !AWS_S3_BUCKET) {
       return false;
     }
 
     // Optional fields to allow for other providers
-    const endpoint = this.runtime.getSetting('AWS_S3_ENDPOINT');
-    const sslEnabled = this.runtime.getSetting('AWS_S3_SSL_ENABLED');
-    const forcePathStyle = this.runtime.getSetting('AWS_S3_FORCE_PATH_STYLE');
+    const endpoint = await this.runtime.getSetting('AWS_S3_ENDPOINT');
+    const sslEnabled = await this.runtime.getSetting('AWS_S3_SSL_ENABLED');
+    const forcePathStyle = await this.runtime.getSetting('AWS_S3_FORCE_PATH_STYLE');
 
     this.s3Client = new S3Client({
       ...(endpoint ? { endpoint } : {}),

@@ -129,7 +129,7 @@ const updateRoleAction: Action = {
     const { roomId } = message;
     const channelType = message.content.channelType as ChannelType;
     const serverId = message.content.serverId as string;
-    const worldId = runtime.getSetting('WORLD_ID');
+    const worldId = await runtime.getSetting('WORLD_ID');
 
     // First, get the world for this server
     let world;

@@ -9,7 +9,7 @@ import { prependWavHeader } from './utils';
  */
 function getVoiceSettings(runtime: IAgentRuntime) {
   const getSetting = (key: string, fallback = '') =>
-    process.env[key] || runtime.getSetting(key) || fallback;
+    process.env[key] || (await runtime.getSetting(key)) || fallback;
 
   return {
     apiKey: getSetting('ELEVENLABS_API_KEY') || getSetting('ELEVENLABS_XI_API_KEY'),

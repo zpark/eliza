@@ -25,9 +25,9 @@ import { z } from 'zod';
  * @returns The Cloudflare Gateway base URL if enabled, undefined otherwise
  */
 function getCloudflareGatewayBaseURL(runtime: any, provider: string): string | undefined {
-  const isCloudflareEnabled = runtime.getSetting('CLOUDFLARE_GW_ENABLED') === 'true';
-  const cloudflareAccountId = runtime.getSetting('CLOUDFLARE_AI_ACCOUNT_ID');
-  const cloudflareGatewayId = runtime.getSetting('CLOUDFLARE_AI_GATEWAY_ID');
+  const isCloudflareEnabled = (await runtime.getSetting('CLOUDFLARE_GW_ENABLED')) === 'true';
+  const cloudflareAccountId = await runtime.getSetting('CLOUDFLARE_AI_ACCOUNT_ID');
+  const cloudflareGatewayId = await runtime.getSetting('CLOUDFLARE_AI_GATEWAY_ID');
 
   const defaultUrl = 'https://api.groq.com/openai/v1';
   logger.debug('Cloudflare Gateway Configuration:', {
@@ -352,14 +352,14 @@ export const groqPlugin: Plugin = {
       const max_response_length = 8000;
       const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
-        apiKey: runtime.getSetting('GROQ_API_KEY'),
+        apiKey: await runtime.getSetting('GROQ_API_KEY'),
         fetch: runtime.fetch,
         baseURL,
       });
 
       const model =
-        runtime.getSetting('GROQ_SMALL_MODEL') ??
-        runtime.getSetting('SMALL_MODEL') ??
+        (await runtime.getSetting('GROQ_SMALL_MODEL')) ??
+        (await runtime.getSetting('SMALL_MODEL')) ??
         'llama-3.1-8b-instant';
 
       logger.log('generating text');
@@ -391,10 +391,12 @@ export const groqPlugin: Plugin = {
       }: GenerateTextParams
     ) => {
       const model =
-        runtime.getSetting('GROQ_LARGE_MODEL') ?? runtime.getSetting('LARGE_MODEL') ?? 'gpt-4444o';
+        (await runtime.getSetting('GROQ_LARGE_MODEL')) ??
+        (await runtime.getSetting('LARGE_MODEL')) ??
+        'gpt-4444o';
       const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
-        apiKey: runtime.getSetting('GROQ_API_KEY'),
+        apiKey: await runtime.getSetting('GROQ_API_KEY'),
         fetch: runtime.fetch,
         baseURL,
       });
@@ -422,7 +424,7 @@ export const groqPlugin: Plugin = {
       const response = await fetch(`${baseURL}/images/generations`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${runtime.getSetting('GROQ_API_KEY')}`,
+          Authorization: `Bearer ${await runtime.getSetting('GROQ_API_KEY')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -536,7 +538,7 @@ export const groqPlugin: Plugin = {
       const response = await fetch(`${baseURL}/audio/transcriptions`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${runtime.getSetting('GROQ_API_KEY')}`,
+          Authorization: `Bearer ${await runtime.getSetting('GROQ_API_KEY')}`,
           // Note: Do not set a Content-Type header—letting fetch set it for FormData is best
         },
         body: formData,
@@ -552,12 +554,12 @@ export const groqPlugin: Plugin = {
     [ModelType.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
       const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
-        apiKey: runtime.getSetting('GROQ_API_KEY'),
+        apiKey: await runtime.getSetting('GROQ_API_KEY'),
         baseURL,
       });
       const model =
-        runtime.getSetting('GROQ_SMALL_MODEL') ??
-        runtime.getSetting('SMALL_MODEL') ??
+        (await runtime.getSetting('GROQ_SMALL_MODEL')) ??
+        (await runtime.getSetting('SMALL_MODEL')) ??
         'llama-3.1-8b-instangt';
 
       try {
@@ -588,12 +590,12 @@ export const groqPlugin: Plugin = {
     [ModelType.OBJECT_LARGE]: async (runtime, params: ObjectGenerationParams) => {
       const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
       const groq = createGroq({
-        apiKey: runtime.getSetting('GROQ_API_KEY'),
+        apiKey: await runtime.getSetting('GROQ_API_KEY'),
         //baseURL,
       });
       const model =
-        runtime.getSetting('GROQ_LARGE_MODEL') ??
-        runtime.getSetting('LARGE_MODEL') ??
+        (await runtime.getSetting('GROQ_LARGE_MODEL')) ??
+        (await runtime.getSetting('LARGE_MODEL')) ??
         'llama-3.2-90b-vision-preview';
 
       try {
@@ -632,7 +634,7 @@ export const groqPlugin: Plugin = {
   //           const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
   //           const response = await fetch(`${baseURL}/models`, {
   //             headers: {
-  //               Authorization: `Bearer ${runtime.getSetting('GROQ_API_KEY')}`,
+  //               Authorization: `Bearer ${await runtime.getSetting('GROQ_API_KEY')}`,
   //             },
   //           });
   //           const data = await response.json();

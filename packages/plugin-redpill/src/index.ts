@@ -209,16 +209,17 @@ export const redpillPlugin: Plugin = {
       const presence_penalty = 0.7;
       const max_response_length = 8192;
 
-      const baseURL = runtime.getSetting('REDPILL_BASE_URL') ?? 'https://api.red-pill.ai/v1';
+      const baseURL =
+        (await runtime.getSetting('REDPILL_BASE_URL')) ?? 'https://api.red-pill.ai/v1';
 
       const redpill = createOpenAI({
-        apiKey: runtime.getSetting('REDPILL_API_KEY'),
+        apiKey: await runtime.getSetting('REDPILL_API_KEY'),
         baseURL,
       });
 
       const model =
-        runtime.getSetting('REDPILL_SMALL_MODEL') ??
-        runtime.getSetting('SMALL_MODEL') ??
+        (await runtime.getSetting('REDPILL_SMALL_MODEL')) ??
+        (await runtime.getSetting('SMALL_MODEL')) ??
         'gpt-4o-mini';
 
       logger.log('generating text');
@@ -248,15 +249,18 @@ export const redpillPlugin: Plugin = {
         presencePenalty = 0.7,
       }: GenerateTextParams
     ) => {
-      const baseURL = runtime.getSetting('REDPILL_BASE_URL') ?? 'https://api.red-pill.ai/v1';
+      const baseURL =
+        (await runtime.getSetting('REDPILL_BASE_URL')) ?? 'https://api.red-pill.ai/v1';
 
       const redpill = createOpenAI({
-        apiKey: runtime.getSetting('REDPILL_API_KEY'),
+        apiKey: await runtime.getSetting('REDPILL_API_KEY'),
         baseURL,
       });
 
       const model =
-        runtime.getSetting('REDPILL_LARGE_MODEL') ?? runtime.getSetting('LARGE_MODEL') ?? 'gpt-4o';
+        (await runtime.getSetting('REDPILL_LARGE_MODEL')) ??
+        (await runtime.getSetting('LARGE_MODEL')) ??
+        'gpt-4o';
 
       const { text: redpillResponse } = await generateText({
         model: redpill.languageModel(model),
@@ -358,14 +362,15 @@ export const redpillPlugin: Plugin = {
       }
     },
     [ModelType.OBJECT_SMALL]: async (runtime, params: ObjectGenerationParams) => {
-      const baseURL = runtime.getSetting('REDPILL_BASE_URL') ?? 'https://api.red-pill.ai/v1';
+      const baseURL =
+        (await runtime.getSetting('REDPILL_BASE_URL')) ?? 'https://api.red-pill.ai/v1';
       const redpill = createOpenAI({
-        apiKey: runtime.getSetting('REDPILL_API_KEY'),
+        apiKey: await runtime.getSetting('REDPILL_API_KEY'),
         baseURL,
       });
       const model =
-        runtime.getSetting('REDPILL_SMALL_MODEL') ??
-        runtime.getSetting('SMALL_MODEL') ??
+        (await runtime.getSetting('REDPILL_SMALL_MODEL')) ??
+        (await runtime.getSetting('SMALL_MODEL')) ??
         'gpt-4o-mini';
 
       try {
@@ -394,13 +399,16 @@ export const redpillPlugin: Plugin = {
       }
     },
     [ModelType.OBJECT_LARGE]: async (runtime, params: ObjectGenerationParams) => {
-      const baseURL = runtime.getSetting('REDPILL_BASE_URL') ?? 'https://api.red-pill.ai/v1';
+      const baseURL =
+        (await runtime.getSetting('REDPILL_BASE_URL')) ?? 'https://api.red-pill.ai/v1';
       const redpill = createOpenAI({
-        apiKey: runtime.getSetting('REDPILL_API_KEY'),
+        apiKey: await runtime.getSetting('REDPILL_API_KEY'),
         baseURL,
       });
       const model =
-        runtime.getSetting('REDPILL_LARGE_MODEL') ?? runtime.getSetting('LARGE_MODEL') ?? 'gpt-4o';
+        (await runtime.getSetting('REDPILL_LARGE_MODEL')) ??
+        (await runtime.getSetting('LARGE_MODEL')) ??
+        'gpt-4o';
 
       try {
         if (params.schema) {
@@ -435,10 +443,11 @@ export const redpillPlugin: Plugin = {
         {
           name: 'redpill_test_url_and_api_key_validation',
           fn: async (runtime) => {
-            const baseURL = runtime.getSetting('REDPILL_BASE_URL') ?? 'https://api.red-pill.ai/v1';
+            const baseURL =
+              (await runtime.getSetting('REDPILL_BASE_URL')) ?? 'https://api.red-pill.ai/v1';
             const response = await fetch(`${baseURL}/models`, {
               headers: {
-                Authorization: `Bearer ${runtime.getSetting('REDPILL_API_KEY')}`,
+                Authorization: `Bearer ${await runtime.getSetting('REDPILL_API_KEY')}`,
               },
             });
             const data = await response.json();

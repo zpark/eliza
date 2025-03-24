@@ -230,7 +230,7 @@ export class DegenTradingService extends Service {
 
     // Validate settings first
     const missingSettings = Object.entries(REQUIRED_SETTINGS)
-      .filter(([key]) => !runtime.getSetting(key))
+      .filter(([key]) => !(await runtime.getSetting(key)))
       .map(([key, desc]) => `${key} (${desc})`);
 
     if (missingSettings.length > 0) {
@@ -856,7 +856,7 @@ export class DegenTradingService extends Service {
   }> {
     logger.info('Processing buy signal:', signal);
 
-    const TRADER_KUMA = this.runtime.getSetting('TRADER_KUMA');
+    const TRADER_KUMA = await this.runtime.getSetting('TRADER_KUMA');
     if (TRADER_KUMA) {
       fetch(TRADER_KUMA).catch((e) => {
         console.error('TRADER_KUMA err', e);
@@ -1935,7 +1935,7 @@ export class DegenTradingService extends Service {
         amount,
         positionId: uuidv4() as UUID,
         currentBalance: tokenBalance.toString(),
-        walletAddress: this.runtime.getSetting('SOLANA_PUBLIC_KEY'),
+        walletAddress: await this.runtime.getSetting('SOLANA_PUBLIC_KEY'),
         isSimulation: false,
         sellRecommenderId: 'default',
         reason,
@@ -3191,7 +3191,7 @@ export class DegenTradingService extends Service {
       `https://public-api.birdeye.so/defi/v3/token/market-data?address=${tokenAddress}`,
       {
         headers: {
-          'X-API-KEY': this.runtime.getSetting('BIRDEYE_API_KEY') || '',
+          'X-API-KEY': (await this.runtime.getSetting('BIRDEYE_API_KEY')) || '',
         },
       }
     );
@@ -3986,7 +3986,7 @@ export class DegenTradingService extends Service {
     try {
       // This would typically get a wallet from a wallet service or create one
       // For now, we'll assume there's a wallet implementation available
-      const privateKey = this.runtime.getSetting('SOLANA_PRIVATE_KEY');
+      const privateKey = await this.runtime.getSetting('SOLANA_PRIVATE_KEY');
       if (!privateKey) {
         logger.error('No private key available for wallet');
         return null;

@@ -301,7 +301,7 @@ export class ClientBase {
     this.runtime = runtime;
     this.state = state;
     const username =
-      state?.TWITTER_USERNAME || (this.runtime.getSetting('TWITTER_USERNAME') as string);
+      state?.TWITTER_USERNAME || ((await this.runtime.getSetting('TWITTER_USERNAME')) as string);
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {
@@ -314,11 +314,13 @@ export class ClientBase {
     // First ensure the agent exists in the database
     await this.runtime.ensureAgentExists(this.runtime.character);
 
-    const username = this.state?.TWITTER_USERNAME || this.runtime.getSetting('TWITTER_USERNAME');
-    const password = this.state?.TWITTER_PASSWORD || this.runtime.getSetting('TWITTER_PASSWORD');
-    const email = this.state?.TWITTER_EMAIL || this.runtime.getSetting('TWITTER_EMAIL');
+    const username =
+      this.state?.TWITTER_USERNAME || (await this.runtime.getSetting('TWITTER_USERNAME'));
+    const password =
+      this.state?.TWITTER_PASSWORD || (await this.runtime.getSetting('TWITTER_PASSWORD'));
+    const email = this.state?.TWITTER_EMAIL || (await this.runtime.getSetting('TWITTER_EMAIL'));
     const twitter2faSecret =
-      this.state?.TWITTER_2FA_SECRET || this.runtime.getSetting('TWITTER_2FA_SECRET');
+      this.state?.TWITTER_2FA_SECRET || (await this.runtime.getSetting('TWITTER_2FA_SECRET'));
 
     // Validate required credentials
     if (!username || !password || !email) {
@@ -337,12 +339,12 @@ export class ClientBase {
       try {
         const authToken =
           this.state?.TWITTER_COOKIES_AUTH_TOKEN ||
-          this.runtime.getSetting('TWITTER_COOKIES_AUTH_TOKEN');
+          (await this.runtime.getSetting('TWITTER_COOKIES_AUTH_TOKEN'));
         const ct0 =
-          this.state?.TWITTER_COOKIES_CT0 || this.runtime.getSetting('TWITTER_COOKIES_CT0');
+          this.state?.TWITTER_COOKIES_CT0 || (await this.runtime.getSetting('TWITTER_COOKIES_CT0'));
         const guestId =
           this.state?.TWITTER_COOKIES_GUEST_ID ||
-          this.runtime.getSetting('TWITTER_COOKIES_GUEST_ID');
+          (await this.runtime.getSetting('TWITTER_COOKIES_GUEST_ID'));
 
         const createTwitterCookies = (authToken: string, ct0: string, guestId: string) =>
           authToken && ct0 && guestId
@@ -590,7 +592,7 @@ export class ClientBase {
     }
 
     const timeline = await this.fetchHomeTimeline(cachedTimeline ? 10 : 50);
-    const username = this.runtime.getSetting('TWITTER_USERNAME');
+    const username = await this.runtime.getSetting('TWITTER_USERNAME');
 
     // Get the most recent 20 mentions and interactions
     const mentionsAndInteractions = await this.fetchSearchTweets(
