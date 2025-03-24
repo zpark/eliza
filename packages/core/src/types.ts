@@ -152,6 +152,7 @@ export const ServiceTypes = {
     EMAIL: "email",
     TEE: "tee",
     TASK: "task",
+    TWITTER: "twitter",
 } as const;
 
 /**
