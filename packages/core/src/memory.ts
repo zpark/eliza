@@ -243,7 +243,9 @@ export class MemoryManager implements IMemoryManager {
         logger.log("Creating Memory", memory.id, memory.content.text);
 
         if (!memory.embedding) {
-            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, null);
+            console.log('looking up embedding')
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
+            console.log('got embedding', memory.embedding.length)
         }
 
         const memoryId = await this.runtime.databaseAdapter.createMemory(
