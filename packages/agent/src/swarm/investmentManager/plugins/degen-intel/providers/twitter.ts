@@ -17,6 +17,7 @@ export default class Twitter {
 
   async syncRawTweets(): Promise<boolean> {
     console.log('syncRawTweets')
+    await this.runtime.ensureEmbeddingDimension()
     try {
       const username = this.runtime.getSetting("TWITTER_USERNAME");
 
@@ -30,13 +31,35 @@ export default class Twitter {
       console.log('')
 
       // get the twitterClient from runtime
-      const twitterClient = this.runtime.getService(ServiceTypes.TWITTER);
-      if (!twitterClient) {
-        logger.error("Twitter client not found");
+      const twitterService = this.runtime.getService(ServiceTypes.TWITTER);
+      if (!twitterService) {
+        // can have a race condition here...
+        logger.error("Twitter service/client not found");
         return false;
       }
 
-      const list = twitterClient.getTweets(username as string, 200);
+      // Check for character-level Twitter credentials
+      const twitterConfig: Partial<TwitterConfig> = {
+        TWITTER_USERNAME: (this.runtime.getSetting("TWITTER_USERNAME") as string) || this.runtime.character.settings?.TWITTER_USERNAME || this.runtime.character.secrets?.TWITTER_USERNAME,
+        TWITTER_PASSWORD: (this.runtime.getSetting("TWITTER_PASSWORD") as string) || this.runtime.character.settings?.TWITTER_PASSWORD || this.runtime.character.secrets?.TWITTER_PASSWORD,
+        TWITTER_EMAIL: (this.runtime.getSetting("TWITTER_EMAIL") as string) || this.runtime.character.settings?.TWITTER_EMAIL || this.runtime.character.secrets?.TWITTER_EMAIL,
+        TWITTER_2FA_SECRET: (this.runtime.getSetting("TWITTER_2FA_SECRET") as string) || this.runtime.character.settings?.TWITTER_2FA_SECRET || this.runtime.character.secrets?.TWITTER_2FA_SECRET,
+      };
+
+      // Filter out undefined values
+      const config = Object.fromEntries(
+        Object.entries(twitterConfig).filter(([_, v]) => v !== undefined)
+      ) as TwitterConfig;
+
+      // so twitterClient is a _TwitterService
+      // with .runtime .config .clients
+      //console.log('runtime', this.runtime)
+      //console.log('about to create client', this.runtime.agentId)
+      const twitterClient = await twitterService.createClient(this.runtime, this.runtime.agentId, config)
+      //console.log('twitterClient', twitterClient)
+      // is it running?
+
+      const list = twitterClient.twitterClient.getTweets(username as string, 200);
       console.log('list', list.length)
       let syncCount = 0;
 
