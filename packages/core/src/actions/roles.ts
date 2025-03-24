@@ -32,17 +32,17 @@ export const generateObject = async ({
 
     // Clean up the response to extract just the enum value
     const cleanedResponse = response.trim();
-    
+
     // Verify the response is one of the allowed enum values
     if (enumValues.includes(cleanedResponse)) {
       return cleanedResponse;
     }
-    
+
     // If the response includes one of the enum values (case insensitive)
-    const matchedValue = enumValues.find(value => 
+    const matchedValue = enumValues.find(value =>
       cleanedResponse.toLowerCase().includes(value.toLowerCase())
     );
-    
+
     if (matchedValue) {
       return matchedValue;
     }
@@ -66,10 +66,10 @@ export const generateObject = async ({
   // Find appropriate brackets based on expected output type
   const firstChar = output === "array" ? "[" : "{";
   const lastChar = output === "array" ? "]" : "}";
-  
+
   const firstBracket = response.indexOf(firstChar);
   const lastBracket = response.lastIndexOf(lastChar);
-  
+
   if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
     jsonString = response.slice(firstBracket, lastBracket + 1);
   }
@@ -82,12 +82,12 @@ export const generateObject = async ({
   // Parse the JSON string
   try {
     const json = JSON.parse(jsonString);
-    
+
     // Validate against schema if provided
     if (schema) {
       return schema.parse(json);
     }
-    
+
     return json;
   } catch (_error) {
     logger.error(`Failed to parse JSON ${output}`);
@@ -171,7 +171,7 @@ async function generateObjectArray({
     logger.error("generateObjectArray context is empty");
     return [];
   }
-  
+
   const result = await generateObject({
     runtime,
     context,
@@ -179,12 +179,12 @@ async function generateObjectArray({
     output: "array",
     schema,
   });
-  
+
   if (!Array.isArray(result)) {
     logger.error("Generated result is not an array");
     return [];
   }
-  
+
   return schema ? schema.parse(result) : result;
 }
 
@@ -208,7 +208,7 @@ const updateRoleAction: Action = {
 
     // Validate message source
     if (message.content.source !== "discord") {
-      logger.info("Validation failed: Not a discord message");
+      //logger.debug("Validation failed: Not a discord message");
       return false;
     }
 
@@ -428,7 +428,7 @@ const updateRoleAction: Action = {
         user: "{{user1}}",
         content: {
           text: "Ban @troublemaker",
-          source: "discord", 
+          source: "discord",
         }
       },
       {
