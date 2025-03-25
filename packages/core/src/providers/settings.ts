@@ -64,26 +64,42 @@ function generateStatusMessage(
       (s) => s.required && !s.configured
     ).length;
 
-    // Generate appropriate message
     if (isOnboarding) {
-      if (requiredUnconfigured > 0) {
+      const requiredMissing = formattedSettings.filter((s) => s.required && !s.configured);
+      const optionalMissing = formattedSettings.filter((s) => !s.required && !s.configured);
+
+      if (requiredMissing.length > 0) {
         return `# PRIORITY TASK: Onboarding with ${state.senderName}\n${
           runtime.character.name
-        } still needs to configure ${requiredUnconfigured} required settings:\n\n${formattedSettings
-          .filter((s) => s.required && !s.configured)
-          .map((s) => `${s.key}: ${s.value}\n(${s.name}) ${s.usageDescription}`)
-          .join('\n\n')}\n\nValid settings keys: ${Object.keys(worldSettings).join(
-          ', '
-        )}\n\nIf the user gives any information related to the settings, ${
+        } needs to configure ${requiredMissing.length} required settings:\n\n${requiredMissing
+          .map(
+            (s) =>
+              `### ${s.name}\n**Key:** ${s.key}\n**Description:** ${s.description}\n**Current Value:** ${s.value}\n**Usage:** ${s.usageDescription}`
+          )
+          .join('\n\n')}\n\n${
           runtime.character.name
-        } should use the UPDATE_SETTINGS action to update the settings with this new information. ${
+        } should FIRST explain these settings to the user and ASK which ones they want to configure. Only if the user provides specific setting values should ${
           runtime.character.name
-        } can update any, some or all settings.`;
+        } use the UPDATE_SETTINGS action. Otherwise, use the REPLY action to continue the conversation.`;
       }
-      return `All required settings have been configured! Here's the current configuration:\n\n${formattedSettings
-        .map((s) => `${s.name}: ${s.description}\nValue: ${s.value}`)
-        .join('\n')}`;
+
+      // All required settings are configured
+      return `All required settings have been configured!\n\n${
+        optionalMissing.length > 0
+          ? `${runtime.character.name} has also noticed that ${optionalMissing.length} optional settings are still unconfigured. These are not required, but configuring them can improve functionality or unlock features.\n\n`
+          : ''
+      }Here is the current configuration:\n\n${formattedSettings
+        .map(
+          (s) =>
+            `### ${s.name}\n**Key:** ${s.key}\n**Description:** ${s.description}\n**Current Value:** ${s.value}`
+        )
+        .join(
+          '\n\n'
+        )}\n\nThe user can update **any** setting at any time, whether it's required or optional. Only if the user provides updated values should ${
+        runtime.character.name
+      } use the UPDATE_SETTINGS action. Otherwise, use the REPLY action to continue the conversation.`;
     }
+
     // Non-onboarding context - list all public settings with values and descriptions
     return `## Current Configuration\n\n${
       requiredUnconfigured > 0
