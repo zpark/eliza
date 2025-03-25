@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { Character, IAgentRuntime, OnboardingConfig, ProjectAgent } from '@elizaos/core';
 import dotenv from 'dotenv';
 import { initCharacter } from '../init';
+import communityManagerPlugin from './plugins/communityManager';
 
 const imagePath = path.resolve('./src/communityManager/assets/portrait.jpg');
 
@@ -29,12 +30,12 @@ export const character: Character = {
   name: 'Eliza',
   plugins: [
     '@elizaos/plugin-sql',
-    '@elizaos/plugin-anthropic',
+    // '@elizaos/plugin-anthropic',
     '@elizaos/plugin-openai',
     '@elizaos/plugin-discord',
-    '@elizaos/plugin-twitter',
-    '@elizaos/plugin-pdf',
-    '@elizaos/plugin-video-understanding',
+    // '@elizaos/plugin-twitter',
+    // '@elizaos/plugin-pdf',
+    // '@elizaos/plugin-video-understanding',
   ],
   settings: {
     secrets: {
@@ -405,6 +406,7 @@ const config: OnboardingConfig = {
 
 export const communityManager: ProjectAgent = {
   character,
+  plugins: [communityManagerPlugin],
   init: async (runtime: IAgentRuntime) => await initCharacter({ runtime, config }),
 };
 
