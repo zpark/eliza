@@ -63,7 +63,9 @@ export default class BuySignal {
     const prompt = template.replace("{{sentiment}}", sentiments);
 
     // Get all trending tokens
-    const trendingData = await this.runtime.databaseAdapter.getCache<IToken[]>("tokens") || [];
+
+    // FIXME: nothing sets this
+    const trendingData = await this.runtime.databaseAdapter.getCache<IToken[]>("tokens_solana") || [];
     console.log('trendingData', trendingData)
     let tokens = "";
     let index = 1;
@@ -78,7 +80,7 @@ export default class BuySignal {
     const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
 
     //console.log('rolePrompt', rolePrompt)
-    //console.log('context', finalPrompt)
+    console.log('context', finalPrompt)
 
     const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
       context: finalPrompt,
@@ -88,7 +90,7 @@ export default class BuySignal {
       object: true
     });
 
-    //console.log('response', response)
+    console.log('response', response)
 
     // Parse the JSON response
     const json: IBuySignalOutput = parseJSONObjectFromText(response)
@@ -120,6 +122,8 @@ export default class BuySignal {
       ...json,
       marketcap: Number(marketcap),
     };
+
+    this.runtime.emitEvent("SPARTAN_TRADE_BUY_SIGNAL", data)
 
     await this.runtime.databaseAdapter.setCache<any>("buy_signals", {
       key: "BUY_SIGNAL",
