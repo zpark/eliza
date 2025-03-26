@@ -5,9 +5,11 @@ import { getWalletBalance } from "../utils/wallet";
 
 export class DataService {
   private cacheManager: CacheManager;
+  private runtime;
 
   constructor(private runtime: IAgentRuntime) {
     this.cacheManager = new CacheManager();
+    this.runtime = runtime;
   }
 
   async initialize(): Promise<void> {
@@ -75,7 +77,7 @@ export class DataService {
   async getCMCSignals(): Promise<TokenSignal[]> {
     try {
       const cmcTokens = await this.runtime.databaseAdapter.getCache<any[]>("cmc_trending_tokens") || [];
-      
+
       return cmcTokens.map(token => ({
         address: token.address,
         symbol: token.symbol,
@@ -115,36 +117,81 @@ export class DataService {
         throw new Error("Birdeye API key not found");
       }
 
-      const response = await fetch(
-        `https://api.birdeye.so/v1/token/price?address=${tokenAddress}`,
-        {
-          headers: { "X-API-KEY": apiKey }
-        }
-      );
+      console.log('getTokenMarketData for', tokenAddress)
+
+      // call all 3 in parallel
+      const [response, volResponse, priceHistoryResponse] = await Promise.all([
+        fetch(
+          //`https://api.birdeye.so/v1/token/price?address=${tokenAddress}`,
+          `https://public-api.birdeye.so/defi/v3/token/market-data?address=${tokenAddress}`,
+          {
+            headers: {
+              accept: "application/json",
+              "x-CHAIN": "solana",
+              "X-API-KEY": apiKey ,
+            }
+          }
+        ),
+        fetch(
+          `https://public-api.birdeye.so/defi/price_volume/single?address=${tokenAddress}&type=24h`,
+          {
+            headers: {
+              accept: "application/json",
+              "x-CHAIN": "solana",
+              "X-API-KEY": apiKey ,
+            }
+          }
+        ),
+        fetch(
+          //`https://api.birdeye.so/v1/token/price_history?address=${tokenAddress}&type=hour&limit=24`,
+          `https://public-api.birdeye.so/defi/history_price?address=${tokenAddress}&address_type=token&type=15m`,
+          {
+            headers: {
+              accept: "application/json",
+              "x-CHAIN": "solana",
+              "X-API-KEY": apiKey ,
+            }
+          }
+        ),
+      ]);
 
       if (!response.ok) {
-        throw new Error(`Birdeye API error: ${response.status}`);
+        throw new Error(`Birdeye response ${tokenAddress} API error: ${response.status}`);
+      }
+      if (!volResponse.ok) {
+        throw new Error(`Birdeye volResponse ${tokenAddress} API error: ${volResponse.status}`);
+      }
+      if (!priceHistoryResponse.ok) {
+        throw new Error(`Birdeye priceHistoryResponse ${tokenAddress} API error: ${priceHistoryResponse.status}`);
       }
 
       const data = await response.json();
-      const historyResponse = await fetch(
-        `https://api.birdeye.so/v1/token/price_history?address=${tokenAddress}&type=hour&limit=24`,
-        {
-          headers: { "X-API-KEY": apiKey }
-        }
-      );
+      //console.log('birdeye token market-data data', data, 'for', tokenAddress)
 
-      const historyData = await historyResponse.json();
+      const volData = await volResponse.json();
+      //console.log('birdeye token vol data', volData, 'for', tokenAddress)
 
+      const priceHistoryData = await priceHistoryResponse.json();
+      //console.log('priceHistoryData', priceHistoryData, 'for', tokenAddress)
+
+      if (!data.data) {
+        console.warn('getTokenMarketData - cant save result'. data, 'for', tokenAddress)
+        return {}
+      }
+      // FIXME: volData.data check
+      // FIXME: priceHistoryData.data
       const result = {
-        price: data.data.value,
-        marketCap: data.data.marketCap || 0,
+        price: data.data.price, //was value
+        marketCap: data.data.market_cap || 0, // was marketCap
         liquidity: data.data.liquidity || 0,
-        volume24h: data.data.volume24h || 0,
-        priceHistory: historyData.data.items.map((item: any) => item.value),
-        volumeHistory: historyData.data.items.map((item: any) => item.volume || 0)
+        //volume24h: data.data.volume24h || 0,
+        volume24h: volData.data.volumeUSD || 0,
+        priceHistory: priceHistoryData.data.items.map((item: any) => item.value),
+        // not used
+        //volumeHistory: historyData.data.items.map((item: any) => item.volume || 0)
       };
 
+      console.log('getTokenMarketData - saving result'. result, 'for', tokenAddress)
       await this.cacheManager.set(cacheKey, result, 60000);
       return result;
     } catch (error) {
@@ -302,7 +349,7 @@ export class DataService {
       const positions = await this.getPositions();
       const totalValue = walletBalance + Object.values(positions)
         .reduce((sum, pos) => sum + pos.value, 0);
-      
+
       const drawdown = await this.calculateDrawdown({
         totalValue,
         positions,
@@ -417,7 +464,7 @@ export class DataService {
     try {
       // Get list of tokens we're monitoring
       const monitoredTokens = await this.getMonitoredTokens();
-      
+
       if (!monitoredTokens.length) {
         return [];
       }
@@ -428,7 +475,7 @@ export class DataService {
           try {
             const balance = await this.walletService.getTokenBalance(tokenAddress);
             const marketData = await this.getTokenMarketData(tokenAddress);
-            
+
             return {
               tokenAddress,
               balance,
@@ -449,4 +496,4 @@ export class DataService {
       return [];
     }
   }
-} 
+}
