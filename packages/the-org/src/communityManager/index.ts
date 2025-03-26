@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { Character, IAgentRuntime, OnboardingConfig, ProjectAgent } from '@elizaos/core';
 import dotenv from 'dotenv';
 import { initCharacter } from '../init';
+import communityManagerPlugin from './plugins/communityManager';
 
 const imagePath = path.resolve('./src/communityManager/assets/portrait.jpg');
 
@@ -405,6 +406,7 @@ const config: OnboardingConfig = {
 
 export const communityManager: ProjectAgent = {
   character,
+  plugins: [communityManagerPlugin],
   init: async (runtime: IAgentRuntime) => await initCharacter({ runtime, config }),
 };
 
