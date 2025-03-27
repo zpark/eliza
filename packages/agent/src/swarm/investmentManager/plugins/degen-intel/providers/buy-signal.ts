@@ -66,7 +66,7 @@ export default class BuySignal {
 
     // FIXME: nothing sets this
     const trendingData = await this.runtime.databaseAdapter.getCache<IToken[]>("tokens_solana") || [];
-    console.log('trendingData', trendingData)
+    //console.log('trendingData', trendingData)
     let tokens = "";
     let index = 1;
     for (const token of trendingData) {
@@ -80,24 +80,34 @@ export default class BuySignal {
     const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
 
     //console.log('rolePrompt', rolePrompt)
-    console.log('context', finalPrompt)
+    //console.log('context', finalPrompt)
 
-    const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context: finalPrompt,
-      system: rolePrompt,
-      temperature: 0.2,
-      maxTokens: 4096,
-      object: true
-    });
+    let responseContent: IBuySignalOutput | null = null;
+    // Retry if missing required fields
+    let retries = 0;
+    const maxRetries = 3;
+    // recommended_buy, recommend_buy_address, reason, buy_amount
+    while (retries < maxRetries && (!responseContent?.recommended_buy || !responseContent?.reason || !responseContent?.recommend_buy_address)) {
+      // could use OBJECT_LARGE but this expects a string return type rn
+      // not sure where OBJECT_LARGE does it's parsing...
+      const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
+        context: finalPrompt,
+        system: rolePrompt,
+        temperature: 0.2,
+        maxTokens: 4096,
+        object: true
+      });
 
-    console.log('response', response)
+      console.log('intel:buy-signal - response', response);
+      responseContent = parseJSONObjectFromText(response) as Content;
 
-    // Parse the JSON response
-    const json: IBuySignalOutput = parseJSONObjectFromText(response)
-    //const json = JSON.parse(response || "{}") as IBuySignalOutput;
-    //console.log('buysignal', json)
+      retries++;
+      if (!responseContent?.recommended_buy && !responseContent?.reason && !responseContent?.recommend_buy_address) {
+        logger.warn('*** Missing required fields, retrying... generateSignal ***');
+      }
+    }
 
-    if (!json.recommend_buy_address) {
+    if (!responseContent?.recommend_buy_address) {
       console.warn('buy-signal::generateSignal - no buy recommendation')
       return false;
     }
@@ -112,22 +122,19 @@ export default class BuySignal {
       },
     };
 
-    const res = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${json.recommend_buy_address}`, options);
+    const res = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${responseContent.recommend_buy_address}`, options);
     if (!res.ok) throw new Error("Birdeye marketcap request failed");
 
     const resJson = await res.json();
     const marketcap = resJson?.data?.realMc;
 
-    const data = {
-      ...json,
-      marketcap: Number(marketcap),
-    };
+    responseContent.marketcap = Number(marketcap)
 
-    this.runtime.emitEvent("SPARTAN_TRADE_BUY_SIGNAL", data)
+    this.runtime.emitEvent("SPARTAN_TRADE_BUY_SIGNAL", responseContent)
 
     await this.runtime.databaseAdapter.setCache<any>("buy_signals", {
       key: "BUY_SIGNAL",
-      data
+      data: responseContent
     });
 
     return true;
