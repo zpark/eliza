@@ -121,6 +121,7 @@ export default class Birdeye {
     const resp = await res.json();
     const data = resp?.data;
 
+    // might want to add the SOLANA_PUBLIC_KEY as a suffix to the key
     await this.runtime.databaseAdapter.setCache<Portfolio>("portfolio", { key: "PORTFOLIO", data });
   }
 
@@ -244,101 +245,5 @@ export default class Birdeye {
     }
 
     logger.info("Filled timeframe slots for sentiment analysis");
-  }
-
-  async parseTweets() {
-    await this.fillTimeframe();
-
-    // Find the next unprocessed sentiment timeslot
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-
-    const memories = await this.runtime.messageManager.getMemories({
-      roomId: this.sentimentRoomId,
-      start: twoDaysAgo.getTime(),
-      end: oneHourAgo.getTime()
-    });
-
-    const sentiment = (memories as Array<Memory & { content: SentimentContent }>).find(m => !m.content.metadata.processed);
-
-    if (!sentiment) {
-      logger.info("No unprocessed timeslots available.");
-      return true;
-    }
-
-    logger.info(`Trying to process ${sentiment.content.metadata.timeslot}`);
-
-    const timeslot = new Date(sentiment.content.metadata.timeslot);
-    const fromDate = new Date(timeslot.getTime() - 60 * 60 * 1000 + 1000);
-    const toDate = timeslot;
-
-    // Get tweets from the twitter feed room
-    const tweets = await this.runtime.messageManager.getMemories({
-      roomId: this.twitterFeedRoomId,
-      start: fromDate.getTime(),
-      end: toDate.getTime()
-    });
-
-    if (!tweets || tweets.length === 0) {
-      logger.info(`No tweets to process for timeslot ${timeslot.toISOString()}`);
-
-      // Mark as processed even if no tweets
-      await this.runtime.messageManager.createMemory({
-        id: sentiment.id,
-        userId: sentiment.userId,
-        agentId: sentiment.agentId,
-        content: {
-          ...sentiment.content,
-          metadata: {
-            ...sentiment.content.metadata,
-            processed: true
-          }
-        },
-        roomId: sentiment.roomId,
-        createdAt: sentiment.createdAt
-      });
-      return true;
-    }
-
-    const tweetArray = tweets.map((tweet) => {
-      const content = tweet.content as Content & { tweet?: { username: string; likes?: number; retweets?: number; }; };
-      return `username: ${content.tweet?.username || 'unknown'} tweeted: ${content.text}${content.tweet?.likes ? ` with ${content.tweet.likes} likes` : ''}${content.tweet?.retweets ? ` and ${content.tweet.retweets} retweets` : ''}.`;
-    });
-
-    const bulletpointTweets = makeBulletpointList(tweetArray);
-    const prompt = template.replace("{{tweets}}", bulletpointTweets);
-
-    const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context: prompt,
-      system: rolePrompt,
-      temperature: 0.2,
-      maxTokens: 4096,
-      object: true
-    });
-
-    // Parse the JSON response
-    const json = JSON.parse(response || "{}");
-
-    // Update the sentiment analysis
-    await this.runtime.messageManager.createMemory({
-      id: sentiment.id,
-      userId: sentiment.userId,
-      agentId: sentiment.agentId,
-      content: {
-        text: json.text,
-        source: "sentiment-analysis",
-        metadata: {
-          ...sentiment.content.metadata,
-          occuringTokens: json.occuringTokens,
-          processed: true
-        }
-      },
-      roomId: sentiment.roomId,
-      createdAt: sentiment.createdAt
-    });
-
-    logger.info(`Successfully processed timeslot ${sentiment.content.metadata.timeslot}`);
-    return true;
   }
 }
