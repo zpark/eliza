@@ -102,6 +102,7 @@ export interface TokenAnalysisState {
 export interface BuySignalMessage {
   positionId: string;
   tokenAddress: string;
+  tradeAmount: string;
   expectedOutAmount: string;
   entityId: string;
 }

@@ -3,7 +3,15 @@
 // This action should be able to run on a schedule
 // store tweets as memories in db, no reason really to get twitter here
 
-import { type IAgentRuntime, ServiceTypes, logger, createUniqueUuid, type UUID, ChannelType } from "@elizaos/core";
+import {
+  type IAgentRuntime,
+  type UUID,
+  ServiceTypes,
+  logger,
+  createUniqueUuid,
+  ChannelType,
+  stringToUuid
+} from "@elizaos/core";
 
 export default class Twitter {
   runtime: IAgentRuntime;
@@ -16,7 +24,7 @@ export default class Twitter {
   }
 
   async syncRawTweets(): Promise<boolean> {
-    console.log('syncRawTweets')
+    await this.runtime.ensureEmbeddingDimension()
     try {
       const username = this.runtime.getSetting("TWITTER_USERNAME");
 
@@ -27,20 +35,44 @@ export default class Twitter {
         source: "twitter",
         type: ChannelType.FEED
       });
-      console.log('')
 
       // get the twitterClient from runtime
-      const twitterClient = this.runtime.getService(ServiceTypes.TWITTER);
-      if (!twitterClient) {
-        logger.error("Twitter client not found");
-        return false;
+      let manager
+      //console.log('trying to acquire manager')
+      while(!manager) {
+        //console.log('do we have manager?')
+        manager = this.runtime.getService(ServiceTypes.TWITTER)
+        if (!manager) {
+          //console.log('Not yet, retrying in 1s')
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
+      console.log('degen-intel: Twitter manager acquired, starting sync')
 
-      const list = twitterClient.getTweets(username as string, 200);
-      console.log('list', list.length)
+      const clientId = stringToUuid("default");
+      const clientKey = manager.getClientKey(clientId, this.runtime.agentId);
+      console.log('clientKey', clientKey)
+      const client = manager.clients.get(clientKey);
+
+      // Check for character-level Twitter credentials
+      const twitterConfig: Partial<TwitterConfig> = {
+        TWITTER_USERNAME: (this.runtime.getSetting("TWITTER_USERNAME") as string) || this.runtime.character.settings?.TWITTER_USERNAME || this.runtime.character.secrets?.TWITTER_USERNAME,
+        TWITTER_PASSWORD: (this.runtime.getSetting("TWITTER_PASSWORD") as string) || this.runtime.character.settings?.TWITTER_PASSWORD || this.runtime.character.secrets?.TWITTER_PASSWORD,
+        TWITTER_EMAIL: (this.runtime.getSetting("TWITTER_EMAIL") as string) || this.runtime.character.settings?.TWITTER_EMAIL || this.runtime.character.secrets?.TWITTER_EMAIL,
+        TWITTER_2FA_SECRET: (this.runtime.getSetting("TWITTER_2FA_SECRET") as string) || this.runtime.character.settings?.TWITTER_2FA_SECRET || this.runtime.character.secrets?.TWITTER_2FA_SECRET,
+      };
+
+      // Filter out undefined values
+      const config = Object.fromEntries(
+        Object.entries(twitterConfig).filter(([_, v]) => v !== undefined)
+      ) as TwitterConfig;
+
+      // get existing one instead of making a new one
+      let twitterClient = manager.getService(this.runtime.agentId, this.runtime.agentId);
+
+      const list = await twitterClient.client.twitterClient.getTweets(username as string, 200);
       let syncCount = 0;
-
-      for (const item of list) {
+      for await (const item of list) {
         if (item?.text && !item?.isRetweet) {
           const tweetId = createUniqueUuid(this.runtime, item.id);
 
@@ -51,7 +83,6 @@ export default class Twitter {
           }
 
           // Create memory for the tweet
-          console.log('creating tweet memory')
           await this.runtime.messageManager.createMemory({
             id: tweetId,
             userId: this.runtime.agentId,
@@ -82,7 +113,7 @@ export default class Twitter {
       return true;
     } catch (error) {
       console.error('error syncing tweets', error)
-      logger.error("Error syncing tweets:", error);
+      //logger.error("Error syncing tweets:", error);
       return false;
     }
   }

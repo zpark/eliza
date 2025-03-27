@@ -145,19 +145,32 @@ export class TaskService extends Service {
       }
 
       const now = Date.now();
+      //console.log('running checkTasks at', now)
 
       for (const task of tasks) {
-        const taskStartTime = new Date(task.metadata.updatedAt || 0).getTime();
+        //console.log('t', task.metadata.)
 
-        // convert updatedAt which is an ISO string to a number
-        const updateIntervalMs = task.metadata.updateInterval ?? 0; // update immediately
-
-        
         // if tags does not contain "repeat", execute immediately
         if (!task.tags?.includes("repeat")) {
+          // does not contain repeat
           await this.executeTask(task.id);
           continue;
         }
+
+        if (task.metadata.updatedAt === task.metadata.createdAt) {
+          if (task.tags?.includes("immediate")) {
+            console.log('immediately running task', task.name)
+            await this.executeTask(task.id);
+            continue
+          }
+        }
+
+        const taskStartTime = new Date(task.metadata.updatedAt || 0).getTime();
+        //const diff = now - taskStartTime
+        //console.log('meta', task.metadata.updatedAt, 'taskStartTime', taskStartTime, 'diff', diff, 'updateIntervalMs', updateIntervalMs)
+
+        // convert updatedAt which is an ISO string to a number
+        const updateIntervalMs = task.metadata.updateInterval ?? 0; // update immediately
 
         // Check if enough time has passed since last update
         if (now - taskStartTime >= updateIntervalMs) {
@@ -168,13 +181,16 @@ export class TaskService extends Service {
         }
       }
     } catch (error) {
+      console.error('error', error)
       logger.error("Error checking tasks:", error);
     }
   }
 
   private async executeTask(taskId: UUID) {
+    let taskName
     try {
       const task = await this.runtime.databaseAdapter.getTask(taskId);
+      taskName = task.name
       if (!task) {
         logger.debug(`Task ${taskId} not found`);
         return;
@@ -187,8 +203,11 @@ export class TaskService extends Service {
       }
 
       logger.debug(`Executing task ${task.name} (${taskId})`);
-      await worker.execute(this.runtime, task.metadata || {});
+      worker.execute(this.runtime, task.metadata || {}).then(() => {
+        logger.debug(`Executed task ${task.name} (${taskId})`);
+      })
       logger.debug("task.tags are", task.tags);
+
       // Handle repeating vs non-repeating tasks
       if (task.tags?.includes("repeat")) {
         // For repeating tasks, update the updatedAt timestamp
@@ -209,7 +228,8 @@ export class TaskService extends Service {
         );
       }
     } catch (error) {
-      logger.error(`Error executing task ${taskId}:`, error);
+      console.error(`Error executing task ${taskName} (${taskId}):`, error)
+      //logger.error(`Error executing task ${taskName} (${taskId}):`, error);
     }
   }
 

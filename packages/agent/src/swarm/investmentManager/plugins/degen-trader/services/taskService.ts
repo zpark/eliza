@@ -42,14 +42,21 @@ export class TaskService extends TradeExecutionService {
   }
 
   private registerBuyTasks(): void {
+    // what create the db record
+    // usually the db record has repeat tags & the interval
+    // this seems to have those without being set
+
+    /*
     this.runtime.registerTaskWorker({
       name: "BUY_SIGNAL",
       execute: async (_runtime: typeof IAgentRuntime, options: any) => {
         logger.info("Executing BUY_SIGNAL task");
+
         if (!options?.metadata?.signal) {
           throw new Error("No signal data in buy task");
         }
         return await this.executeBuyTask(options.metadata);
+
       },
       validate: async () => true,
     });
@@ -62,6 +69,7 @@ export class TaskService extends TradeExecutionService {
       },
       validate: async () => true,
     });
+    */
   }
 
   private registerSellTasks(): void {
@@ -74,6 +82,7 @@ export class TaskService extends TradeExecutionService {
       validate: async () => true,
     });
 
+    /*
     this.runtime.registerTaskWorker({
       name: "MONITOR_POSITIONS",
       execute: async () => {
@@ -82,9 +91,11 @@ export class TaskService extends TradeExecutionService {
       },
       validate: async () => true,
     });
+    */
   }
 
   private registerMonitoringTasks(): void {
+    /*
     this.runtime.registerTaskWorker({
       name: "OPTIMIZE_SLIPPAGE",
       execute: async () => {
@@ -102,6 +113,7 @@ export class TaskService extends TradeExecutionService {
       },
       validate: async () => true,
     });
+    */
   }
 
   async createSellTask(signal: SellSignalMessage) {
@@ -155,35 +167,6 @@ export class TaskService extends TradeExecutionService {
     }
   }
 
-  private async executeBuyTask(options: any) {
-    try {
-      const { signal, tradeAmount } = options;
-      if (!signal) {
-        throw new Error("No signal data in buy task");
-      }
-
-      const result = await this.buyService.handleBuySignal({
-        ...signal,
-        tradeAmount: tradeAmount || 0
-      });
-
-      if (result.success) {
-        logger.info("Buy task executed successfully", {
-          signature: result.signature,
-          outAmount: result.outAmount
-        });
-      } else {
-        logger.error("Buy task failed", { error: result.error });
-      }
-
-      return result;
-    } catch (error) {
-      console.log("Error executing buy task:", error)
-      //logger.error("Error executing buy task:", error);
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
   private async executeSellTask(options: any) {
     try {
       const { signal } = options;
@@ -209,6 +192,7 @@ export class TaskService extends TradeExecutionService {
     }
   }
 
+  /*
   private async monitorPositions() {
     try {
       // Implement position monitoring logic
@@ -253,4 +237,5 @@ export class TaskService extends TradeExecutionService {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
+  */
 }

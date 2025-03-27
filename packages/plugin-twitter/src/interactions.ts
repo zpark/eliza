@@ -105,7 +105,7 @@ export class TwitterInteractionClient {
         const handleTwitterInteractionsLoop = () => {
             // Defaults to 2 minutes
             const interactionInterval = (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number || 120) * 1000;
-        
+
             this.handleTwitterInteractions();
             setTimeout(
                 handleTwitterInteractionsLoop,
@@ -131,11 +131,11 @@ export class TwitterInteractionClient {
 
             logger.log(
                 "Completed checking mentioned tweets:",
-                mentionCandidates.length
+                mentionCandidates?.length
             );
             let uniqueTweetCandidates = [...mentionCandidates];
             // Only process target users if configured
-            if ((this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).length) {
+            if ((this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[])?.length) {
                 const TARGET_USERS =
                     this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
 
@@ -223,6 +223,7 @@ export class TwitterInteractionClient {
                 );
             }
 
+
             // Sort tweet candidates by ID in ascending order
             uniqueTweetCandidates = uniqueTweetCandidates
                 .sort((a, b) => a.id.localeCompare(b.id))
@@ -271,11 +272,11 @@ export class TwitterInteractionClient {
 
                     const thread = await buildConversationThread(
                         tweet,
-                        this.client
+                        this.client,
                     );
 
                     const message = {
-                        content: { 
+                        content: {
                             text: tweet.text,
                             imageUrls: tweet.photos?.map(photo => photo.url) || [],
                             tweet: tweet,
@@ -302,6 +303,7 @@ export class TwitterInteractionClient {
 
             logger.log("Finished checking Twitter interactions");
         } catch (error) {
+            console.error(error)
             logger.error("Error handling Twitter interactions:", error);
         }
     }
@@ -326,7 +328,7 @@ export class TwitterInteractionClient {
             return { text: "", action: "IGNORE" };
         }
 
-        logger.log("Processing Tweet: ", tweet.id);
+        logger.log("handleTweet - Processing Tweet: ", tweet.id);
         const formatTweet = (tweet: Tweet) => {
             return `  ID: ${tweet.id}
   From: ${tweet.name} (@${tweet.username})
@@ -358,7 +360,6 @@ export class TwitterInteractionClient {
     // Handle the error
     logger.error("Error Occured during describing image: ", error);
 }
-
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
             twitterUserName: this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME"),
@@ -427,7 +428,7 @@ export class TwitterInteractionClient {
         const shouldRespond = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
             context: shouldRespondContext,
           });
-        
+
           if (!shouldRespond.includes("RESPOND")) {
             logger.log("Not responding to message");
             return { text: "Response Decision:", action: shouldRespond };
@@ -463,7 +464,7 @@ export class TwitterInteractionClient {
         const responseText = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
             context,
           });
-      
+
         const response = parseJSONObjectFromText(responseText) as Content;
 
         const removeQuotes = (str: string) =>
@@ -495,7 +496,7 @@ export class TwitterInteractionClient {
                         );
                         return memories;
                     };
-                    
+
                     const responseMessages = [{
                             id: createUniqueUuid(this.runtime, tweet.id),
                             userId: this.runtime.agentId,
@@ -550,7 +551,7 @@ export class TwitterInteractionClient {
         const visited: Set<string> = new Set();
 
         async function processThread(currentTweet: Tweet, depth = 0) {
-            logger.log("Processing tweet:", {
+            logger.log("buildConversationThread - Processing tweet:", {
                 id: currentTweet.id,
                 inReplyToStatusId: currentTweet.inReplyToStatusId,
                 depth: depth,

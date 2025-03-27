@@ -152,6 +152,7 @@ export const ServiceTypes = {
     EMAIL: "email",
     TEE: "tee",
     TASK: "task",
+    TWITTER: "twitter",
 } as const;
 
 /**
@@ -561,7 +562,12 @@ export enum ChannelType {
 }
 
 /**
- * Client instance
+ * Services provide services to runtime
+ * these are usually things like singletons that have resources
+ * that can be shared across agent runtimes
+ * services exist in the context of a agent runtime
+ * can be accessed like
+ * runtime.getService(DegenTradingService.serviceType)
  */
 export abstract class Service extends EventEmitter {
   /** Runtime instance */

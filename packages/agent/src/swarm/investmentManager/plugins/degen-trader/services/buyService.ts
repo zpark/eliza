@@ -4,6 +4,7 @@ import { DataService } from './dataService';
 import { AnalyticsService } from './analyticsService';
 import { type BuySignalMessage } from '../types';
 import { TradingConfig } from '../types/trading';
+import { calculateVolatility, assessMarketCondition } from "../utils/analyzeTrade";
 import { v4 as uuidv4 } from 'uuid';
 import { UUID } from 'uuid';
 
@@ -42,22 +43,100 @@ export class BuyService {
     };
   }
 
+  private async handleBuySignal(params: any): void {
+    const TRADER_BUY_KUMA = this.runtime.getSetting("TRADER_BUY_KUMA");
+    if (TRADER_BUY_KUMA) {
+      fetch(TRADER_BUY_KUMA).catch((e) => {
+        console.error("TRADER_BUY_KUMA err", e);
+      });
+    }
+
+    console.log('trader dataService got SPARTAN_TRADE_BUY_SIGNAL', params)
+    /*
+    trader dataService got SPARTAN_TRADE_BUY_SIGNAL {
+      recommended_buy: 'Jupiter',
+      recommend_buy_address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+      reason: 'Jupiter is both trending and has a positive sentiment score, indicating strong market interest and potential for growth. Given your balance of 0.088209662 SOL, a buy amount of 0.05 SOL allows you to participate in the potential upside while managing risk effectively.',
+      buy_amount: '0.05',
+      marketcap: NaN
+    }
+    */
+
+    // buyService.generateBuySignal makes a taskService.BUY_TASK
+    // taskService.BUY_TASK calls (was task)buyService.executeBuyTask call buyService.handleBuySignal
+    // buyService.handleBuySignal is the final step and does the wallet tx to BUY
+
+    // Create buy signal
+    const signal: BuySignalMessage = {
+      positionId: uuidv4() as UUID,
+      tokenAddress: params.recommend_buy_address,
+      entityId: "default",
+      tradeAmount: params.buy_amount,
+      expectedOutAmount: "0",
+    };
+
+    // Add expected out amount based on quote
+    // Only try to get expected amount if we have a trade amount
+    if (signal.tradeAmount) {
+      try {
+        // Get a quote to determine expected amount
+        const quoteResponse = await fetch(
+          `https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${
+            signal.tokenAddress
+          }&amount=${
+            Math.round(signal.tradeAmount * 1e9)
+          }&slippageBps=0`
+        );
+
+        if (quoteResponse.ok) {
+          const quoteData = await quoteResponse.json();
+          signal.expectedOutAmount = quoteData.outAmount;
+        }
+      } catch (error) {
+        logger.warn("Failed to get expected out amount for buy", {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    // background, no await needed
+    this.executeBuy(signal).then(result => {
+      console.log('executeBuy - result', result)
+    })
+  }
+
   async initialize(): Promise<void> {
     logger.info("Initializing buy service");
+
+    // event vs task
+    // fg vs bg?
+    // going to use events for now, we'll worry about background later
+    this.runtime.registerEvent("SPARTAN_TRADE_BUY_SIGNAL", this.handleBuySignal.bind(this));
   }
 
   async stop(): Promise<void> {
     // Cleanup if needed
   }
 
-  async handleBuySignal(signal: BuySignalMessage): Promise<{
+  private async executeBuy(signal: BuySignalMessage): Promise<{
     success: boolean;
     signature?: string;
     error?: string;
     outAmount?: string;
     swapUsdValue?: string;
-  }> {
+  }>  {
     try {
+      if (!signal) {
+        throw new Error("No signal data in buy task");
+      }
+
+      /*
+      const result = await this.handleBuySignal({
+        ...signal,
+        tradeAmount: tradeAmount || 0
+      });
+      */
+
       // Validate token before trading
       const validation = await this.validateTokenForTrading(signal.tokenAddress);
       if (!validation.isValid) {
@@ -103,13 +182,20 @@ export class BuyService {
         );
       }
 
+      if (result.success) {
+        logger.info("Buy task executed successfully", {
+          signature: result.signature,
+          outAmount: result.outAmount
+        });
+      } else {
+        logger.error("Buy task failed", { error: result.error });
+      }
+
       return result;
     } catch (error) {
-      console.log("Error handling buy signal:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+      console.log("Error executing buy task:", error)
+      //logger.error("Error executing buy task:", error);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 
@@ -120,6 +206,8 @@ export class BuyService {
     try {
       // Get token market data
       const marketData = await this.dataService.getTokenMarketData(tokenAddress);
+
+      console.log('marketData', marketData)
 
       // Check if token has sufficient liquidity
       if (marketData.liquidity < this.tradingConfig.thresholds.minLiquidity) {
@@ -181,13 +269,13 @@ export class BuyService {
       // Adjust for volatility
       let adjustedAmount = maxPosition;
       if (tokenData.priceHistory) {
-        const volatility = this.calculateVolatility(tokenData.priceHistory);
+        const volatility = calculateVolatility(tokenData.priceHistory);
         const volatilityFactor = Math.max(0.5, 1 - volatility);
         adjustedAmount *= volatilityFactor;
       }
 
       // Adjust for market conditions
-      const marketCondition = await this.assessMarketCondition();
+      const marketCondition = await assessMarketCondition(this.runtime);
       if (marketCondition === "bearish") {
         adjustedAmount *= 0.5;
       }
@@ -241,42 +329,6 @@ export class BuyService {
     }
   }
 
-  private calculateVolatility(priceHistory: number[]): number {
-    if (priceHistory.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < priceHistory.length; i++) {
-      returns.push(Math.log(priceHistory[i] / priceHistory[i - 1]));
-    }
-
-    const mean = returns.reduce((a, b) => a + b) / returns.length;
-    const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
-    return Math.sqrt(variance);
-  }
-
-  private async assessMarketCondition(): Promise<"bullish" | "neutral" | "bearish"> {
-    try {
-      const solData = await this.dataService.getTokenMarketData(
-        "So11111111111111111111111111111111111111112" // SOL address
-      );
-
-      if (!solData.priceHistory || solData.priceHistory.length < 24) {
-        return "neutral";
-      }
-
-      const currentPrice = solData.price;
-      const previousPrice = solData.priceHistory[0];
-      const priceChange = ((currentPrice - previousPrice) / previousPrice) * 100;
-
-      if (priceChange > 5) return "bullish";
-      if (priceChange < -5) return "bearish";
-      return "neutral";
-    } catch (error) {
-      console.log("Error assessing market condition:", error);
-      return "neutral";
-    }
-  }
-
   private async fetchTokenMetadata(tokenAddress: string): Promise<{
     verified: boolean;
     suspiciousAttributes: string[];
@@ -284,40 +336,16 @@ export class BuyService {
   }> {
     // Implementation from previous code...
     // This would fetch token metadata from your preferred source
+
+    // not from rabbi-trader
+    // FIXME: find the birdeye call that does a security check
+    // suspiciousAttributes
+    console.log('fetchTokenMetadata write me!')
     return {
       verified: true,
       suspiciousAttributes: [],
       ownershipConcentration: 0,
     };
-  }
-
-  async generateBuySignal(): Promise<void> {
-    try {
-      logger.info("Generating buy signal...");
-
-      // Get token recommendation
-      const recommendation = await this.dataService.getTokenRecommendation();
-
-      if (!recommendation) {
-        console.log("No token recommendation available");
-        return;
-      }
-
-      console.log("Token recommendation:", recommendation);
-
-      // Create buy signal
-      const signal: BuySignalMessage = {
-        positionId: uuidv4() as UUID,
-        tokenAddress: recommendation.recommend_buy_address,
-        entityId: "default",
-        expectedOutAmount: "0"
-      };
-
-      // Create buy task with the recommended amount
-      await this.createBuyTask(signal, recommendation.buy_amount);
-    } catch (error) {
-      console.log("Error generating buy signal:", error);
-    }
   }
 
   private async analyzeTradingAmount({
@@ -366,51 +394,4 @@ export class BuyService {
     return this.analyticsService;
   }
 
-  async createBuyTask(signal: BuySignalMessage, tradeAmount?: number) {
-    try {
-      logger.info("Creating buy task:", { signal, tradeAmount });
-
-      // Add expected out amount based on quote
-      let expectedOutAmount = null;
-
-      // Only try to get expected amount if we have a trade amount
-      if (tradeAmount) {
-        try {
-          // Get a quote to determine expected amount
-          const quoteResponse = await fetch(
-            `https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${
-              signal.tokenAddress
-            }&amount=${Math.round(tradeAmount * 1e9)}&slippageBps=0`
-          );
-
-          if (quoteResponse.ok) {
-            const quoteData = await quoteResponse.json();
-            expectedOutAmount = quoteData.outAmount;
-          }
-        } catch (error) {
-          logger.warn("Failed to get expected out amount for buy", {
-            error: error instanceof Error ? error.message : String(error)
-          });
-        }
-      }
-
-      await this.runtime.databaseAdapter.createTask({
-        id: uuidv4() as UUID,
-        roomId: this.runtime.agentId,
-        name: "BUY_SIGNAL",
-        description: `Buy token ${signal.tokenAddress}`,
-        tags: ["queue", ServiceTypes.DEGEN_TRADING],
-        metadata: {
-          signal,
-          tradeAmount,
-          expectedOutAmount,
-          updatedAt: new Date().toISOString(),
-        },
-      });
-
-      logger.info("Buy task created");
-    } catch (error) {
-      console.log("Error creating buy task:", error);
-    }
-  }
 }

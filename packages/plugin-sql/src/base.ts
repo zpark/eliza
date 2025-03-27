@@ -959,6 +959,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
         const memoryId = memory.id ?? v4() as UUID;
 
+
         await this.db.transaction(async (tx) => {
             await tx.insert(memoryTable).values([{
                 id: memoryId,
@@ -1861,7 +1862,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
         await this.withRetry(async () => {
             await this.withDatabase(async () => {
-                console.log("updating task", id, task);
+                //console.log("updating task", id, task);
                 const updateValues : Partial<Task> & { updatedAt?: number } = {
                     updatedAt: new Date
                 };

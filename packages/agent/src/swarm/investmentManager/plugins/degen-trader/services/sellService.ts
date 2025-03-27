@@ -4,6 +4,11 @@ import { DataService } from './dataService';
 import { AnalyticsService } from './analyticsService';
 import { type SellSignalMessage } from '../types';
 import { TradingConfig } from '../types/trading';
+import { calculateVolatility, assessMarketCondition } from "../utils/analyzeTrade";
+
+import { BN, toBN, formatBN } from '../utils/bignumber';
+import { v4 as uuidv4 } from 'uuid';
+import { UUID } from 'uuid';
 
 export class SellService {
   private pendingSells: { [tokenAddress: string]: bigint } = {};
@@ -41,21 +46,7 @@ export class SellService {
     };
   }
 
-  async initialize(): Promise<void> {
-    logger.info("Initializing sell service");
-  }
-
-  async stop(): Promise<void> {
-    this.pendingSells = {};
-  }
-
-  async handleSellSignal(signal: SellSignalMessage): Promise<{
-    success: boolean;
-    signature?: string;
-    error?: string;
-    receivedAmount?: string;
-    receivedValue?: string;
-  }> {
+  async handleSellSignal(params: any): void {
     const TRADER_SELL_KUMA = this.runtime.getSetting("TRADER_SELL_KUMA");
     if (TRADER_SELL_KUMA) {
       fetch(TRADER_SELL_KUMA).catch((e) => {
@@ -63,10 +54,82 @@ export class SellService {
       });
     }
 
+    console.log('trader dataService got SPARTAN_TRADE_SELL_SIGNAL', params)
+
+    // Create sell signal
+    const signal: SellSignalMessage = {
+      positionId: uuidv4() as UUID,
+      tokenAddress: params.recommend_sell_address,
+      // pairId
+      amount: params.sell_amount,
+      // currentBalance
+      // sellRecommenderId
+      // walletAddress
+      // isSimulation
+      // reason
+      entityId: "default",
+    };
+
+    // FIXME: refactor to a function
+    // Add expected out amount based on quote
+    // Only try to get expected amount if we have a trade amount
+    if (signal.amount) {
+      try {
+        // Get a quote to determine expected amount
+        const quoteResponse = await fetch(
+          `https://quote-api.jup.ag/v6/quote?inputMint=${
+              signal.tokenAddress
+            }&outputMint=So11111111111111111111111111111111111111112&amount=${
+              Math.round(signal.amount * 1e9) // amount has to be lamports
+            }&slippageBps=0`
+        );
+
+        if (quoteResponse.ok) {
+          const quoteData = await quoteResponse.json();
+          signal.expectedOutAmount = quoteData.outAmount;
+        }
+      } catch (error) {
+        logger.warn("Failed to get expected out amount for sell", {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    // background, no await needed
+
+    // execute sell
+    this.executeSell(signal).then(result => {
+      console.log('executeSell - result', result)
+    })
+  }
+
+  async initialize(): Promise<void> {
+    logger.info("Initializing sell service");
+    this.runtime.registerEvent("SPARTAN_TRADE_SELL_SIGNAL", this.handleSellSignal.bind(this));
+  }
+
+  async stop(): Promise<void> {
+    this.pendingSells = {};
+  }
+
+  async executeSell(signal: SellSignalMessage): Promise<{
+    success: boolean;
+    signature?: string;
+    error?: string;
+    receivedAmount?: string;
+    receivedValue?: string;
+  }> {
+
     const tokenAddress = signal.tokenAddress;
 
     try {
-      const sellAmount = BigInt(signal.amount);
+      if (!signal) {
+        throw new Error("No signal data in sell task");
+      }
+
+      //const sellAmount = BigInt(signal.amount);
+      // string but make number-like for validation
+      const sellAmount = toBN(signal.amount); // anything from a small decimal to a really large number
 
       try {
         // Record pending sell
@@ -94,7 +157,8 @@ export class SellService {
         const expectedAmount = await this.getExpectedAmount(
           tokenAddress,
           sellAmount.toString(),
-          signal.walletAddress
+          signal.walletAddress,
+          slippageBps
         );
 
         // Get the wallet
@@ -174,14 +238,14 @@ export class SellService {
 
       // Increase slippage for sells during high volatility
       if (isSell && tokenData.priceHistory) {
-        const volatility = this.calculateVolatility(tokenData.priceHistory);
+        const volatility = calculateVolatility(tokenData.priceHistory);
         if (volatility > 0.1) { // High volatility threshold
           slippage *= (1 + volatility);
         }
       }
 
       // Adjust for market conditions
-      const marketCondition = await this.assessMarketCondition();
+      const marketCondition = await assessMarketCondition(this.runtime);
       if (marketCondition === "bearish" && isSell) {
         slippage *= 1.2; // Increase slippage in bearish conditions for sells
       }
@@ -200,13 +264,21 @@ export class SellService {
   private async getExpectedAmount(
     tokenAddress: string,
     amount: string,
-    walletAddress: string
+    walletAddress: string,
+    slippageBps: number,
   ): Promise<string> {
     try {
+      console.log('getExpectedAmount - slippageBps', slippageBps, 'amount', amount)
       // Get quote from Jupiter or other DEX
-      const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=${amount}&slippageBps=0`;
+      const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${
+          tokenAddress
+        }&outputMint=So11111111111111111111111111111111111111112&amount=${
+          Math.round(toBN(amount) * 1e9)
+        }&slippageBps=${
+          slippageBps // do we need to * 10000 here?
+        }`;
       const response = await fetch(quoteUrl);
-      
+
       if (!response.ok) {
         throw new Error(`Quote API error: ${response.status}`);
       }
@@ -218,40 +290,4 @@ export class SellService {
       return "0";
     }
   }
-
-  private calculateVolatility(priceHistory: number[]): number {
-    if (priceHistory.length < 2) return 0;
-
-    const returns = [];
-    for (let i = 1; i < priceHistory.length; i++) {
-      returns.push(Math.log(priceHistory[i] / priceHistory[i - 1]));
-    }
-
-    const mean = returns.reduce((a, b) => a + b) / returns.length;
-    const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
-    return Math.sqrt(variance);
-  }
-
-  private async assessMarketCondition(): Promise<"bullish" | "neutral" | "bearish"> {
-    try {
-      const solData = await this.dataService.getTokenMarketData(
-        "So11111111111111111111111111111111111111112" // SOL address
-      );
-
-      if (!solData.priceHistory || solData.priceHistory.length < 24) {
-        return "neutral";
-      }
-
-      const currentPrice = solData.price;
-      const previousPrice = solData.priceHistory[0];
-      const priceChange = ((currentPrice - previousPrice) / previousPrice) * 100;
-
-      if (priceChange > 5) return "bullish";
-      if (priceChange < -5) return "bearish";
-      return "neutral";
-    } catch (error) {
-      console.log("Error assessing market condition:", error);
-      return "neutral";
-    }
-  }
-} 
+}
