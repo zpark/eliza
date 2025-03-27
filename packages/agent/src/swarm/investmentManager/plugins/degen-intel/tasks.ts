@@ -5,6 +5,7 @@ import CoinmarketCap from "./providers/coinmarketcap";
 import Twitter from "./providers/twitter";
 import TwitterParser from "./providers/twitter-parser";
 import BuySignal from "./providers/buy-signal";
+import SellSignal from "./providers/sell-signal";
 
 export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
   worldId = runtime.agentId; // this is global data for the agent
@@ -144,10 +145,37 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
     metadata: {
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      // FIXME: env var
       updateInterval: 1000 * 60 * 5, // 5 minutes
     },
     tags: ["queue", "repeat", "degen_intel", "immediate"],
   });
+
+  // enable with solana wallet env vars set
+  runtime.registerTaskWorker({
+    name: "INTEL_GENERATE_SELL_SIGNAL",
+    validate: async (_runtime, _message, _state) => {
+      return true; // TODO: validate after certain time
+    },
+    execute: async (runtime, _options) => {
+      const signal = new SellSignal(runtime);
+      await signal.generateSignal();
+    }
+  });
+
+  runtime.databaseAdapter.createTask({
+    name: "INTEL_GENERATE_SELL_SIGNAL",
+    description: "Generate a sell signal",
+    worldId,
+    metadata: {
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      // FIXME: env var
+      updateInterval: 1000 * 60 * 10, // 5 minutes
+    },
+    tags: ["queue", "repeat", "degen_intel", "immediate"],
+  });
+
 
   if (runtime.getSetting("TWITTER_USERNAME")) {
     console.log('registering INTEL_PARSE_TWEETS')
