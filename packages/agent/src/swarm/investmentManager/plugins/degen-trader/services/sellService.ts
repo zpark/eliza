@@ -80,7 +80,7 @@ export class SellService {
           `https://quote-api.jup.ag/v6/quote?inputMint=${
               signal.tokenAddress
             }&outputMint=So11111111111111111111111111111111111111112&amount=${
-              Math.round(signal.amount * 1e9)
+              Math.round(signal.amount * 1e9) // amount has to be lamports
             }&slippageBps=0`
         );
 
@@ -96,6 +96,8 @@ export class SellService {
     }
 
     // background, no await needed
+
+    // execute sell
     this.executeSell(signal).then(result => {
       console.log('executeSell - result', result)
     })
