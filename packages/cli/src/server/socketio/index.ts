@@ -4,6 +4,7 @@ import { SOCKET_MESSAGE_TYPE } from '@elizaos/core';
 import type { Server as SocketIOServer } from 'socket.io';
 import type { RemoteSocket, Socket } from 'socket.io';
 import type { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { LogService, LogFilter } from '../../services/LogService';
 
 export class SocketIORouter {
   private agents: Map<UUID, IAgentRuntime>;
@@ -16,7 +17,7 @@ export class SocketIORouter {
   }
 
   setupListeners(io: SocketIOServer) {
-    logger.info(`[SocketIO] Setting up Socket.IO event listeners`);
+    logger.info('[SocketIO] Setting up Socket.IO event listeners');
 
     // Log registered message types for debugging
     const messageTypes = Object.keys(SOCKET_MESSAGE_TYPE).map(
@@ -78,6 +79,72 @@ export class SocketIORouter {
       message: 'Connected to Eliza Socket.IO server',
       socketId: socket.id,
     });
+
+    this.setupLogHandlers(socket);
+  }
+
+  private setupLogHandlers(socket: Socket) {
+    // Handle log requests
+    socket.on('getLogs', (filter: LogFilter, callback) => {
+      try {
+        const logService = LogService.getInstance();
+        const result = logService.getLogs(filter);
+        callback({ success: true, ...result });
+      } catch (error) {
+        callback({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    });
+
+    // Handle real-time log subscription
+    socket.on('subscribeToLogs', (filter: LogFilter) => {
+      // Store the filter for this socket
+      const logService = LogService.getInstance();
+
+      // Set up an interval to check for new logs
+      const intervalId = setInterval(() => {
+        try {
+          const result = logService.getLogs({
+            ...filter,
+            since: Date.now() - 5000, // Last 5 seconds
+          });
+
+          if (result.logs.length > 0) {
+            socket.emit('newLogs', result);
+          }
+        } catch (error) {
+          socket.emit('logError', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }, 5000); // Check every 5 seconds
+
+      // Store the interval ID for cleanup
+      socket.on('unsubscribeFromLogs', () => {
+        clearInterval(intervalId);
+      });
+
+      // Clean up on disconnect
+      socket.on('disconnect', () => {
+        clearInterval(intervalId);
+      });
+    });
+
+    // Handle log clearing
+    socket.on('clearLogs', (callback) => {
+      try {
+        const logService = LogService.getInstance();
+        logService.clearLogs();
+        callback({ success: true });
+      } catch (error) {
+        callback({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    });
   }
 
   private handleGenericMessage(socket: Socket, data: any) {
@@ -115,7 +182,7 @@ export class SocketIORouter {
     const { roomId, agentId } = payload;
 
     if (!roomId || !agentId) {
-      this.sendErrorResponse(socket, `agentId and roomId are required`);
+      this.sendErrorResponse(socket, 'agentId and roomId are required');
       return;
     }
 
@@ -155,7 +222,7 @@ export class SocketIORouter {
     logger.info(`[SocketIO] Processing message in room ${roomId} from ${senderName || senderId}`);
 
     if (!roomId) {
-      this.sendErrorResponse(socket, `roomId is required`);
+      this.sendErrorResponse(socket, 'roomId is required');
       return;
     }
 
@@ -176,7 +243,7 @@ export class SocketIORouter {
       }
 
       if (!runtime) {
-        this.sendErrorResponse(socket, `No agent runtime available`);
+        this.sendErrorResponse(socket, 'No agent runtime available');
         return;
       }
 
@@ -262,13 +329,13 @@ export class SocketIORouter {
     // Find the appropriate runtime
     const runtime = this.agents.get(agentId) || this.agents.get(senderId as UUID);
     if (!runtime) {
-      this.sendErrorResponse(socket, `[SocketIO] No runtime found.`);
+      this.sendErrorResponse(socket, '[SocketIO] No runtime found.');
       return;
     }
 
     const text = message?.trim();
     if (!text) {
-      this.sendErrorResponse(socket, `[SocketIO] No text found.`);
+      this.sendErrorResponse(socket, '[SocketIO] No text found.');
       return;
     }
 
@@ -291,7 +358,7 @@ export class SocketIORouter {
           type: ChannelType.API,
           worldId: worldId as UUID,
         });
-        logger.info(`[SocketIO] Connection ensured successfully`);
+        logger.info('[SocketIO] Connection ensured successfully');
       } catch (error) {
         logger.error(`[SocketIO] Error in ensureConnection: ${error.message}`);
       }
@@ -335,7 +402,7 @@ export class SocketIORouter {
           channel: 'socketio',
         },
       });
-      logger.info(`[SocketIO] Relationship created successfully`);
+      logger.info('[SocketIO] Relationship created successfully');
     }
   }
 
@@ -376,7 +443,7 @@ export class SocketIORouter {
 
     logger.info(`[SocketIO] Creating memory for message ${memory.id}`);
     await runtime.createMemory(memory, 'messages');
-    logger.info(`[SocketIO] Created memory successfully`);
+    logger.info('[SocketIO] Created memory successfully');
   }
 
   private broadcastMessageToRoom(socket: Socket, roomId: string, payload: any) {

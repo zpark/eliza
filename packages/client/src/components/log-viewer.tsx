@@ -8,6 +8,8 @@ import { ScrollArea } from './ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from './ui/button';
+import SocketIOManager from '../lib/socketio-manager';
+import { cn } from '../lib/utils';
 
 interface LogEntry {
   level: number;
@@ -26,6 +28,11 @@ interface LogResponse {
   total: number;
   level: string;
   levels: string[];
+}
+
+interface LogError {
+  error: string;
+  message?: string;
 }
 
 const LOG_LEVEL_NUMBERS = {
@@ -67,6 +74,9 @@ export function LogViewer({ agentName, level, hideTitle }: LogViewerProps = {}) 
   const isUserScrolling = useRef(false);
   const lastLogId = useRef<string>('');
   const queryClient = useQueryClient();
+  const [isRealtime, setIsRealtime] = useState(false);
+
+  const socketManager = useRef(SocketIOManager.getInstance());
 
   const { data, error, isLoading } = useQuery<LogResponse>({
     queryKey: ['logs', selectedLevel, selectedAgentName],
@@ -75,19 +85,26 @@ export function LogViewer({ agentName, level, hideTitle }: LogViewerProps = {}) 
         level: selectedLevel === 'all' ? '' : selectedLevel,
         agentName: selectedAgentName === 'all' ? undefined : selectedAgentName,
       }),
-    refetchInterval: 1000,
+    refetchInterval: isRealtime ? false : 1000,
     staleTime: 1000,
+    enabled: !isRealtime,
   });
 
   const { data: agents } = useAgents();
   const agentNames = agents?.data?.agents?.map((agent) => agent.name) ?? [];
 
+  const [realtimeLogs, setRealtimeLogs] = useState<LogEntry[]>([]);
+
   const handleClearLogs = async () => {
     try {
       setIsClearing(true);
       await apiClient.deleteLogs();
-      // Invalidate the logs query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ['logs'] });
+
+      if (isRealtime) {
+        setRealtimeLogs([]);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['logs'] });
+      }
     } catch (error) {
       console.error('Failed to clear logs:', error);
     } finally {
@@ -109,16 +126,17 @@ export function LogViewer({ agentName, level, hideTitle }: LogViewerProps = {}) 
   }, []);
 
   useEffect(() => {
-    if (!data?.logs?.length) return;
+    const logs = isRealtime ? realtimeLogs : data?.logs;
+    if (!logs?.length) return;
 
-    const currentLastLog = data.logs[data.logs.length - 1];
+    const currentLastLog = logs[logs.length - 1];
     const currentLastLogId = `${currentLastLog.time}-${currentLastLog.msg}`;
 
     if (shouldAutoScroll && currentLastLogId !== lastLogId.current) {
       setTimeout(scrollToBottom, 0);
       lastLogId.current = currentLastLogId;
     }
-  }, [data?.logs, shouldAutoScroll, scrollToBottom]);
+  }, [isRealtime ? realtimeLogs : data?.logs, shouldAutoScroll, scrollToBottom]);
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     if (isUserScrolling.current) return;
@@ -176,11 +194,103 @@ export function LogViewer({ agentName, level, hideTitle }: LogViewerProps = {}) 
     );
   };
 
+  const handleNewLogs = (result: LogResponse) => {
+    const filteredLogs = result.logs.filter((log) => {
+      const agentMatch = selectedAgentName === 'all' || log.agentName === selectedAgentName;
+      const levelMatch =
+        selectedLevel === 'all' ||
+        getLevelName(log.level).toLowerCase() === selectedLevel.toLowerCase();
+      return agentMatch && levelMatch;
+    });
+
+    setRealtimeLogs((prev) => [...prev, ...filteredLogs]);
+  };
+
+  const toggleRealtime = useCallback(() => {
+    const newIsRealtime = !isRealtime;
+    setIsRealtime(newIsRealtime);
+
+    if (newIsRealtime) {
+      const filters = {
+        level: selectedLevel === 'all' ? undefined : selectedLevel,
+        agentName: selectedAgentName === 'all' ? undefined : selectedAgentName,
+      };
+
+      apiClient
+        .getLogs(filters)
+        .then((result) => {
+          setRealtimeLogs(result.logs);
+        })
+        .catch((error) => {
+          console.error('Failed to fetch initial logs:', error);
+        });
+
+      socketManager.current.subscribeToLogs(filters);
+    } else {
+      socketManager.current.unsubscribeFromLogs();
+      setRealtimeLogs([]);
+    }
+  }, [isRealtime, selectedLevel, selectedAgentName]);
+
+  useEffect(() => {
+    if (!isRealtime) return;
+
+    const handleLogError = (error: any) => {
+      console.error('Realtime log error:', error);
+    };
+
+    socketManager.current.on('newLogs', handleNewLogs);
+    socketManager.current.on('logError', handleLogError);
+
+    return () => {
+      socketManager.current.off('newLogs', handleNewLogs);
+      socketManager.current.off('logError', handleLogError);
+    };
+  }, [isRealtime]);
+
+  useEffect(() => {
+    if (!isRealtime) return;
+
+    const filters = {
+      level: selectedLevel === 'all' ? undefined : selectedLevel,
+      agentName: selectedAgentName === 'all' ? undefined : selectedAgentName,
+    };
+
+    apiClient
+      .getLogs(filters)
+      .then((result) => {
+        setRealtimeLogs(result.logs);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch filtered logs:', error);
+      });
+
+    socketManager.current.subscribeToLogs(filters);
+  }, [isRealtime, selectedLevel, selectedAgentName]);
+
+  useEffect(() => {
+    return () => {
+      socketManager.current.unsubscribeFromLogs();
+    };
+  }, []);
+
   return (
     <div className="p-4">
       <div className="mb-4 flex items-center justify-between">
         {!hideTitle && <PageTitle title={'System Logs'} />}
         <div className="flex items-center gap-4">
+          <Button
+            variant={isRealtime ? 'default' : 'secondary'}
+            size="sm"
+            onClick={toggleRealtime}
+            className={cn(
+              'transition-all',
+              isRealtime && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+            )}
+          >
+            {isRealtime ? 'Realtime On' : 'Realtime Off'}
+          </Button>
+
           <Button variant="destructive" size="sm" onClick={handleClearLogs} disabled={isClearing}>
             {isClearing ? 'Clearing...' : 'Clear Logs'}
           </Button>
@@ -226,9 +336,9 @@ export function LogViewer({ agentName, level, hideTitle }: LogViewerProps = {}) 
         </div>
       </div>
 
-      {isLoading ? (
+      {isLoading && !isRealtime ? (
         <div className="font-mono p-4">Loading logs...</div>
-      ) : error ? (
+      ) : error && !isRealtime ? (
         <div className="text-red-500 font-mono p-4">
           {error instanceof Error ? error.message : 'Failed to fetch logs'}
         </div>
@@ -239,12 +349,13 @@ export function LogViewer({ agentName, level, hideTitle }: LogViewerProps = {}) 
             onScroll={handleScroll}
             className="p-4 text-sm space-y-1 h-full overflow-auto"
           >
-            {data?.logs.length === 0 ? (
+            {(isRealtime ? realtimeLogs : (data?.logs ?? [])).length === 0 ? (
               <div className="text-gray-500 font-mono">
                 No {selectedLevel === 'all' ? '' : selectedLevel.toUpperCase()} logs found
+                {isRealtime && ' (Waiting for new logs...)'}
               </div>
             ) : (
-              data?.logs.map((log) => formatLogEntry(log))
+              (isRealtime ? realtimeLogs : (data?.logs ?? [])).map((log) => formatLogEntry(log))
             )}
           </div>
         </ScrollArea>

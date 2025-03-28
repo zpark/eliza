@@ -7,6 +7,34 @@ import { randomUUID } from './utils';
 
 //const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
 
+// Add these type definitions
+export interface LogEntry {
+  level: number;
+  time: number;
+  msg: string;
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+export interface LogFilter {
+  since?: number;
+  level?: string;
+  agentName?: string;
+  agentId?: string;
+  limit?: number;
+}
+
+export interface LogResponse {
+  logs: LogEntry[];
+  metadata: {
+    count: number;
+    total: number;
+    requestedLevel: string;
+    agentName: string;
+    agentId: string;
+    levels: string[];
+  };
+}
+
 /**
  * SocketIOManager handles real-time communication between the client and server
  * using Socket.io. It maintains a single connection to the server and allows
@@ -21,6 +49,7 @@ class SocketIOManager extends EventEmitter {
   private activeRooms: Set<string> = new Set();
   private entityId: string | null = null;
   private agentIds: string[] | null = null;
+  private logSubscriptionId: NodeJS.Timer | null = null;
 
   private constructor() {
     super();
@@ -47,7 +76,7 @@ class SocketIOManager extends EventEmitter {
     }
 
     // Create a single socket connection
-    const fullURL = window.location.origin + '/';
+    const fullURL = `${window.location.origin}/`;
     console.log('connecting to', fullURL);
     this.socket = io(fullURL, {
       autoConnect: true,
@@ -63,15 +92,14 @@ class SocketIOManager extends EventEmitter {
       console.log('[SocketIO] Connected to server');
       this.isConnected = true;
       this.resolveConnect?.();
-
       // Rejoin any active rooms after reconnection
-      this.activeRooms.forEach((roomId) => {
+      for (const roomId of this.activeRooms) {
         this.joinRoom(roomId);
-      });
+      }
     });
 
     this.socket.on('messageBroadcast', (data) => {
-      console.log(`[SocketIO] Message broadcast received:`, data);
+      console.log('[SocketIO] Message broadcast received:', data);
 
       // Log the full data structure to understand formats
       console.log('[SocketIO] Message broadcast data structure:', {
@@ -235,10 +263,116 @@ class SocketIOManager extends EventEmitter {
   }
 
   /**
+   * Subscribe to real-time logs with filtering
+   * @param filter Log filter options (level, agentName, agentId, etc.)
+   */
+  public subscribeToLogs(filter: LogFilter): void {
+    if (!this.socket || !this.isConnected) {
+      console.error('[SocketIO] Cannot subscribe to logs: not connected');
+      return;
+    }
+
+    // Clear any existing subscription
+    this.unsubscribeFromLogs();
+
+    // Set up log subscription
+    this.socket.emit('subscribeToLogs', filter);
+
+    // Listen for new logs
+    this.socket.on('newLogs', (result) => {
+      this.emit('newLogs', result);
+    });
+
+    // Listen for log errors
+    this.socket.on('logError', (error) => {
+      console.error('[SocketIO] Log error:', error);
+      this.emit('logError', error);
+    });
+
+    console.log('[SocketIO] Subscribed to logs with filter:', filter);
+  }
+
+  /**
+   * Unsubscribe from real-time logs
+   */
+  public unsubscribeFromLogs(): void {
+    if (!this.socket) {
+      return;
+    }
+
+    this.socket.emit('unsubscribeFromLogs');
+    this.socket.off('newLogs');
+    this.socket.off('logError');
+    console.log('[SocketIO] Unsubscribed from logs');
+  }
+
+  /**
+   * Get logs with filtering (one-time request)
+   * @param filter Log filter options
+   * @returns Promise with logs result
+   */
+  public getLogs(filter: LogFilter): Promise<LogResponse> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket || !this.isConnected) {
+        reject(new Error('Cannot get logs: not connected'));
+        return;
+      }
+
+      this.socket.emit(
+        'getLogs',
+        filter,
+        (response: {
+          success: boolean;
+          logs?: LogEntry[];
+          count?: number;
+          total?: number;
+          level?: string;
+          levels?: string[];
+          error?: string;
+        }) => {
+          if (response.success) {
+            resolve({
+              logs: response.logs || [],
+              count: response.count || 0,
+              total: response.total || 0,
+              level: response.level || 'all',
+              levels: response.levels || [],
+            });
+          } else {
+            reject(new Error(response.error || 'Failed to get logs'));
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * Clear all logs
+   * @returns Promise<void>
+   */
+  public clearLogs(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket || !this.isConnected) {
+        reject(new Error('Cannot clear logs: not connected'));
+        return;
+      }
+
+      this.socket.emit('clearLogs', (response) => {
+        if (response.success) {
+          resolve();
+        } else {
+          reject(new Error(response.error || 'Failed to clear logs'));
+        }
+      });
+    });
+  }
+
+  /**
    * Disconnect from the server
    */
   public disconnect(): void {
     if (this.socket) {
+      this.unsubscribeFromLogs(); // Clean up log subscriptions
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;

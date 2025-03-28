@@ -13,6 +13,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { worldRouter } from './world';
 import { envRouter } from './env';
+import { LogService, LogFilter } from '../../services/LogService';
 
 // Custom levels from @elizaos/core logger
 const LOG_LEVELS = {
@@ -60,7 +61,10 @@ export function setupSocketIO(
 
   // Handle socket connections
   io.on('connection', (socket) => {
-    const { agentId, roomId } = socket.handshake.query as { agentId: string; roomId: string };
+    const { agentId, roomId } = socket.handshake.query as {
+      agentId: string;
+      roomId: string;
+    };
 
     logger.debug('Socket connected', { agentId, roomId, socketId: socket.id });
 
@@ -72,7 +76,10 @@ export function setupSocketIO(
 
     // Handle messages from clients
     socket.on('message', async (messageData) => {
-      logger.debug('Socket message received', { messageData, socketId: socket.id });
+      logger.debug('Socket message received', {
+        messageData,
+        socketId: socket.id,
+      });
 
       if (messageData.type === SOCKET_MESSAGE_TYPE.SEND_MESSAGE) {
         const payload = messageData.payload;
@@ -268,13 +275,13 @@ export function setupSocketIO(
 
         roomParticipants.set(roomId, new Set());
 
-        agentIds?.forEach((agentId: UUID) => {
+        for (const agentId of agentIds || []) {
           if (agents.has(agentId as UUID)) {
             // Add agent to room participants
-            roomParticipants.get(roomId)!.add(agentId as UUID);
+            roomParticipants.get(roomId)?.add(agentId as UUID);
             logger.debug(`Agent ${agentId} joined room ${roomId}`);
           }
-        });
+        }
         logger.debug('roomParticipants', roomParticipants);
 
         logger.debug(`Client ${socket.id} joining room ${roomId}`);
@@ -552,78 +559,29 @@ export function createApiRouter(
     res.json({ message: 'Server stopping...' });
   });
 
-  // Logs endpoint
+  // Logs endpoint supports both GET and POST
   const logsHandler = (req, res) => {
-    const since = req.query.since ? Number(req.query.since) : Date.now() - 3600000; // Default 1 hour
-    const requestedLevel = (req.query.level?.toString().toLowerCase() || 'all') as LogLevel;
-    const requestedAgentName = req.query.agentName?.toString() || 'all';
-    const requestedAgentId = req.query.agentId?.toString() || 'all'; // Add support for agentId parameter
-    const limit = Math.min(Number(req.query.limit) || 100, 1000); // Max 1000 entries
-
-    // Access the underlying logger instance
-    const destination = (logger as unknown)[Symbol.for('pino-destination')];
-
-    if (!destination?.recentLogs) {
-      return res.status(500).json({
-        error: 'Logger destination not available',
-        message: 'The logger is not configured to maintain recent logs',
-      });
-    }
-
     try {
-      // Get logs from the destination's buffer
-      const recentLogs: LogEntry[] = destination.recentLogs();
-      const requestedLevelValue = LOG_LEVELS[requestedLevel] || LOG_LEVELS.info;
+      // Query parameters with defaults
+      const since = req.query.since ? Number(req.query.since) : Date.now() - 3600000; // Default 1 hour
+      const requestedLevel = (req.query.level?.toString().toLowerCase() || 'all') as LogLevel;
+      const requestedAgentName = req.query.agentName?.toString() || 'all';
+      const requestedAgentId = req.query.agentId?.toString() || 'all';
+      const limit = Math.min(Number(req.query.limit) || 100, 1000); // Max 1000 entries
 
-      const filtered = recentLogs
-        .filter((log) => {
-          // Filter by time always
-          const timeMatch = log.time >= since;
-
-          // Filter by level - return all logs if requestedLevel is 'all'
-          let levelMatch = true;
-          if (requestedLevel && requestedLevel !== 'all') {
-            levelMatch = log.level === requestedLevelValue;
-          }
-
-          // Filter by agentName if provided - return all if 'all'
-          const agentNameMatch =
-            !requestedAgentName || requestedAgentName === 'all'
-              ? true
-              : log.agentName === requestedAgentName;
-
-          // Filter by agentId if provided - return all if 'all'
-          const agentIdMatch =
-            !requestedAgentId || requestedAgentId === 'all'
-              ? true
-              : log.agentId === requestedAgentId;
-
-          return timeMatch && levelMatch && agentNameMatch && agentIdMatch;
-        })
-        .slice(-limit);
-
-      // Add debug log to help troubleshoot
-      logger.debug('Logs request processed', {
-        requestedLevel,
-        requestedLevelValue,
-        requestedAgentName,
-        requestedAgentId,
-        filteredCount: filtered.length,
-        totalLogs: recentLogs.length,
-      });
-
-      res.json({
-        logs: filtered,
-        count: filtered.length,
-        total: recentLogs.length,
-        requestedLevel: requestedLevel,
+      const logService = LogService.getInstance();
+      const logs = logService.getLogs({
+        since,
+        level: requestedLevel,
         agentName: requestedAgentName,
         agentId: requestedAgentId,
-        levels: Object.keys(LOG_LEVELS),
+        limit,
       });
+
+      res.json(logs);
     } catch (error) {
       res.status(500).json({
-        error: 'Failed to retrieve logs',
+        error: 'Failed to get logs',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
@@ -635,20 +593,8 @@ export function createApiRouter(
   // Handler for clearing logs
   const logsClearHandler = (_req, res) => {
     try {
-      // Access the underlying logger instance
-      const destination = (logger as unknown)[Symbol.for('pino-destination')];
-
-      if (!destination?.clear) {
-        return res.status(500).json({
-          error: 'Logger clear method not available',
-          message: 'The logger is not configured to clear logs',
-        });
-      }
-
-      // Clear the logs
-      destination.clear();
-
-      logger.debug('Logs cleared via API endpoint');
+      const logService = LogService.getInstance();
+      logService.clearLogs();
       res.json({ status: 'success', message: 'Logs cleared successfully' });
     } catch (error) {
       res.status(500).json({
