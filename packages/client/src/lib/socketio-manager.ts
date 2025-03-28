@@ -47,7 +47,7 @@ class SocketIOManager extends EventEmitter {
     }
 
     // Create a single socket connection
-    const fullURL = window.location.origin + '/';
+    const fullURL = `${window.location.origin}/`;
     console.log('connecting to', fullURL);
     this.socket = io(fullURL, {
       autoConnect: true,
@@ -63,15 +63,14 @@ class SocketIOManager extends EventEmitter {
       console.log('[SocketIO] Connected to server');
       this.isConnected = true;
       this.resolveConnect?.();
-
       // Rejoin any active rooms after reconnection
-      this.activeRooms.forEach((roomId) => {
+      for (const roomId of this.activeRooms) {
         this.joinRoom(roomId);
-      });
+      }
     });
 
     this.socket.on('messageBroadcast', (data) => {
-      console.log(`[SocketIO] Message broadcast received:`, data);
+      console.log('[SocketIO] Message broadcast received:', data);
 
       // Log the full data structure to understand formats
       console.log('[SocketIO] Message broadcast data structure:', {
