@@ -4,10 +4,106 @@
         <title>ElizaOS Updates</title>
         <link>https://eliza.how/blog</link>
         <description>Stay up to date with the latest from ElizaOS</description>
-        <lastBuildDate>Sat, 22 Mar 2025 21:23:53 GMT</lastBuildDate>
+        <lastBuildDate>Fri, 28 Mar 2025 08:56:31 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[Tools for Taming Information]]></title>
+            <link>https://eliza.how/blog/taming_info</link>
+            <guid>https://eliza.how/blog/taming_info</guid>
+            <pubDate>Fri, 28 Mar 2025 08:56:31 GMT</pubDate>
+            <description><![CDATA[From summarizing Discord channels to generating daily AI-powered newsfeeds, we’re building tools that help communities stay aligned, surface insights, and reward contributors — without needing everyone to be everywhere at once. This post shares practical examples and blueprints for deploying Eliza agents across your own projects.]]></description>
+            <content:encoded><![CDATA[<p>From summarizing Discord channels to generating daily AI-powered newsfeeds, we’re building tools that help communities stay aligned, surface insights, and reward contributors — without needing everyone to be everywhere at once. This post shares practical examples and blueprints for deploying Eliza agents across your own projects.</p>
+<p><a href="https://eliza.how/assets/files/aicomms-2fbcbb2b8f8abc24152da77cd59979dc.jpg" target="_blank"><img decoding="async" loading="lazy" alt="3D News Show Example" src="https://eliza.how/assets/images/aicomms-2fbcbb2b8f8abc24152da77cd59979dc.jpg" width="1924" height="1279" class="img__Ss2"></a></p>
+<!-- -->
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="challenges">Challenges<a href="https://eliza.how/blog/taming_info#challenges" class="hash-link" aria-label="Direct link to Challenges" title="Direct link to Challenges">​</a></h2>
+<p><a href="https://www.notboring.co/p/the-great-online-game" target="_blank" rel="noopener noreferrer">The Great Online Game</a> is played across many different apps and chat rooms. One of the biggest challenges facing players is locating critical information like who does what or updates scattered when it's across Discord channels, GitHub repositories, forums, threads, etc. No human, regardless of how dedicated, can keep track of everything.</p>
+<p><img decoding="async" loading="lazy" alt="XKCD comic about information scattering" src="https://eliza.how/assets/images/xkcd1810-42223bbcc466bceebc87639aace5efc0.png" width="740" height="536" class="img__Ss2">
+<a href="https://xkcd.com/1810/" target="_blank" rel="noopener noreferrer">https://xkcd.com/1810/</a></p>
+<p>Even when information is theoretically "public," people are generally too lazy to fetch it. That and stakeholders may prefer different information formats:</p>
+<ul>
+<li>Developers dig into GitHub</li>
+<li>Community vibes on Discord</li>
+<li>Casual followers scroll Twitter</li>
+<li>Visual learners watch videos</li>
+</ul>
+<p>Instead of forcing everyone onto one highway early on, a better strategy would be to build bridges between lanes to allow information to flow more freely. AI agents are the vehicles for that information, they carry the ability to meet people where they are to deliver important insights while preserving context.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="goals">Goals<a href="https://eliza.how/blog/taming_info#goals" class="hash-link" aria-label="Direct link to Goals" title="Direct link to Goals">​</a></h3>
+<ul>
+<li>Reduce overhead on managing comms / community questions</li>
+<li>Keep people informed across different platforms</li>
+<li>Accelerate onboarding for new contributors</li>
+</ul>
+<hr>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="case-study-ai-news-system">Case Study: AI News System<a href="https://eliza.how/blog/taming_info#case-study-ai-news-system" class="hash-link" aria-label="Direct link to Case Study: AI News System" title="Direct link to Case Study: AI News System">​</a></h3>
+<p>This <a href="https://github.com/elizaOS/discord-summarizer" target="_blank" rel="noopener noreferrer">discord summarizer</a> was the first prototype. For ElizaOS we're now using <a href="https://github.com/bozp-pzob/ai-news" target="_blank" rel="noopener noreferrer">this AI News tool</a> to aggregate sources from across the ecosystem. The system works in four key stages:</p>
+<ol>
+<li><strong>Collection</strong>: APIs pull data from multiple sources including Twitter, Discord, GitHub, and market data platforms.</li>
+<li><strong>Wrangling</strong>: LLMs normalize, summarize, and tag topics to create a unified knowledge base from disparate sources.</li>
+<li><strong>Distribution</strong>: The system produces standardized outputs in multiple formats (JSON, Markdown, RSS) to suit different consumption needs.</li>
+<li><strong>Consumption</strong>: Users can access tailored products like dashboards, newsletters, or even 3D news shows.</li>
+</ol>
+<!-- -->
+<p>You can see the results from this tool here, which updates daily via GitHub actions:</p>
+<ul>
+<li><a href="https://m3-org.github.io/ai-news/" target="_blank" rel="noopener noreferrer">https://m3-org.github.io/ai-news/</a></li>
+<li><a href="https://eliza.how/news" target="_blank" rel="noopener noreferrer">https://eliza.how/news</a></li>
+</ul>
+<div class="responsive-iframe"><iframe src="https://www.youtube.com/embed/fIGoyaEd0Hw" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+<p>Here's an example news clip: <a href="https://x.com/elizaOS/status/1880280863210106975" target="_blank" rel="noopener noreferrer">https://x.com/elizaOS/status/1880280863210106975</a></p>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="case-study-ai-assistants">Case Study: AI Assistants<a href="https://eliza.how/blog/taming_info#case-study-ai-assistants" class="hash-link" aria-label="Direct link to Case Study: AI Assistants" title="Direct link to Case Study: AI Assistants">​</a></h2>
+<p>Idk about you, but I hate seeing questions left hanging in tech support channels, especially when the answer can easily be found in the docs. It's a perfect opportunity to <a href="https://en.wikipedia.org/wiki/Eating_your_own_dog_food" target="_blank" rel="noopener noreferrer">eat our own dogfood</a>, experience and fix pain points firsthand,  and showcase a powerful use case of AI agents to other devs.</p>
+<p><a href="https://eliza.how/assets/files/jintern-3157a38979ec1bc2ff5c4371e1137a36.jpg" target="_blank"><img decoding="async" loading="lazy" alt="jintern2" src="https://eliza.how/assets/images/jintern-3157a38979ec1bc2ff5c4371e1137a36.jpg" width="950" height="525" class="img__Ss2"></a></p>
+<p>While we're analyzing tech support channels, we can identify gaps in docs based on common community questions which can then be addressed systematically. This may involve checking if any github issues or pull requests already address a question, and if not, then to help create an issue for it. Herein lies a powerful feedback loop:</p>
+<ul>
+<li>Aggregate &amp; Analyze: Extract questions and answers, who is helping who (and if succesful), identify pain points, gather sentiment</li>
+<li>Clean &amp; Enhance Data, Update docs, create bug reports</li>
+<li>RAG Knowledge: AI Agents giving automated responses to FAQ</li>
+</ul>
+<p>You can now use <a href="https://github.com/bozp-pzob/ai-news" target="_blank" rel="noopener noreferrer">AI news</a> to generate a summary, who helped who, FAQ, and action items analysis of a source for whatever time period you want - even historically!</p>
+<p><a href="https://eliza.how/assets/files/ainews-4aec2c68dc6e44d077a1079422fbc7fc.jpg" target="_blank"><img decoding="async" loading="lazy" alt="image" src="https://eliza.how/assets/images/ainews-4aec2c68dc6e44d077a1079422fbc7fc.jpg" width="1920" height="1080" class="img__Ss2"></a></p>
+<p>We retroactively reward people who provided good answers to questions (we're using tip.cc) over a time period. Later people can reuse their tips when helping or asking for help from other people.</p>
+<p><a href="https://eliza.how/assets/files/reward-c6be72735ce6826239846e5943c028ba.jpg" target="_blank"><img decoding="async" loading="lazy" alt="image" src="https://eliza.how/assets/images/reward-c6be72735ce6826239846e5943c028ba.jpg" width="1024" height="512" class="img__Ss2"></a></p>
+<p><strong>Main Lesson: Treat the docs as first-class citizen of your project.</strong></p>
+<p>Eliza AI agent assistants helping devs with common questions about elizaOS greatly benefit from good docs to provide more current and accurate information, which speeds up onboarding and lets developers stay focused on higher impact activities.</p>
+<blockquote>
+<p>Read <a href="https://www.kapa.ai/blog/optimizing-technical-documentation-for-llms" target="_blank" rel="noopener noreferrer">this guide</a> on how to optimize technical docs for LLMs. Adding FAQ with answers in the docs enhances optimizes them for LLM use cases.</p>
+</blockquote>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="get-involved">Get Involved<a href="https://eliza.how/blog/taming_info#get-involved" class="hash-link" aria-label="Direct link to Get Involved" title="Direct link to Get Involved">​</a></h2>
+<p>In the future I want people to be able to install Eliza and be greeted by an agent that can help you setup, configure settings, create plugins, deploy, etc. For now I think our assistants need to be supervised until we're confident enough in their responses. I think we can speed things up by having the agent admit what they don't know the answer vs hallucinating, and to guide devs to the main community support channels when they're having difficulty.</p>
+<p>If you want to collaborate with us, here's a few ideas:</p>
+<ul>
+<li>Answer people's questions in the coders / tech support channels on discord, it will get noticed :)</li>
+<li>Help with docs: go through pages, verify information with code, test the steps, create issues and PRs with fixes</li>
+<li>Collaborate with us on the <a href="https://github.com/bozp-pzob/ai-news" target="_blank" rel="noopener noreferrer">AI news aggregator</a>
+<ul>
+<li>Generate new show ideas using the <a href="https://m3-org.github.io/ai-news/" target="_blank" rel="noopener noreferrer">output files</a> from AI-news</li>
+<li>Write a script that takes a week of daily logs and turns it into a newsletter or news show program</li>
+</ul>
+</li>
+<li>Ingest docs into your Eliza agent as knowledge to onboard them then tinker with the character file to takee on a role in the DAO<!-- -->
+<ul>
+<li>Perhaps it can act as a scribe that summarizes chats</li>
+<li>Lore keeper, community moderation, or social media marketer</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="links">Links<a href="https://eliza.how/blog/taming_info#links" class="hash-link" aria-label="Direct link to Links" title="Direct link to Links">​</a></h3>
+<ul>
+<li><a href="https://github.com/bozp-pzob/ai-news" target="_blank" rel="noopener noreferrer">https://github.com/bozp-pzob/ai-news</a> (aggregator tool)<!-- -->
+<ul>
+<li><a href="https://m3-org.github.io/ai-news/" target="_blank" rel="noopener noreferrer">https://m3-org.github.io/ai-news/</a> (data for elizaOS ecosystem)</li>
+</ul>
+</li>
+<li><a href="https://github.com/elizaOS/knowledge" target="_blank" rel="noopener noreferrer">https://github.com/elizaOS/knowledge</a> (for eliza RAG knowledge)</li>
+<li><a href="https://www.kapa.ai/blog/optimizing-technical-documentation-for-llms" target="_blank" rel="noopener noreferrer">https://www.kapa.ai/blog/optimizing-technical-documentation-for-llms</a></li>
+<li><a href="https://x.com/dankvr/status/1884417610420474199" target="_blank" rel="noopener noreferrer">https://x.com/dankvr/status/1884417610420474199</a> (update 1/28/25)</li>
+<li><a href="https://x.com/dankvr/status/1880050455226827246" target="_blank" rel="noopener noreferrer">https://x.com/dankvr/status/1880050455226827246</a> (update 1/16/25)</li>
+</ul>]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[ElizaOS V2: What's New]]></title>
             <link>https://eliza.how/blog/v1-v2</link>
@@ -15,7 +111,7 @@
             <pubDate>Sat, 22 Mar 2025 21:23:53 GMT</pubDate>
             <description><![CDATA[The newest version of eliza represents significant upgrades from the previous version, offering a leaner, more flexible architecture for cross-platform agent interaction. This short guide highlights the key differences between V1 and V2.]]></description>
             <content:encoded><![CDATA[<p>The newest version of <a href="https://github.com/elizaOS/eliza" target="_blank" rel="noopener noreferrer">eliza</a> represents significant upgrades from the previous version, offering a leaner, more flexible architecture for cross-platform agent interaction. This short guide highlights the key differences between V1 and V2.</p>
-<p><a href="https://eliza.how/assets/files/v1-v2-1bdb162732849d30e98437ea20cd2ac1.jpg" target="_blank"><img decoding="async" loading="lazy" src="https://eliza.how/assets/images/v1-v2-1bdb162732849d30e98437ea20cd2ac1.jpg" width="3072" height="1727" class="img__Ss2"></a></p>
+<p><a href="https://eliza.how/assets/files/v1-v2-e5c6248d127b73f19c623f61f2685bc9.jpg" target="_blank"><img decoding="async" loading="lazy" src="https://eliza.how/assets/images/v1-v2-e5c6248d127b73f19c623f61f2685bc9.jpg" width="3072" height="1727" class="img__Ss2"></a></p>
 <!-- -->
 <p>Source: <a href="https://www.youtube.com/watch?v=yUjScwAZsQo" target="_blank" rel="noopener noreferrer">https://www.youtube.com/watch?v=yUjScwAZsQo</a></p>
 <h3 class="anchor anchorWithStickyNavbar_fF9Z" id="v2-impact">V2 Impact<a href="https://eliza.how/blog/v1-v2#v2-impact" class="hash-link" aria-label="Direct link to V2 Impact" title="Direct link to V2 Impact">​</a></h3>
@@ -76,7 +172,7 @@
 <h2 class="anchor anchorWithStickyNavbar_fF9Z" id="video-archive-for-research">Video Archive for Research<a href="https://eliza.how/blog/wdygdtw_recap#video-archive-for-research" class="hash-link" aria-label="Direct link to Video Archive for Research" title="Direct link to Video Archive for Research">​</a></h2>
 <p>These recordings help document the week-by-week evolution of the crypto AI ecosystem, capturing the iterative development process and community formation in real-time. NotebookLM and similar research tools can extract specific technical discussions, discover new connections, and track project evolution through these as sources.</p>
 <p>Below is a complete list of all WDYGDTW session recordings. These videos can be imported into tools like Google's <a href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer">NotebookLM</a> via youtube video import for deeper analysis, transcript generation, and pattern recognition across the development timeline:</p>
-<p><a href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer"><img decoding="async" loading="lazy" alt="image" src="https://eliza.how/assets/images/notebooklm-7a5b2a4520443f6236c5f3c713db477b.jpg" width="2554" height="1327" class="img__Ss2"></a></p>
+<p><a href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer"><img decoding="async" loading="lazy" alt="image" src="https://eliza.how/assets/images/notebooklm-479b8eaab80a4919dbecbaf8c365aaf0.jpg" width="1280" height="720" class="img__Ss2"></a></p>
 <p><strong>Youtube</strong></p>
 <ol>
 <li><a href="https://www.youtube.com/watch?v=9EmvhlBPB8Q" target="_blank" rel="noopener noreferrer">https://www.youtube.com/watch?v=9EmvhlBPB8Q</a></li>
