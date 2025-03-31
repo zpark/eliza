@@ -482,8 +482,21 @@ export async function getTokenBalance(
     runtime: IAgentRuntime,
     tokenMint: string
 ): Promise<TokenBalance | null> {
-    const balances = await getWalletBalances(runtime);
-    return balances.tokens.find(token => token.mint === tokenMint) || null;
+    try {
+        const balances = await getWalletBalances(runtime);
+        const token = balances.tokens.find(t => t.mint.toLowerCase() === tokenMint.toLowerCase());
+        
+        if (!token) {
+            logger.warn(`No balance found for token ${tokenMint}`, {
+                availableTokens: balances.tokens.map(t => t.mint)
+            });
+        }
+        
+        return token;
+    } catch (error) {
+        logger.error("Failed to get token balance:", error);
+        return null;
+    }
 }
 
 /**

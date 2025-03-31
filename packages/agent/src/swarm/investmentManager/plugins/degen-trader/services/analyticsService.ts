@@ -135,7 +135,7 @@ export class AnalyticsService {
     }
   }
 
-  private calculateRSI(prices: number[], period: number): number {
+  calculateRSI(prices: number[], period: number): number {
     if (prices.length < period + 1) {
       return 50; // Default neutral value
     }
@@ -172,7 +172,7 @@ export class AnalyticsService {
     return 100 - 100 / (1 + rs);
   }
 
-  private calculateMACD(prices: number[]): {
+  calculateMACD(prices: number[]): {
     macd: number;
     signal: number;
     histogram: number;
@@ -205,7 +205,7 @@ export class AnalyticsService {
     };
   }
 
-  private calculateEMA(prices: number[], period: number): number {
+  calculateEMA(prices: number[], period: number): number {
     if (prices.length < period) {
       return prices[prices.length - 1];
     }

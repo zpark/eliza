@@ -75,14 +75,14 @@ export class WalletService {
       connection: this.connection,
       CONFIRMATION_CONFIG: this.CONFIRMATION_CONFIG,
 
-      private async executeTrade({
+      async executeTrade({
         tokenAddress,
         amount,
         slippage,
         action
       }: {
         tokenAddress: string;
-        amount: number;
+        amount: string | number;
         slippage: number;
         action: "BUY" | "SELL";
       }, dex = 'jup'): Promise<WalletOperationResult> {
@@ -104,14 +104,10 @@ export class WalletService {
           const inputTokenCA = action === 'SELL' ? tokenAddress : SOL_ADDRESS;
           const outputTokenCA = action === 'SELL' ? SOL_ADDRESS : tokenAddress;
 
-          // Convert amount to lamports for the API
-          /*
-          const swapAmount = action === 'SELL'
-            ? Number(amount)  // For selling, amount is already in lamports
-            : Math.floor(Number(amount) * 1e9);  // For buying, convert to lamports
-          */
-          // for sell swapAmount needs to be an int
-          const swapAmount = Math.floor(Number(amount) * 1e9);
+          // Convert amount to lamports for BUY (SOL is input)
+          const swapAmount = action === "BUY" 
+            ? Math.floor(Number(amount) * 1e9)  // Convert SOL to lamports for buy
+            : Math.floor(Number(amount));       // Amount already in token decimals for sell
 
           logger.debug("Swap parameters:", {
             inputTokenCA,
@@ -292,7 +288,7 @@ export class WalletService {
             error: error instanceof Error ? error.message : "Unknown error"
           };
         }
-},
+      },
 
       async buy({ tokenAddress, amountInSol, slippageBps }): Promise<WalletOperationResult> {
         try {

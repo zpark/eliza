@@ -24,52 +24,14 @@ export class TaskService extends TradeExecutionService {
     );
   }
 
-  // Implement required methods
-  async initialize(): Promise<void> {
-    // Implementation
-  }
-
   async registerTasks(): Promise<void> {
-    this.registerBuyTasks();
     this.registerSellTasks();
-    this.registerMonitoringTasks();
   }
 
   async stop(): Promise<void> {
     // Clear all scheduled tasks
     this.scheduledTasks.forEach(task => clearTimeout(task));
     this.scheduledTasks = [];
-  }
-
-  private registerBuyTasks(): void {
-    // what create the db record
-    // usually the db record has repeat tags & the interval
-    // this seems to have those without being set
-
-    /*
-    this.runtime.registerTaskWorker({
-      name: "BUY_SIGNAL",
-      execute: async (_runtime: typeof IAgentRuntime, options: any) => {
-        logger.info("Executing BUY_SIGNAL task");
-
-        if (!options?.metadata?.signal) {
-          throw new Error("No signal data in buy task");
-        }
-        return await this.executeBuyTask(options.metadata);
-
-      },
-      validate: async () => true,
-    });
-
-    this.runtime.registerTaskWorker({
-      name: "OPTIMIZE_BUY_PARAMETERS",
-      execute: async () => {
-        logger.info("Optimizing buy parameters");
-        return await this.optimizeBuyParameters();
-      },
-      validate: async () => true,
-    });
-    */
   }
 
   private registerSellTasks(): void {
@@ -81,39 +43,6 @@ export class TaskService extends TradeExecutionService {
       },
       validate: async () => true,
     });
-
-    /*
-    this.runtime.registerTaskWorker({
-      name: "MONITOR_POSITIONS",
-      execute: async () => {
-        logger.info("Monitoring positions");
-        return await this.monitorPositions();
-      },
-      validate: async () => true,
-    });
-    */
-  }
-
-  private registerMonitoringTasks(): void {
-    /*
-    this.runtime.registerTaskWorker({
-      name: "OPTIMIZE_SLIPPAGE",
-      execute: async () => {
-        logger.info("Optimizing slippage parameters");
-        return await this.optimizeSlippageParameters();
-      },
-      validate: async () => true,
-    });
-
-    this.runtime.registerTaskWorker({
-      name: "PERFORMANCE_ANALYSIS",
-      execute: async () => {
-        logger.info("Analyzing trading performance");
-        return await this.analyzePerformance();
-      },
-      validate: async () => true,
-    });
-    */
   }
 
   async createSellTask(signal: SellSignalMessage) {
@@ -191,51 +120,4 @@ export class TaskService extends TradeExecutionService {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
-
-  /*
-  private async monitorPositions() {
-    try {
-      // Implement position monitoring logic
-      // This could include checking stop losses, take profits, etc.
-      logger.info("Position monitoring completed");
-      return { success: true };
-    } catch (error) {
-      console.log("Error monitoring positions:", error);
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  private async optimizeSlippageParameters() {
-    try {
-      // Implement slippage optimization logic
-      logger.info("Slippage parameters optimized");
-      return { success: true };
-    } catch (error) {
-      console.log("Error optimizing slippage parameters:", error);
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  private async optimizeBuyParameters() {
-    try {
-      // Implement buy parameter optimization logic
-      logger.info("Buy parameters optimized");
-      return { success: true };
-    } catch (error) {
-      console.log("Error optimizing buy parameters:", error);
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  private async analyzePerformance() {
-    try {
-      // Implement performance analysis logic
-      logger.info("Performance analysis completed");
-      return { success: true };
-    } catch (error) {
-      console.log("Error analyzing performance:", error);
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-  */
 }

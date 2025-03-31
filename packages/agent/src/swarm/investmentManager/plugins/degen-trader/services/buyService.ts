@@ -84,7 +84,7 @@ export class BuyService {
           `https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${
             signal.tokenAddress
           }&amount=${
-            Math.round(signal.tradeAmount * 1e9)
+            Math.round(Number(signal.tradeAmount) * 1e9)
           }&slippageBps=0`
         );
 

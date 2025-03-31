@@ -1,16 +1,19 @@
-import { type IAgentRuntime, logger } from "@elizaos/core";
+import { type AgentRuntime, logger } from "@elizaos/core";
 import { CacheManager } from '../utils/cacheManager';
 import { PortfolioStatus, TokenSignal } from '../types/trading';
 import { getWalletBalance } from "../utils/wallet";
+import { AnalyticsService } from '../services/analyticsService';
 
 export class DataService {
   private cacheManager: CacheManager;
-  private runtime;
-  private apiKey;
+  private apiKey: string;
+  private tradingConfig: any; // Add proper type
+  private walletService: any; // Add proper type
+  private analyticsService: AnalyticsService;
 
-  constructor(private runtime: IAgentRuntime) {
+  constructor(private runtime: AgentRuntime) {
     this.cacheManager = new CacheManager();
-    this.runtime = runtime;
+    this.analyticsService = new AnalyticsService(runtime);
   }
 
   async initialize(): Promise<void> {
@@ -30,7 +33,7 @@ export class DataService {
   async getBirdeyeSignals(): Promise<TokenSignal[]> {
     try {
       // Get trending tokens from cache (updated by degen-intel service)
-      const trendingTokens = await this.runtime.databaseAdapter.getCache<any[]>("birdeye_trending_tokens") || [];
+      const trendingTokens = await this.cacheManager.get<any[]>("birdeye_trending_tokens") || [];
 
       return Promise.all(
         trendingTokens.map(async (token) => {
@@ -56,7 +59,7 @@ export class DataService {
 
   async getTwitterSignals(): Promise<TokenSignal[]> {
     try {
-      const twitterSignals = await this.runtime.databaseAdapter.getCache<any[]>("twitter_parsed_signals") || [];
+      const twitterSignals = await this.cacheManager.get<any[]>("twitter_parsed_signals") || [];
 
       return twitterSignals.map((signal) => ({
         address: signal.tokenAddress,
@@ -81,7 +84,7 @@ export class DataService {
 
   async getCMCSignals(): Promise<TokenSignal[]> {
     try {
-      const cmcTokens = await this.runtime.databaseAdapter.getCache<any[]>("cmc_trending_tokens") || [];
+      const cmcTokens = await this.cacheManager.get<any[]>("cmc_trending_tokens") || [];
 
       return cmcTokens.map(token => ({
         address: token.address,
@@ -221,7 +224,7 @@ export class DataService {
           priceUsd: t.price,
           marketCap: t.marketCap,
           liquidity: t.liquidity, // probably in USD
-          vol24h: t.vol24h, // probably in USD
+          vol24h: t.volume24h, // probably in USD
           priceHistory: t.priceHistory,
         }
         // Standard is 1 request per second
@@ -349,7 +352,14 @@ export class DataService {
 
       if (!data.data) {
         console.warn('getTokenMarketData - cant save result', data, 'for', tokenAddress)
-        return {}
+        return {
+          price: 0,
+          marketCap: 0,
+          liquidity: 0,
+          volume24h: 0,
+          priceHistory: [],
+          volumeHistory: []
+        }
       }
       // FIXME: volData.data check
       // FIXME: priceHistoryData.data
@@ -361,8 +371,7 @@ export class DataService {
         //volume24h: data.data.volume24h || 0,
         volume24h: volData.data.volumeUSD || 0,
         priceHistory: priceHistoryData.data.items.map((item: any) => item.value),
-        // not used
-        //volumeHistory: historyData.data.items.map((item: any) => item.volume || 0)
+        volumeHistory: [] // Add this missing property
       };
 
       //console.log('getTokenMarketData - saving result', result, 'for', tokenAddress)
@@ -383,21 +392,40 @@ export class DataService {
   }
 
   private async calculateTechnicalSignals(marketData: any) {
-    // Implementation of technical analysis calculations
-    // This would include RSI, MACD, etc. calculations
+    // Use analyticsService to calculate technical signals
+    const rsi = this.analyticsService.calculateRSI(marketData.priceHistory, 14); // 14 is standard period for RSI
+    const macd = this.analyticsService.calculateMACD(marketData.priceHistory);
+    
+    // Calculate volatility based on price history
+    const volatility = marketData.priceHistory.length > 1 ? 
+      Math.abs(marketData.priceHistory[marketData.priceHistory.length - 1] - 
+               marketData.priceHistory[marketData.priceHistory.length - 2]) / 
+               marketData.priceHistory[marketData.priceHistory.length - 2] : 0;
+
+    // Determine volume profile trend
+    const volumeTrend = marketData.volume24h > (marketData.marketCap * 0.1) ? "increasing" : "stable";
+    const unusualActivity = marketData.volume24h > (marketData.marketCap * 0.2);
+
     return {
-      rsi: 0, // Placeholder
-      macd: {
-        value: 0,
-        signal: 0,
-        histogram: 0,
-      },
+      rsi,
+      macd,
       volumeProfile: {
-        trend: "stable" as const,
-        unusualActivity: false,
+        trend: volumeTrend as "increasing" | "stable",
+        unusualActivity,
       },
-      volatility: 0,
+      volatility,
     };
+  }
+
+  private async calculateDrawdown(params: {
+    totalValue: number;
+    positions: { [tokenAddress: string]: { amount: number; value: number } };
+    solBalance: number;
+  }): Promise<number> {
+    // Calculate max drawdown based on initial investment vs current value
+    const totalInvestment = Object.values(params.positions).reduce((sum, pos) => sum + pos.value, 0) + params.solBalance;
+    const drawdown = (totalInvestment - params.totalValue) / totalInvestment;
+    return Math.max(0, drawdown);
   }
 
   async getTokenRecommendation(): Promise<{
@@ -473,21 +501,21 @@ export class DataService {
     }
 
     // Score each token
-    const scoredTokens = Array.from(tokenMap.values()).map((token) => {
+    const scoredTokens = await Promise.all(Array.from(tokenMap.values()).map(async (token) => {
       let score = 0;
 
       // Technical Analysis Score (0-40)
       if (token.technicalSignals) {
-        score += this.scoreTechnicalSignals(token.technicalSignals);
+        score += await this.analyticsService.scoreTechnicalSignals(token.technicalSignals);
       }
 
       // Social Signal Score (0-30)
       if (token.socialMetrics) {
-        score += this.scoreSocialMetrics(token.socialMetrics);
+        score += await this.analyticsService.scoreSocialMetrics(token.socialMetrics);
       }
 
       // Market Metrics Score (0-30)
-      score += this.scoreMarketMetrics({
+      score += await this.analyticsService.scoreMarketMetrics({
         marketCap: token.marketCap,
         volume24h: token.volume24h,
         liquidity: token.liquidity,
@@ -495,7 +523,7 @@ export class DataService {
 
       token.score = score;
       return token;
-    });
+    }));
 
     // Sort by score and filter minimum requirements
     return scoredTokens
@@ -527,13 +555,29 @@ export class DataService {
 
       const drawdown = await this.calculateDrawdown({
         totalValue,
-        positions,
+        positions: positions.reduce((acc, pos) => {
+          if (pos) {
+            acc[pos.tokenAddress] = {
+              amount: pos.balance,
+              value: pos.value
+            };
+          }
+          return acc;
+        }, {} as { [tokenAddress: string]: { amount: number; value: number } }),
         solBalance: walletBalance
       });
 
       return {
         totalValue,
-        positions,
+        positions: positions.reduce((acc, pos) => {
+          if (pos) {
+            acc[pos.tokenAddress] = {
+              amount: pos.balance,
+              value: pos.value
+            };
+          }
+          return acc;
+        }, {} as { [tokenAddress: string]: { amount: number; value: number } }),
         solBalance: walletBalance,
         drawdown
       };
@@ -631,43 +675,6 @@ export class DataService {
       return Array.from(tokenAddresses);
     } catch (error) {
       console.log("Error getting monitored tokens:", error);
-      return [];
-    }
-  }
-
-  async getPositions(): Promise<any[]> {
-    try {
-      // Get list of tokens we're monitoring
-      const monitoredTokens = await this.getMonitoredTokens();
-
-      if (!monitoredTokens.length) {
-        return [];
-      }
-
-      // Get positions for each token
-      const positions = await Promise.all(
-        monitoredTokens.map(async (tokenAddress) => {
-          try {
-            const balance = await this.walletService.getTokenBalance(tokenAddress);
-            const marketData = await this.getTokenMarketData(tokenAddress);
-
-            return {
-              tokenAddress,
-              balance,
-              currentPrice: marketData.price,
-              value: balance * marketData.price,
-              lastUpdated: new Date().toISOString()
-            };
-          } catch (error) {
-            console.log(`Error getting position for token ${tokenAddress}:`, error);
-            return null;
-          }
-        })
-      );
-
-      return positions.filter(position => position !== null);
-    } catch (error) {
-      console.log("Error getting positions:", error);
       return [];
     }
   }

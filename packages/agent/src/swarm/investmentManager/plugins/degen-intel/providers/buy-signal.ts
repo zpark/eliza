@@ -4,7 +4,6 @@ import type { IToken } from "../types";
 
 const rolePrompt = "You are a buy signal analyzer.";
 const template = `
-
 I want you to give a crypto buy signal based on both the sentiment analysis as well as the trending tokens.
 Only choose a token that occurs in both the Trending Tokens list as well as the Sentiment analysis. This ensures we have the proper token address.
 The sentiment score has a range of -100 to 100, with -100 indicating extreme negativity and 100 indicating extreme positiveness.
@@ -18,14 +17,11 @@ Trending tokens:
 
 {{trending_tokens}}
 
-Only return the following JSON:
+Return a valid JSON object with the following format:
+{"recommended_buy":"token_symbol","recommend_buy_address":"token_address","reason":"reason_text","buy_amount":"amount"}
 
-{
-recommended_buy: "the symbol of the token for example DEGENAI",
-recommend_buy_address: "the address of the token to purchase, for example: 2sCUCJdVkmyXp4dT8sFaA9LKgSMK4yDPi9zLHiwXpump",
-reason: "the reason why you think this is a good buy, and why you chose the specific amount",
-buy_amount: "number, for example: 0.1"
-}`;
+For example:
+{"recommended_buy":"DEGENAI","recommend_buy_address":"2sCUCJdVkmyXp4dT8sFaA9LKgSMK4yDPi9zLHiwXpump","reason":"Strong momentum and positive sentiment","buy_amount":"0.1"}`;
 
 interface IBuySignalOutput {
   recommended_buy: string;

@@ -5,10 +5,12 @@ import { TradeExecutionService } from "./tradeExecutionService";
 import { WalletService } from "./walletService";
 import { AnalyticsService } from "./analyticsService";
 import { v4 as uuidv4 } from "uuid";
+import { DEFAULT_CONFIG } from '../config/config';
 
 export class MonitoringService implements TradeExecutionService {
   private isInitialized = false;
   private monitoringIntervals: NodeJS.Timeout[] = [];
+  private tradingConfig = DEFAULT_CONFIG;
 
   constructor(
     private runtime: IAgentRuntime,
@@ -267,6 +269,34 @@ export class MonitoringService implements TradeExecutionService {
       }
     } catch (error) {
       console.log("Error monitoring prices:", error);
+    }
+  }
+
+  private async checkPriceThresholds(
+    tokenAddress: string, 
+    currentPrice: number,
+    position: any
+  ): Promise<void> {
+    try {
+      const stopLossPrice = position.entryPrice * (1 - this.tradingConfig.riskLimits.stopLossPercentage);
+      const takeProfitPrice = position.entryPrice * (1 + this.tradingConfig.riskLimits.takeProfitPercentage);
+
+      if (currentPrice <= stopLossPrice) {
+        await this.createSellSignal(
+          tokenAddress,
+          position.amount.toString(),
+          "Stop loss triggered"
+        );
+      } else if (currentPrice >= takeProfitPrice) {
+        const halfPosition = BigInt(position.amount.toString()) / BigInt(2);
+        await this.createSellSignal(
+          tokenAddress,
+          halfPosition.toString(),
+          "Take profit - selling half position"
+        );
+      }
+    } catch (error) {
+      logger.warn("Error checking price thresholds:", error);
     }
   }
 } 

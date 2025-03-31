@@ -49,6 +49,8 @@ export interface SellSignalMessage {
   positionId: UUID;
   tokenAddress: string;
   amount: string;
+  entityId: string;
+  expectedOutAmount?: string;
   currentBalance: string;
   walletAddress: string;
   isSimulation: boolean;

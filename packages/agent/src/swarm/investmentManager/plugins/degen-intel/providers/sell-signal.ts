@@ -4,6 +4,7 @@ import type { IToken } from "../types";
 
 import { SOLANA_WALLET_DATA_CACHE_KEY, type WalletPortfolio } from '@elizaos/plugin-solana';
 import { ServiceTypes } from "../../degen-trader/types";
+import { getWalletBalances } from "../../degen-trader/utils/wallet";
 
 const rolePrompt = "You are a sell signal analyzer.";
 const template = `
@@ -29,7 +30,7 @@ Only return the following JSON:
   recommended_sell: "the symbol of the token for example DEGENAI",
   recommend_sell_address: "the address of the token to purchase, for example: 2sCUCJdVkmyXp4dT8sFaA9LKgSMK4yDPi9zLHiwXpump",
   reason: "the reason why you think this is a good sell, and why you chose the specific amount",
-  sell_amount: "number, for example: 0.1"
+  sell_amount: "number, for example: 600.54411 (number amount of tokens to sell)"
 }`;
 
 interface ISellSignalOutput {
@@ -51,71 +52,28 @@ export default class SellSignal {
     try {
       logger.info("sell-signal::generateSignal - Updating latest sell signal");
 
-      // transaction_history, PORTFOLIO might be interesting
-      // CMC has a listing latest tokens
-
+      // First refresh wallet data
+      await this.runtime.emitEvent("INTEL_SYNC_WALLET", {});
+      
+      // Replace the cache lookup with direct wallet balance check
+      const walletBalances = await getWalletBalances(this.runtime);
+      const walletData = walletBalances.tokens.map(token => ({
+        mint: token.mint,
+        balance: token.uiAmount
+      }));
+      
       const portfolioData = await this.runtime.databaseAdapter.getCache<WalletPortfolio>("PORTFOLIO") || [];
       const txHistoryData = await this.runtime.databaseAdapter.getCache<WalletPortfolio>("transaction_history") || [];
 
       console.log('portfolioData', portfolioData)
-      /* [] */
-      //console.log('txHistoryData', txHistoryData)
-      /*
-      {
-        data: {
-          to: '11111111111111111111111111111111',
-          fee: 5825,
-          from: '5Hr7wZg7oBpVhH5nngRqzr5W7ZFUfCsfEhbziZJak7fr',
-          status: true,
-          txHash: '4MEZGiFCVuwKDxcHUYXysCqFzdbnBhMQtUTKC2X9SBiDFUyuwAL8bDxr7TdJTwMKNuq38kMB3aCQ5d7jwSMBuN3a',
-          blockTime: '2025-02-27T12:14:43+00:00',
-          mainAction: 'received',
-          blockNumber: 323431520,
-          balanceChange: [Array],
-          contractLabel: [Object]
-        },
-        txHash: '4MEZGiFCVuwKDxcHUYXysCqFzdbnBhMQtUTKC2X9SBiDFUyuwAL8bDxr7TdJTwMKNuq38kMB3aCQ5d7jwSMBuN3a',
-        blockTime: '2025-02-27T12:14:43.000Z'
-      },
-      */
-
-      const walletData = await this.runtime.databaseAdapter.getCache<WalletPortfolio>("solana/walletData") || [];
-      //console.log('walletData', walletData)
-      /*
-      {
-        icon: 'https://static.jup.ag/jup/icon.png',
-        name: 'Jupiter',
-        symbol: 'JUP',
-        address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
-        balance: 98703601,
-        chainId: 'solana',
-        logoURI: 'https://static.jup.ag/jup/icon.png',
-        decimals: 6,
-        priceUsd: 0.5568798035004853,
-        uiAmount: 98.703601,
-        valueSol: '0.385338',
-        valueUsd: 54.966041929670304
-      },
-      */
       // collect CA
       let walletProviderStr = 'Your wallet contents: '
       const tokensHeld = []
-      for(const t of walletData.items) {
-        walletProviderStr += 'You hold ' + t.uiAmount + '(' + t.balance + ') of ' + t.name + ' (' + t.symbol + ' CA: ' + t.address + ') worth $' + t.valueUsd + 'usd (' + t.valueSol + ' sol)' + "\n"
-        tokensHeld.push(t.address) // CAs
+      for(const t of walletData) {
+        walletProviderStr += 'You hold ' + t.balance + '(' + t.balance + ') of ' + t.mint + ' (' + t.mint + ' CA: ' + t.mint + ') worth $' + t.balance + 'usd (' + t.balance + ' sol)' + "\n"
+        tokensHeld.push(t.mint)
       }
       let prompt = template.replace("{{walletData}}", walletProviderStr);
-
-      // walletData already gathered all this info
-      /*
-      // get birdeye data for tokens
-      const publicKey = this.runtime.getSetting("SOLANA_PUBLIC_KEY");
-      const res = await fetch(`https://public-api.birdeye.so/v1/wallet/token_list?wallet=${publicKey}`, options);
-      const resp = await res.json();
-      const data = resp?.data;
-      console.log('birdeye wallet data', resp)
-      // address, balance, uiAMount, name, symbol, logoURI, priceUsd, valueUsd
-      */
 
       // might be best to move this out of this function
       const tradeService = this.runtime.getService(ServiceTypes.DEGEN_TRADING)
@@ -213,7 +171,7 @@ export default class SellSignal {
       if (!res.ok) throw new Error("Birdeye marketcap request failed");
 
       const resJson = await res.json();
-      //console.log('sell-signal birdeye check', resJson)
+      console.log('sell-signal birdeye check', resJson)
 
       // lots of good info
 

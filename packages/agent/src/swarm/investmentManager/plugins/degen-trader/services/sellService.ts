@@ -9,9 +9,10 @@ import { calculateVolatility, assessMarketCondition } from "../utils/analyzeTrad
 import { BN, toBN, formatBN } from '../utils/bignumber';
 import { v4 as uuidv4 } from 'uuid';
 import { UUID } from 'uuid';
+import { getTokenBalance } from "../utils/wallet";
 
 export class SellService {
-  private pendingSells: { [tokenAddress: string]: bigint } = {};
+  private pendingSells: { [tokenAddress: string]: BN } = {};
   private tradingConfig: TradingConfig;
 
   constructor(
@@ -60,13 +61,7 @@ export class SellService {
     const signal: SellSignalMessage = {
       positionId: uuidv4() as UUID,
       tokenAddress: params.recommend_sell_address,
-      // pairId
       amount: params.sell_amount,
-      // currentBalance
-      // sellRecommenderId
-      // walletAddress
-      // isSimulation
-      // reason
       entityId: "default",
     };
 
@@ -80,7 +75,7 @@ export class SellService {
           `https://quote-api.jup.ag/v6/quote?inputMint=${
               signal.tokenAddress
             }&outputMint=So11111111111111111111111111111111111111112&amount=${
-              Math.round(signal.amount * 1e9) // amount has to be lamports
+              Math.round(Number(signal.amount) * 1e9) // amount has to be lamports
             }&slippageBps=0`
         );
 
@@ -119,66 +114,86 @@ export class SellService {
     receivedAmount?: string;
     receivedValue?: string;
   }> {
-
-    const tokenAddress = signal.tokenAddress;
-
     try {
+      // Check token balance first
+      const tokenBalance = await getTokenBalance(this.runtime, signal.tokenAddress);
+      if (!tokenBalance) {
+        return {
+          success: false,
+          error: "No token balance found"
+        };
+      }
+
+      // Convert requested amount to proper decimal format using token's decimals
+      const sellAmount = toBN(signal.amount).times(10 ** tokenBalance.decimals);
+      
+      // Validate against actual balance
+      if (sellAmount.gt(toBN(tokenBalance.balance))) {
+        return {
+          success: false,
+          error: `Insufficient token balance. Requested: ${sellAmount.toString()}, Available: ${tokenBalance.balance}`
+        };
+      }
+
       if (!signal) {
         throw new Error("No signal data in sell task");
       }
 
-      //const sellAmount = BigInt(signal.amount);
-      // string but make number-like for validation
-      const sellAmount = toBN(signal.amount); // anything from a small decimal to a really large number
+      // Log actual amounts for debugging
+      logger.info("Executing sell with amounts:", {
+        requestedAmount: signal.amount,
+        adjustedAmount: sellAmount.toString(),
+        actualBalance: signal.currentBalance // Need to pass this in signal
+      });
 
       try {
         // Record pending sell
-        this.pendingSells[tokenAddress] =
-          (this.pendingSells[tokenAddress] || BigInt(0)) + sellAmount;
+        this.pendingSells[signal.tokenAddress] = 
+          (this.pendingSells[signal.tokenAddress] || toBN(0)).plus(sellAmount);
 
         // Convert token amount to number for calculations
         const sellAmountNum = Number(sellAmount);
 
-        // Calculate dynamic slippage based on token metrics and trade size
-        const slippageBps = await this.calculateDynamicSlippage(
-          tokenAddress,
-          sellAmountNum,
-          true
-        );
+      // Calculate dynamic slippage based on token metrics and trade size
+      const slippageBps = await this.calculateDynamicSlippage(
+        signal.tokenAddress,
+        sellAmountNum,
+        true
+      );
 
-        logger.info("Getting quote for sell with dynamic slippage", {
-          tokenAddress,
-          inputAmount: sellAmount,
-          slippageBps,
-          dynamicSlippageApplied: true
-        });
+      logger.info("Getting quote for sell with dynamic slippage", {
+        tokenAddress: signal.tokenAddress,
+        inputAmount: sellAmount,
+        slippageBps,
+        dynamicSlippageApplied: true
+      });
 
-        // Get quote for expected amount
-        const expectedAmount = await this.getExpectedAmount(
-          tokenAddress,
-          sellAmount.toString(),
-          signal.walletAddress,
-          slippageBps
-        );
+      // Get quote for expected amount
+      const expectedAmount = await this.getExpectedAmount(
+        signal.tokenAddress,
+        sellAmount.toString(),
+        signal.walletAddress,
+        slippageBps
+      );
 
-        // Get the wallet
-        const wallet = await this.walletService.getWallet();
-        if (!wallet) {
-          throw new Error("No wallet available for trading");
-        }
+      // Get the wallet
+      const wallet = await this.walletService.getWallet();
+      if (!wallet) {
+        throw new Error("No wallet available for trading");
+      }
 
-        // Execute the sell
-        const result = await wallet.sell({
-          tokenAddress: tokenAddress,
-          tokenAmount: sellAmount.toString(),
-          slippageBps: slippageBps,
-        });
+      // Execute the sell
+      const result = await wallet.sell({
+        tokenAddress: signal.tokenAddress,
+        tokenAmount: sellAmount.toString(),
+        slippageBps: slippageBps,
+      });
 
         if (result.success && result.signature) {
           // Track slippage impact
           if (result.receivedAmount && expectedAmount) {
             await this.analyticsService.trackSlippageImpact(
-              tokenAddress,
+              signal.tokenAddress,
               expectedAmount,
               result.receivedAmount,
               slippageBps,
@@ -186,27 +201,27 @@ export class SellService {
             );
           }
 
-          logger.info("Sell successful", {
-            signature: result.signature,
-            receivedAmount: result.receivedAmount || "unknown"
-          });
+        logger.info("Sell successful", {
+          signature: result.signature,
+          receivedAmount: result.receivedAmount || "unknown"
+        });
 
-          return {
-            success: true,
-            signature: result.signature,
-            receivedAmount: result.receivedAmount,
-            receivedValue: result.swapUsdValue
-          };
-        }
+        return {
+          success: true,
+          signature: result.signature,
+          receivedAmount: result.receivedAmount,
+          receivedValue: result.swapUsdValue
+        };
+      }
 
         logger.error("Sell failed", { error: result.error });
         return { success: false, error: result.error };
       } finally {
-        // Remove from pending sells whether successful or not
-        this.pendingSells[tokenAddress] =
-          (this.pendingSells[tokenAddress] || BigInt(0)) - sellAmount;
-        if (this.pendingSells[tokenAddress] <= BigInt(0)) {
-          delete this.pendingSells[tokenAddress];
+        // Remove from pending sells
+        this.pendingSells[signal.tokenAddress] = 
+          (this.pendingSells[signal.tokenAddress] || toBN(0)).minus(sellAmount);
+        if (this.pendingSells[signal.tokenAddress].lte(toBN(0))) {
+          delete this.pendingSells[signal.tokenAddress];
         }
       }
     } catch (error) {
@@ -271,12 +286,11 @@ export class SellService {
       console.log('getExpectedAmount - slippageBps', slippageBps, 'amount', amount)
       // Get quote from Jupiter or other DEX
       const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${
-          tokenAddress
-        }&outputMint=So11111111111111111111111111111111111111112&amount=${
-          Math.round(toBN(amount) * 1e9)
-        }&slippageBps=${
-          slippageBps // do we need to * 10000 here?
-        }`;
+        tokenAddress
+      }&outputMint=So11111111111111111111111111111111111111112&amount=${
+        amount  // Already in proper decimal format
+      }&slippageBps=${slippageBps}`;
+      
       const response = await fetch(quoteUrl);
 
       if (!response.ok) {
