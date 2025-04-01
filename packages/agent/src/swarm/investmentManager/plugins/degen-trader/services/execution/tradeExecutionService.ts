@@ -1,8 +1,8 @@
 import { type AgentRuntime, logger } from "@elizaos/core";
-import { executeTrade } from "../utils/wallet";
-import { WalletService } from "./walletService";
-import { DataService } from "./dataService";
-import { AnalyticsService } from "./analyticsService";
+import { executeTrade } from "../../utils/wallet";
+import { WalletService } from "../walletService";
+import { DataService } from "../dataService";
+import { AnalyticsService } from "../analyticsService";
 
 export class TradeExecutionService {
   constructor(
@@ -35,16 +35,14 @@ export class TradeExecutionService {
     outAmount?: string;
   }> {
     try {
-      // Execute buy trade
       const result = await executeTrade(this.runtime, {
         tokenAddress,
         amount,
         slippage,
-        dex: "raydium", // Default to Raydium
+        dex: "raydium",
         action: "BUY"
       });
 
-      // Track trade execution analytics
       if (result.success) {
         await this.analyticsService.trackTradeExecution({
           type: "buy",
@@ -56,7 +54,7 @@ export class TradeExecutionService {
 
       return result;
     } catch (error) {
-      console.log("Buy trade execution failed:", error);
+      logger.error("Buy trade execution failed:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -79,16 +77,14 @@ export class TradeExecutionService {
     receivedAmount?: string;
   }> {
     try {
-      // Execute sell trade
       const result = await executeTrade(this.runtime, {
         tokenAddress,
         amount,
         slippage,
-        dex: "raydium", // Default to Raydium
+        dex: "raydium",
         action: "SELL"
       });
 
-      // Track trade execution analytics
       if (result.success) {
         await this.analyticsService.trackTradeExecution({
           type: "sell",
@@ -100,7 +96,7 @@ export class TradeExecutionService {
 
       return result;
     } catch (error) {
-      console.log("Sell trade execution failed:", error);
+      logger.error("Sell trade execution failed:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -121,7 +117,7 @@ export class TradeExecutionService {
       
       return expectedAmount.toString();
     } catch (error) {
-      console.log("Error calculating expected amount:", error);
+      logger.error("Error calculating expected amount:", error);
       return "0";
     }
   }

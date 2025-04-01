@@ -1,9 +1,9 @@
 import { type AgentRuntime as IAgentRuntime, logger } from "@elizaos/core";
-import { BuyService } from './buyService';
-import { SellService } from './sellService';
+import { BuyService } from './execution/buyService';
+import { SellService } from './execution/sellService';
 import { v4 as uuidv4 } from "uuid";
 import { ServiceTypes } from "../types";
-import { TradeExecutionService } from './tradeExecutionService';
+import { TradeExecutionService } from './execution/tradeExecutionService';
 import { type SellSignalMessage } from '../types';
 import type { AgentRuntime } from "@elizaos/core";
 

@@ -28,14 +28,16 @@ import {
   getWalletKeypair,
 } from "./utils/wallet";
 import { CacheManager } from "./utils/cacheManager";
-import { BuyService } from "./services/buyService";
-import { SellService } from "./services/sellService";
+
+// Service imports
+import { BuyService } from "./services/execution/buyService";
+import { SellService } from "./services/execution/sellService";
 import { DataService } from "./services/dataService";
 import { AnalyticsService } from "./services/analyticsService";
 import { MonitoringService } from "./services/monitoringService";
 import { TaskService } from "./services/taskService";
 import { WalletService } from "./services/walletService";
-import { TradeExecutionService } from "./services/tradeExecutionService";
+import { TradeExecutionService } from "./services/execution/tradeExecutionService";
 
 interface TokenSignal {
   address: string;
@@ -116,6 +118,7 @@ export class DegenTradingService extends Service {
   private monitoringService: MonitoringService;
   private taskService: TaskService;
   private walletService: WalletService;
+  private tradeExecutionService: TradeExecutionService;
 
   static serviceType = ServiceTypes.DEGEN_TRADING;
   capabilityDescription = "The agent is able to trade on the Solana blockchain";
@@ -128,6 +131,12 @@ export class DegenTradingService extends Service {
     this.dataService = new DataService(runtime);
     this.analyticsService = new AnalyticsService(runtime);
     this.walletService = new WalletService(runtime);
+    this.tradeExecutionService = new TradeExecutionService(
+      runtime,
+      this.walletService,
+      this.dataService,
+      this.analyticsService
+    );
     this.buyService = new BuyService(runtime, this.walletService, this.dataService, this.analyticsService);
     this.sellService = new SellService(runtime, this.walletService, this.dataService, this.analyticsService);
     this.taskService = new TaskService(runtime, this.buyService, this.sellService);
