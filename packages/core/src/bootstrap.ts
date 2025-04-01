@@ -238,7 +238,7 @@ const messageReceivedHandler = async ({
         logger.debug(`*** Raw Response Type: ${typeof response} ***`);
 
         // parseJSONObjectFromText does a ```json check and clean
-        responseContent = parseJSONObjectFromText(processedResponse) as Content;
+        responseContent = parseJSONObjectFromText(response) as Content;
         logger.debug('*** Parsed Response Object ***', responseContent);
 
         retries++;
