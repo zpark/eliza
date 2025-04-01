@@ -98,7 +98,7 @@ function withTransform(
   fetchFn: typeof fetch,
   transform?: Partial<FetchTransformOptions>,
 ): typeof fetch {
-  return async (input, init) => {
+  return (async (input, init, preconnect?) => {
     const fetchArgs = (await transform?.request?.(input, init)) ?? [
       input,
       init,
@@ -106,7 +106,7 @@ function withTransform(
     // @ts-expect-error don't care
     const res = await fetchFn(...fetchArgs);
     return (await transform?.response?.(res)) ?? res;
-  };
+  }) as typeof fetch;
 }
 
 /**
