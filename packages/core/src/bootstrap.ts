@@ -218,29 +218,41 @@ const messageReceivedHandler = async ({
         shouldRespondPrompt
       );
 
-      const response = await runtime.useModel(ModelType.TEXT_SMALL, {
-        prompt: shouldRespondPrompt,
-      });
+      let responseContent: Content | null = null;
+      // Retry if missing required fields
+      let retries = 0;
+      const maxRetries = 3;
 
-      logger.debug(`*** Should Respond Response for ${runtime.character.name} ***\n`, response);
-      logger.debug(`*** Raw Response Type: ${typeof response} ***`);
+      // name, action, providers
+      while (
+        retries < maxRetries &&
+        (!responseContent?.name || !responseContent?.action || !responseContent?.providers)
+      ) {
+        // could use OBJECT_SMALL but this expects a string return type rn
+        // not sure where OBJECT_SMALL does it's parsing, so we can check for a retry
+        const response = await runtime.useModel(ModelType.TEXT_SMALL, {
+          // could shift over to
+          prompt: shouldRespondPrompt,
+        });
+        logger.debug(`*** Should Respond Response for ${runtime.character.name} ***\n`, response);
+        logger.debug(`*** Raw Response Type: ${typeof response} ***`);
 
-      // Try to preprocess response by removing code blocks markers if present
-      let processedResponse = response;
-      if (typeof response === 'string' && response.includes('```')) {
-        logger.debug('*** Response contains code block markers, attempting to clean up ***');
-        processedResponse = response.replace(/```json\n|\n```|```/g, '');
-        logger.debug('*** Processed Response ***\n', processedResponse);
+        // parseJSONObjectFromText does a ```json check and clean
+        responseContent = parseJSONObjectFromText(processedResponse) as Content;
+        logger.debug('*** Parsed Response Object ***', responseContent);
+
+        retries++;
+        if (!responseContent?.name && !responseContent?.action && !responseContent?.providers) {
+          logger.warn('*** Missing required fields, retrying... shouldRespondPrompt ***');
+        }
       }
 
-      const responseObject = parseJSONObjectFromText(processedResponse);
-      logger.debug('*** Parsed Response Object ***', responseObject);
-
       // Safely handle the case where parsing returns null
-      const providers = responseObject?.providers as string[] | undefined;
+      const providers = responseContent.providers as string[] | undefined;
       logger.debug('*** Providers Value ***', providers);
 
-      const shouldRespond = responseObject?.action && responseObject.action === 'RESPOND';
+      // the template does not use similies
+      const shouldRespond = responseContent?.action && responseContent.action === 'RESPOND';
       logger.debug('*** Should Respond ***', shouldRespond);
 
       state = await runtime.composeState(message, null, providers);
@@ -248,54 +260,20 @@ const messageReceivedHandler = async ({
       let responseMessages: Memory[] = [];
 
       if (shouldRespond) {
-        const prompt = composePromptFromState({
-          state,
-          template: runtime.character.templates?.messageHandlerTemplate || messageHandlerTemplate,
-        });
+        // if we should repsond, call reply action
+        // this reduces the amount of code we need here
+        responseContent.actions = ['REPLY'];
 
-        let responseContent: Content | null = null;
-
-        // Retry if missing required fields
-        let retries = 0;
-        const maxRetries = 3;
-        while (retries < maxRetries && (!responseContent?.thought || !responseContent?.actions)) {
-          const response = await runtime.useModel(ModelType.TEXT_SMALL, {
-            prompt,
-          });
-
-          responseContent = parseJSONObjectFromText(response) as Content;
-
-          retries++;
-          if (!responseContent?.thought && !responseContent?.actions) {
-            logger.warn('*** Missing required fields, retrying... ***');
-          }
-        }
-
-        // Check if this is still the latest response ID for this agent+room
-        const currentResponseId = agentResponses.get(message.roomId);
-        if (currentResponseId !== responseId) {
-          logger.info(
-            `Response discarded - newer message being processed for agent: ${runtime.agentId}, room: ${message.roomId}`
-          );
-          return;
-        }
-
-        if (responseContent) {
-          responseContent.inReplyTo = createUniqueUuid(runtime, message.id);
-
-          responseMessages = [
-            {
-              id: asUUID(v4()),
-              entityId: runtime.agentId,
-              agentId: runtime.agentId,
-              content: responseContent,
-              roomId: message.roomId,
-              createdAt: Date.now(),
-            },
-          ];
-
-          callback(responseContent);
-        }
+        responseMessages = [
+          {
+            id: asUUID(v4()),
+            entityId: runtime.agentId,
+            agentId: runtime.agentId,
+            content: responseContent,
+            roomId: message.roomId,
+            createdAt: Date.now(),
+          },
+        ];
 
         // Clean up the response ID
         agentResponses.delete(message.roomId);
