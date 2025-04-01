@@ -9,6 +9,7 @@ import {
 import { generateText } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import { z } from "zod";
+import FormData from 'form-data';
 
 async function tokenizeText(model: ModelType, context: string) {
   const modelName =

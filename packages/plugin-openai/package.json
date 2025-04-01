@@ -21,6 +21,7 @@
         "@ai-sdk/openai": "^1.1.9",
         "@ai-sdk/ui-utils": "1.1.9",
         "@elizaos/core": "workspace:*",
+        "@types/form-data": "^2.5.2",
         "ai": "^4.1.25",
         "js-tiktoken": "^1.0.18",
         "tsup": "8.4.0",
