@@ -1,4 +1,4 @@
-import { parseJSONObjectFromText, type IAgentRuntime, logger, ModelTypes } from "@elizaos/core";
+import { parseJSONObjectFromText, type IAgentRuntime, logger, ModelTypes, Content } from "@elizaos/core";
 import type { Sentiment } from "../schemas";
 import type { IToken } from "../types";
 
@@ -95,7 +95,7 @@ export default class BuySignal {
       });
 
       console.log('intel:buy-signal - response', response);
-      responseContent = parseJSONObjectFromText(response) as Content;
+      responseContent = parseJSONObjectFromText(response) as IBuySignalOutput;
 
       retries++;
       if (!responseContent?.recommended_buy && !responseContent?.reason && !responseContent?.recommend_buy_address) {

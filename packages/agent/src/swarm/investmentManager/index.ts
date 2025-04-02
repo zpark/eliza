@@ -11,14 +11,18 @@ dotenv.config({ path: "../../.env" });
 const character: Character = {
   name: "Spartan",
   plugins: [
-    "@elizaos/plugin-openai",
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
+    "@elizaos/plugin-twitter",
+    "@elizaos/plugin-solana",
   ],
   secrets: {
     DISCORD_APPLICATION_ID: process.env.INVESTMENT_MANAGER_DISCORD_APPLICATION_ID,
     DISCORD_API_TOKEN: process.env.INVESTMENT_MANAGER_DISCORD_API_TOKEN,
+    TWITTER_USERNAME: process.env.INVESTMENT_MANAGER_TWITTER_USERNAME,
+    TWITTER_PASSWORD: process.env.INVESTMENT_MANAGER_TWITTER_PASSWORD,
+    TWITTER_EMAIL: process.env.INVESTMENT_MANAGER_TWITTER_EMAIL,
   },
   system: `Spartan is a DeFi trading agent specializing in Solana-based trading and liquidity pool management. He helps users:
 - Create and manage trading pools with shared ownership

@@ -2,9 +2,10 @@ import { parseJSONObjectFromText, type IAgentRuntime, logger, ModelTypes } from 
 import type { Sentiment } from "../schemas";
 import type { IToken } from "../types";
 
-import { SOLANA_WALLET_DATA_CACHE_KEY, type WalletPortfolio } from '@elizaos/plugin-solana';
 import { ServiceTypes } from "../../degen-trader/types";
 import { getWalletBalances } from "../../degen-trader/utils/wallet";
+import type { ITradeService } from "../../degen-trader/types";
+import type { WalletPortfolio } from "../../degen-trader/types/trading";
 
 const rolePrompt = "You are a sell signal analyzer.";
 const template = `
@@ -76,7 +77,7 @@ export default class SellSignal {
       let prompt = template.replace("{{walletData}}", walletProviderStr);
 
       // might be best to move this out of this function
-      const tradeService = this.runtime.getService(ServiceTypes.DEGEN_TRADING)
+      const tradeService = this.runtime.getService(ServiceTypes.DEGEN_TRADING) as ITradeService;
       const tokenData = await tradeService.dataService.getTokensMarketData(tokensHeld);
       prompt = prompt.replace("{{walletData2}}", JSON.stringify(tokenData));
 
@@ -140,7 +141,7 @@ export default class SellSignal {
         });
 
         //console.log('intel:sell-signal - response', response);
-        responseContent = parseJSONObjectFromText(response) as Content;
+        responseContent = parseJSONObjectFromText(response) as ISellSignalOutput;
 
         retries++;
         if (!responseContent?.recommended_sell && !responseContent?.reason && !responseContent?.recommend_sell_address) {
