@@ -203,8 +203,11 @@ export const create = new Command()
         projectName = prefixedName;
       }
 
-      // Set up target directory - now calculated only once after projectName is finalized
-      const targetDir = path.join(options.dir === '.' ? process.cwd() : options.dir, projectName);
+      // Set up target directory as /packages folder
+      const targetDir =
+        options.type === 'plugin'
+          ? path.join(process.cwd(), 'packages', projectName) // Plugins always go in packages/
+          : path.join(options.dir === '.' ? process.cwd() : options.dir, projectName);
 
       // For plugin initialization, we can simplify the process
       if (options.type === 'plugin') {
@@ -262,7 +265,7 @@ export const create = new Command()
         logger.info(`\nYour plugin is ready! Here's your development workflow:
 
 1️⃣ Development
-   cd ${cdPath}
+   cd packages/${cdPath}
    ${colors.cyan('npx elizaos dev')}              # Start development with hot-reloading
 
 2️⃣ Testing
