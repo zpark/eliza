@@ -775,7 +775,7 @@ The state of the agent.
 
 • **didRespond?**: `boolean`
 
-Whether the agent responded to the message.~
+Whether the agent responded to the message.
 
 • **callback?**: [`HandlerCallback`](../type-aliases/HandlerCallback.md)
 
