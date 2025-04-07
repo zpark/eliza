@@ -38,6 +38,7 @@ import { MonitoringService } from "./services/monitoringService";
 import { TaskService } from "./services/taskService";
 import { WalletService } from "./services/walletService";
 import { TradeExecutionService } from "./services/execution/tradeExecutionService";
+import { TradeMemoryService } from './services/tradeMemoryService';
 
 interface TokenSignal {
   address: string;
@@ -119,6 +120,7 @@ export class DegenTradingService extends Service {
   private taskService: TaskService;
   private walletService: WalletService;
   private tradeExecutionService: TradeExecutionService;
+  private tradeMemoryService: TradeMemoryService;
 
   static serviceType = ServiceTypes.DEGEN_TRADING;
   capabilityDescription = "The agent is able to trade on the Solana blockchain";
@@ -131,14 +133,15 @@ export class DegenTradingService extends Service {
     this.dataService = new DataService(runtime);
     this.analyticsService = new AnalyticsService(runtime);
     this.walletService = new WalletService(runtime);
+    this.tradeMemoryService = new TradeMemoryService(runtime);
     this.tradeExecutionService = new TradeExecutionService(
       runtime,
       this.walletService,
       this.dataService,
       this.analyticsService
     );
-    this.buyService = new BuyService(runtime, this.walletService, this.dataService, this.analyticsService);
-    this.sellService = new SellService(runtime, this.walletService, this.dataService, this.analyticsService);
+    this.buyService = new BuyService(runtime, this.walletService, this.dataService, this.analyticsService, this.tradeMemoryService);
+    this.sellService = new SellService(runtime, this.walletService, this.dataService, this.analyticsService, this.tradeMemoryService);
     this.taskService = new TaskService(runtime, this.buyService, this.sellService);
     this.monitoringService = new MonitoringService(
       runtime,
@@ -187,6 +190,7 @@ export class DegenTradingService extends Service {
         this.dataService.initialize(),
         this.analyticsService.initialize(),
         this.walletService.initialize(),
+        this.tradeMemoryService.initialize(),
         this.buyService.initialize(),
         this.sellService.initialize(),
         this.monitoringService.initialize(),

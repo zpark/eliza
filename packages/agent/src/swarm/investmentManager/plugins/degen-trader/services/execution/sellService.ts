@@ -7,6 +7,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { UUID } from 'uuid';
 import { BN, toBN } from '../../utils/bignumber';
 import { getTokenBalance } from '../../utils/wallet';
+import { TradeMemoryService } from '../tradeMemoryService';
+import { WalletService } from '../walletService';
+import { DataService } from '../dataService';
+import { AnalyticsService } from '../analyticsService';
 
 import { executeTrade } from '../../utils/wallet';
 
@@ -14,11 +18,19 @@ export class SellService extends BaseTradeService {
   private pendingSells: { [tokenAddress: string]: BN } = {};
   private validationService: TokenValidationService;
   private calculationService: TradeCalculationService;
+  private tradeMemoryService: TradeMemoryService;
 
-  constructor(runtime: IAgentRuntime, ...services: any[]) {
-    super(runtime, ...services);
-    this.validationService = new TokenValidationService(runtime, ...services);
-    this.calculationService = new TradeCalculationService(runtime, ...services);
+  constructor(
+    runtime: IAgentRuntime,
+    walletService: WalletService,
+    dataService: DataService,
+    analyticsService: AnalyticsService,
+    tradeMemoryService: TradeMemoryService
+  ) {
+    super(runtime, walletService, dataService, analyticsService);
+    this.validationService = new TokenValidationService(runtime, walletService, dataService, analyticsService);
+    this.calculationService = new TradeCalculationService(runtime, walletService, dataService, analyticsService);
+    this.tradeMemoryService = tradeMemoryService;
   }
 
   async initialize(): Promise<void> {
@@ -118,7 +130,22 @@ export class SellService extends BaseTradeService {
           action: "SELL"
         });
 
-        if (result.success && result.signature && signal.expectedOutAmount) {
+        if (result.success) {
+          await this.tradeMemoryService.createTrade({
+            tokenAddress: signal.tokenAddress,
+            chain: "solana",
+            type: "SELL",
+            amount: sellAmount.toString(),
+            price: tokenPerformance.price.toString(),
+            txHash: result.signature,
+            metadata: {
+              slippage: slippageBps,
+              expectedAmount: signal.expectedOutAmount,
+              receivedAmount: result.receivedAmount,
+              valueUsd: result.receivedValue
+            }
+          });
+
           await this.analyticsService.trackSlippageImpact(
             signal.tokenAddress,
             signal.expectedOutAmount,

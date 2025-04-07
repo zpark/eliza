@@ -5,15 +5,27 @@ import { TradeCalculationService } from '../calculation/tradeCalculation';
 import { BuySignalMessage } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { UUID } from 'uuid';
+import { TradeMemoryService } from '../tradeMemoryService';
+import { WalletService } from '../walletService';
+import { DataService } from '../dataService';
+import { AnalyticsService } from '../analyticsService';
 
 export class BuyService extends BaseTradeService {
   private validationService: TokenValidationService;
   private calculationService: TradeCalculationService;
+  private tradeMemoryService: TradeMemoryService;
 
-  constructor(runtime: IAgentRuntime, ...services: any[]) {
-    super(runtime, ...services);
-    this.validationService = new TokenValidationService(runtime, ...services);
-    this.calculationService = new TradeCalculationService(runtime, ...services);
+  constructor(
+    runtime: IAgentRuntime, 
+    walletService: WalletService,
+    dataService: DataService,
+    analyticsService: AnalyticsService,
+    tradeMemoryService: TradeMemoryService
+  ) {
+    super(runtime, walletService, dataService, analyticsService);
+    this.validationService = new TokenValidationService(runtime, walletService, dataService, analyticsService);
+    this.calculationService = new TradeCalculationService(runtime, walletService, dataService, analyticsService);
+    this.tradeMemoryService = tradeMemoryService;
   }
 
   async initialize(): Promise<void> {
@@ -111,14 +123,31 @@ export class BuyService extends BaseTradeService {
         slippageBps,
       });
 
-      if (result.success && result.outAmount) {
-        await this.analyticsService.trackSlippageImpact(
-          signal.tokenAddress,
-          signal.expectedOutAmount || "0",
-          result.outAmount,
-          slippageBps,
-          false
-        );
+      if (result.success) {
+        await this.tradeMemoryService.createTrade({
+          tokenAddress: signal.tokenAddress,
+          chain: "solana",
+          type: "BUY",
+          amount: buyAmount.toString(),
+          price: validation.price.toString(),
+          txHash: result.signature,
+          metadata: {
+            slippage: slippageBps,
+            expectedAmount: signal.expectedOutAmount,
+            receivedAmount: result.outAmount,
+            valueUsd: result.swapUsdValue
+          }
+        });
+
+        if (result.outAmount) {
+          await this.analyticsService.trackSlippageImpact(
+            signal.tokenAddress,
+            signal.expectedOutAmount || "0",
+            result.outAmount,
+            slippageBps,
+            false
+          );
+        }
       }
 
       return result;
