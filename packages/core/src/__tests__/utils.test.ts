@@ -129,6 +129,12 @@ describe('Utils Comprehensive Tests', () => {
       expect(result).toEqual({ key: 'value', number: '42' });
     });
 
+    it('should handle code blocks without trailing newline', () => {
+      const text = '```json\n{"key": "value"}\n```';
+      const result = parseJSONObjectFromText(text.trimEnd());
+      expect(result).toEqual({ key: 'value' });
+    });
+
     it('should parse direct JSON without code blocks', () => {
       const text = '{"name": "Alice", "age": 30}';
       const result = parseJSONObjectFromText(text);
