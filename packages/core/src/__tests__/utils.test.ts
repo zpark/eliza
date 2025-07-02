@@ -135,6 +135,12 @@ describe('Utils Comprehensive Tests', () => {
       expect(result).toEqual({ key: 'value' });
     });
 
+    it('should parse code blocks without newline after the language tag', () => {
+      const text = '```json{"key": "value"}\n```';
+      const result = parseJSONObjectFromText(text);
+      expect(result).toEqual({ key: 'value' });
+    });
+
     it('should parse direct JSON without code blocks', () => {
       const text = '{"name": "Alice", "age": 30}';
       const result = parseJSONObjectFromText(text);
