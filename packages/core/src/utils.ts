@@ -334,7 +334,10 @@ export const formatTimestamp = (messageDate: number) => {
   return `${days} day${days !== 1 ? 's' : ''} ago`;
 };
 
-const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
+// Match a ```json code block. Some models may use Windows style newlines or
+// omit the newline entirely after the language tag and before the closing
+// delimiter. This regex handles those variations gracefully.
+const jsonBlockPattern = /```json\s*(?:\r?\n)?([\s\S]*?)(?:\r?\n)?```/;
 
 /**
  * Parses key-value pairs from a simple XML structure within a given text.
