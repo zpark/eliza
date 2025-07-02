@@ -334,7 +334,9 @@ export const formatTimestamp = (messageDate: number) => {
   return `${days} day${days !== 1 ? 's' : ''} ago`;
 };
 
-const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
+// Match a ```json code block, allowing optional newlines after the opening
+// and before the closing ``` to handle variations returned by different LLMs
+const jsonBlockPattern = /```json\s*\n?([\s\S]*?)\n?```/;
 
 /**
  * Parses key-value pairs from a simple XML structure within a given text.
