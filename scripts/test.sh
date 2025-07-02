@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Check Node.js version
-REQUIRED_NODE_VERSION=22
+# Node.js 20 is the minimum requirement. Higher versions are also accepted.
+REQUIRED_NODE_VERSION=20
 CURRENT_NODE_VERSION=$(node -v | cut -d'.' -f1 | sed 's/v//')
 
 if ((CURRENT_NODE_VERSION < REQUIRED_NODE_VERSION)); then
